@@ -26,6 +26,10 @@ function usage() {
 }
 
 function check_env_vars() {
+	if ! [[ -v POSTGRESQL_USER && -v POSTGRESQL_PASSWORD && -v POSTGRESQL_DATABASE ]]; then
+		usage
+	fi
+
 	[[ "$POSTGRESQL_USER"     =~ $psql_identifier_regex ]] || usage
 	[ ${#POSTGRESQL_USER} -le 63 ] || usage "PostgreSQL username too long (maximum 63 characters)"
 	[[ "$POSTGRESQL_PASSWORD" =~ $psql_password_regex   ]] || usage
