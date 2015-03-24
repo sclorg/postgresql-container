@@ -48,8 +48,7 @@ function unset_env_vars() {
 	unset POSTGRESQL_ADMIN_PASSWORD
 }
 
-if [ "$1" = "postgres" -a ! -f "$PGDATA/postgresql.conf" ]; then
-
+function initialize_database() {
 	check_env_vars
 
 	# Initialize the database cluster with utf8 support enabled by default.
@@ -89,6 +88,12 @@ if [ "$1" = "postgres" -a ! -f "$PGDATA/postgresql.conf" ]; then
 	fi
 
 	pg_ctl stop
+}
+
+if [ "$1" = "postgres" ]; then
+	if [ ! -f "$PGDATA/postgresql.conf" ]; then
+		initialize_database
+	fi
 fi
 
 unset_env_vars
