@@ -1,0 +1,15 @@
+#
+# Custom OpenShift configuration.
+#
+# NOTE: This file is rewritten everytime the container is started!
+#       Changes to this file will be overrwritten.
+#
+
+# Listen on all interfaces.
+listen_addresses = '*'
+
+# Determines the maximum number of concurrent connections to the database server. Default: 100
+max_connections = ${POSTGRESQL_MAX_CONNECTIONS}
+
+# Sets the amount of memory the database server uses for shared memory buffers. Default: 32MB
+shared_buffers = ${POSTGRESQL_SHARED_BUFFERS}
