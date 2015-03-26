@@ -6,7 +6,12 @@ source $HOME/.bashrc
 set -eu
 
 # Data dir
-export PGDATA=/var/lib/pgsql/data
+export PGDATA=$HOME/data
+POSTGRESQL_CONFIG_FILE=$HOME/openshift-custom-postgresql.conf
+
+# Configuration settings.
+export POSTGRESQL_MAX_CONNECTIONS=${POSTGRESQL_MAX_CONNECTIONS:-100}
+export POSTGRESQL_SHARED_BUFFERS=${POSTGRESQL_SHARED_BUFFERS:-32MB}
 
 # Be paranoid and stricter than we should be.
 psql_identifier_regex='^[a-zA-Z_][a-zA-Z0-9_]*$'
@@ -22,10 +27,17 @@ function usage() {
 	echo "  \$POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')"
 	echo "Optional:"
 	echo "  \$POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')"
+	echo "Settings:"
+	echo "  \$POSTGRESQL_MAX_CONNECTIONS (default: 100)"
+	echo "  \$POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
 	exit 1
 }
 
 function check_env_vars() {
+	if ! [[ -v POSTGRESQL_USER && -v POSTGRESQL_PASSWORD && -v POSTGRESQL_DATABASE ]]; then
+		usage
+	fi
+
 	[[ "$POSTGRESQL_USER"     =~ $psql_identifier_regex ]] || usage
 	[ ${#POSTGRESQL_USER} -le 63 ] || usage "PostgreSQL username too long (maximum 63 characters)"
 	[[ "$POSTGRESQL_PASSWORD" =~ $psql_password_regex   ]] || usage
@@ -44,8 +56,7 @@ function unset_env_vars() {
 	unset POSTGRESQL_ADMIN_PASSWORD
 }
 
-if [ "$1" = "postgres" -a ! -f "$PGDATA/postgresql.conf" ]; then
-
+function initialize_database() {
 	check_env_vars
 
 	# Initialize the database cluster with utf8 support enabled by default.
@@ -56,12 +67,8 @@ if [ "$1" = "postgres" -a ! -f "$PGDATA/postgresql.conf" ]; then
 	# PostgreSQL configuration.
 	cat >> "$PGDATA/postgresql.conf" <<-EOF
 
-		#
-		# Custom OpenShift configuration starting at this point.
-		#
-
-		# Listen on all interfaces.
-		listen_addresses = '*'
+		# Custom OpenShift configuration:
+		include '../openshift-custom-postgresql.conf'
 	EOF
 
 	# Access control configuration.
@@ -85,6 +92,14 @@ if [ "$1" = "postgres" -a ! -f "$PGDATA/postgresql.conf" ]; then
 	fi
 
 	pg_ctl stop
+}
+
+# New config is generated every time a container is created. It only contains
+# additional custom settings and is included from $PGDATA/postgresql.conf.
+envsubst < ${POSTGRESQL_CONFIG_FILE}.template > ${POSTGRESQL_CONFIG_FILE}
+
+if [ "$1" = "postgres" -a ! -f "$PGDATA/postgresql.conf" ]; then
+	initialize_database
 fi
 
 unset_env_vars

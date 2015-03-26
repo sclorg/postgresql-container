@@ -34,6 +34,13 @@ The image recognizes following environment variables that you can set during ini
 |  `POSTGRESQL_DATABASE`       | Database name                                  |
 |  `POSTGRESQL_ADMIN_PASSWORD` | Password for the `postgres` admin account (optional)     |
 
+Following environment variables influence PostgreSQL configuration file. They are all optional.
+
+|    Variable name              |    Description                                                          |    Default
+| :---------------------------- | ----------------------------------------------------------------------- | -------------------------------
+|  `POSTGRESQL_MAX_CONNECTIONS` | The maximum number of client connections allowed                        |  100
+|  `POSTGRESQL_SHARED_BUFFERS`  | Sets how much memory is dedicated to PostgreSQL to use for caching data |  32M
+
 You can also set following mount points by passing `-v /host:/container` flag to docker.
 
 |  Volume mount point      | Description                           |
