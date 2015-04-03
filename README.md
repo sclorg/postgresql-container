@@ -19,9 +19,9 @@ make build TARGET=rhel7
 
 This image is available on DockerHub. To download it use:
 
-----
+```console
 docker pull openshift/postgresql-92-centos7
-----
+```
 
 To build PostgreSQL image from scratch use:
 
