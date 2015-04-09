@@ -22,14 +22,14 @@ function usage() {
 		echo "error: $1"
 	fi
 	echo "You must specify following environment variables:"
-	echo "  \$POSTGRESQL_USER (regex: '$psql_identifier_regex')"
-	echo "  \$POSTGRESQL_PASSWORD (regex: '$psql_password_regex')"
-	echo "  \$POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')"
+	echo "  POSTGRESQL_USER (regex: '$psql_identifier_regex')"
+	echo "  POSTGRESQL_PASSWORD (regex: '$psql_password_regex')"
+	echo "  POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')"
 	echo "Optional:"
-	echo "  \$POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')"
+	echo "  POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')"
 	echo "Settings:"
-	echo "  \$POSTGRESQL_MAX_CONNECTIONS (default: 100)"
-	echo "  \$POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
+	echo "  POSTGRESQL_MAX_CONNECTIONS (default: 100)"
+	echo "  POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
 	exit 1
 }
 
