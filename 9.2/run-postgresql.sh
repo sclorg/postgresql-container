@@ -1,12 +1,22 @@
 #!/bin/bash
 
+# Set HOME variable
+export HOME=/var/lib/pgsql
+
 # For SCL enablement
 source $HOME/.bashrc
 
 set -eu
 
 # Data dir
-export PGDATA=$HOME/data
+if [ -O $HOME/data ]; then
+  export PGDATA=$HOME/data
+else
+  # If current user does not own data directory
+  # create a subdirectory that the user does own
+  mkdir $HOME/data/userdata
+  export PGDATA=$HOME/data/userdata
+fi
 POSTGRESQL_CONFIG_FILE=$HOME/openshift-custom-postgresql.conf
 
 # Configuration settings.
@@ -68,7 +78,7 @@ function initialize_database() {
 	cat >> "$PGDATA/postgresql.conf" <<-EOF
 
 		# Custom OpenShift configuration:
-		include '../openshift-custom-postgresql.conf'
+		include '${POSTGRESQL_CONFIG_FILE}'
 	EOF
 
 	# Access control configuration.
@@ -97,6 +107,13 @@ function initialize_database() {
 # New config is generated every time a container is created. It only contains
 # additional custom settings and is included from $PGDATA/postgresql.conf.
 envsubst < ${POSTGRESQL_CONFIG_FILE}.template > ${POSTGRESQL_CONFIG_FILE}
+
+# Generate passwd file based on current uid
+export USER_ID=$(id -u)
+envsubst < ${HOME}/passwd.template > ${HOME}/passwd
+export LD_PRELOAD=libnss_wrapper.so
+export NSS_WRAPPER_PASSWD=/var/lib/pgsql/passwd
+export NSS_WRAPPER_GROUP=/etc/group
 
 if [ "$1" = "postgres" -a ! -f "$PGDATA/postgresql.conf" ]; then
 	initialize_database
