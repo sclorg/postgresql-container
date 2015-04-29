@@ -24,13 +24,16 @@ EXPOSE 5432
 # to make sure of that.
 RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs install https://www.softwarecollections.org/en/scls/rhscl/postgresql92/epel-7-x86_64/download/rhscl-postgresql92-epel-7-x86_64.noarch.rpm && \
-    yum -y --setopt=tsflags=nodocs install gettext postgresql92 && \
+    yum -y --setopt=tsflags=nodocs --enablerepo=centosplus install gettext postgresql92 epel-release && \
+    yum -y --setopt=tsflags=nodocs install nss_wrapper && \
     yum clean all && \
     mkdir -p /var/lib/pgsql/data && chown postgres.postgres /var/lib/pgsql/data && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)"
 
 COPY run-postgresql.sh /usr/local/bin/
 COPY contrib /var/lib/pgsql/
+
+RUN chmod -R go+rwx /var/lib/pgsql && chmod go+w /var/run/postgresql
 
 VOLUME ["/var/lib/pgsql/data"]
 

@@ -79,9 +79,10 @@ function test_postgresql() {
 
 function create_container() {
 	local name=$1 ; shift
+	local cargs=${CONTAINER_ARGS:-}
 	cidfile="$CIDFILE_DIR/$name"
 	# create container with a cidfile in a directory for cleanup
-	docker run --cidfile $cidfile -d "$@" $IMAGE_NAME
+	docker run $cargs --cidfile $cidfile -d "$@" $IMAGE_NAME
 	echo "Created container $(cat $cidfile)"
 }
 
@@ -184,3 +185,6 @@ run_container_creation_tests
 run_configuration_tests
 USER=user PASS=pass run_tests no_admin
 USER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin
+# Test with arbitrary uid for the container
+CONTAINER_ARGS="-u 12345" USER=user2 PASS=pass run_tests no_admin_altuid
+CONTAINER_ARGS="-u 12345" USER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid
