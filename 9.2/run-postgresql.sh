@@ -22,6 +22,7 @@ POSTGRESQL_CONFIG_FILE=$HOME/openshift-custom-postgresql.conf
 # Configuration settings.
 export POSTGRESQL_MAX_CONNECTIONS=${POSTGRESQL_MAX_CONNECTIONS:-100}
 export POSTGRESQL_SHARED_BUFFERS=${POSTGRESQL_SHARED_BUFFERS:-32MB}
+export POSTGRESQL_MAX_PREPARED_TXS=${POSTGRESQL_MAX_PREPARED_TXS:-0}
 
 # Be paranoid and stricter than we should be.
 psql_identifier_regex='^[a-zA-Z_][a-zA-Z0-9_]*$'
@@ -40,6 +41,7 @@ function usage() {
 	echo "Settings:"
 	echo "  POSTGRESQL_MAX_CONNECTIONS (default: 100)"
 	echo "  POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
+	echo "  POSTGRESQL_MAX_PREPARED_TXS (default: 0)"
 	exit 1
 }
 

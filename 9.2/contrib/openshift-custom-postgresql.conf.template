@@ -13,3 +13,6 @@ max_connections = ${POSTGRESQL_MAX_CONNECTIONS}
 
 # Sets the amount of memory the database server uses for shared memory buffers. Default: 32MB
 shared_buffers = ${POSTGRESQL_SHARED_BUFFERS}
+
+# Sets the maximum number of transactions that can be in the "prepared" state simultaneously - XA support. Default: 0 (disabled)
+max_prepared_transactions = ${POSTGRESQL_MAX_PREPARED_TXS}
