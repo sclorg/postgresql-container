@@ -65,6 +65,8 @@ initialization, by passing `-e VAR=VALUE` to the Docker run command.
 |  `POSTGRESQL_PASSWORD`       | Password for the user account                  |
 |  `POSTGRESQL_DATABASE`       | Database name                                  |
 |  `POSTGRESQL_ADMIN_PASSWORD` | Password for the `postgres` admin account (optional)     |
+|  `POSTGRESQL_MASTER`         | IP or hostname of the `postgres` master, used by replicas (optional)     |
+|  `POSTGRESQL_REPLICA`        | yes or no specifies if we are configuring a `postgres` replica (optional)     |
 
 Following environment variables influence PostgreSQL configuration file. They are all optional.
 
@@ -144,3 +146,39 @@ User can choose between testing PostgreSQL based on RHEL or CentOS image.
 **Notice: By omitting the `VERSION` parameter, the build/test action will be performed
 on all provided versions of PostgreSQL. Since we are now providing only version `9.2`,
 you can omit this parameter.**
+
+Replication
+----------------------------------
+
+The image recognizes environment variables that will configure the
+Postgres container to act as a replica within a Postgres streaming replication
+configuration.  
+
+The replica is configured to communicate with a 'master' Postgres container
+in order to receive updates from the 'master'.  The replica is configured
+to allow reads as replication is performed.  The replication is async but
+can be configured to be synchronous if required.  Postgres replication
+only allows replica databases to be read, not written to or updated.
+
+To set up a replication configuration, you would deploy a master Postgres
+instance first, then create any number of read-only replica instances, all of 
+which would point to the master.
+
+The environment variable POSTGRESQL_MASTER is passed to the replica upon
+startup which will be used to perform the connection from the replica to
+the master.  This value can be an IP address or a host name if you are
+running within a Docker DNS orchestration environment (e.g. Openshift).
+
+The environment variable POSTGRESQL_REPLICA when set, is used to denote
+that you want to configure this Postgres instance as a replica and not a master.
+For example, a recovery.conf file is created and placed in PGDAT when this
+variable is set.
+
+The master or regular standalone Postgres instances are pre-configured to
+allow replication from any host using the user/password that is created
+when the master or regular standalone Postgres instance is created.
+
+Here is an example of creating a replica instance and mapping it's Postgres port to localhost port 5433, it connects to a Postgres master at 172.17.0.5:
+```
+$ docker run -d --name postgresql_database -e POSTGRESQL_MASTER=172.17.0.5 -e POSTGRESQL_REPLICA=yes -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5433:5432 openshift/postgresql-92-centos7
+```
