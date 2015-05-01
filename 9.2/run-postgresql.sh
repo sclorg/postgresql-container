@@ -13,6 +13,9 @@ else
   fi
   export PGDATA=$HOME/data/userdata
 fi
+
+export PGDATA=$HOME/data
+POSTGRESQL_RECOVERY_FILE=$HOME/openshift-custom-recovery.conf
 POSTGRESQL_CONFIG_FILE=$HOME/openshift-custom-postgresql.conf
 
 # Configuration settings.
@@ -33,6 +36,8 @@ function usage() {
   echo "  POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')"
   echo "Optional:"
   echo "  POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')"
+  echo "  POSTGRESQL_REPLICA (true or false)"
+  echo "  POSTGRESQL_MASTER (host or ip address of master)"
   echo "Settings:"
   echo "  POSTGRESQL_MAX_CONNECTIONS (default: 100)"
   echo "  POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
@@ -54,12 +59,21 @@ function check_env_vars() {
   fi
 }
 
+function check_env_vars_for_replica() {
+	if ! [[ -v POSTGRESQL_MASTER && -v POSTGRESQL_REPLICA ]]; then
+		usage
+	fi
+
+}
+
 # Make sure env variables don't propagate to PostgreSQL process.
 function unset_env_vars() {
   unset POSTGRESQL_USER
   unset POSTGRESQL_PASSWORD
   unset POSTGRESQL_DATABASE
   unset POSTGRESQL_ADMIN_PASSWORD
+  unset POSTGRESQL_REPLICA
+  unset POSTGRESQL_MASTER
 }
 
 function initialize_database() {
@@ -86,18 +100,55 @@ EOF
 
 # Allow connections from all hosts.
 host all all all md5
+# Allow replication connections from all hosts.
+host replication all all md5
 EOF
 
   pg_ctl -w start
   createuser "$POSTGRESQL_USER"
   createdb --owner="$POSTGRESQL_USER" "$POSTGRESQL_DATABASE"
   psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_PASSWORD}';"
+  psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH REPLICATION ;"
 
   if [ -v POSTGRESQL_ADMIN_PASSWORD ]; then
     psql --command "ALTER USER \"postgres\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_ADMIN_PASSWORD}';"
   fi
 
   pg_ctl stop
+}
+function initialize_replica() {
+	echo "initialize replica called"
+	check_env_vars
+	check_env_vars_for_replica
+	cd /tmp
+	pwd
+	ls -al
+	ps ax
+	cat >> ".pgpass" <<-EOF
+	*:*:*:*:${POSTGRESQL_PASSWORD}
+	EOF
+	chmod 0600 .pgpass
+	export PGPASSFILE=/tmp/.pgpass
+	rm -rf $PGDATA/*
+	chmod 0700 $PGDATA
+	pg_basebackup -x --no-password --pgdata $PGDATA --host=$POSTGRESQL_MASTER --port=5432 -U $POSTGRESQL_USER
+	# PostgreSQL recovery configuration.
+	cat >> "$PGDATA/recovery.conf" <<-EOF
+
+		# Custom OpenShift recovery configuration:
+		include '../openshift-custom-recovery.conf'
+	EOF
+
+	pg_ctl -w start
+while :
+do
+	echo "Press [CTRL+C] to stop.."
+	sleep 1000
+done
+
+	cat $PGDATA/pg_log/*
+
+	pg_ctl stop
 }
 
 # New config is generated every time a container is created. It only contains
@@ -112,7 +163,12 @@ export NSS_WRAPPER_PASSWD=/var/lib/pgsql/passwd
 export NSS_WRAPPER_GROUP=/etc/group
 
 if [ "$1" = "postgres" -a ! -f "$PGDATA/postgresql.conf" ]; then
-  initialize_database
+	if [[ -v POSTGRESQL_REPLICA ]]; then
+		envsubst < ${POSTGRESQL_RECOVERY_FILE}.template > ${POSTGRESQL_RECOVERY_FILE}
+		initialize_replica
+	else
+		initialize_database
+	fi
 fi
 
 unset_env_vars

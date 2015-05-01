@@ -1,0 +1,119 @@
+{
+  "kind": "Config",
+  "apiVersion": "v1beta1",
+  "id": "pg-replica-example",
+  "items":[
+    {
+      "kind": "Service",
+      "apiVersion": "v1beta2",
+      "id": "pg-master",
+      "labels": {
+        "name": "pg-master"
+      },
+      "containerPort": 5432,
+      "port": 5432,
+      "selector": {
+        "name": "pg-master"
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1beta2",
+      "id": "pg-slave",
+      "labels": {
+        "name": "pg-slave"
+      },
+      "containerPort": 5432,
+      "port": 5432,
+      "selector": {
+        "name": "pg-slave"
+      }
+    },
+    {
+      "kind": "ReplicationController",
+      "apiVersion": "v1beta2",
+      "id": "pg-master",
+      "metadata": {
+        "name": "pg-master",
+        "labels": {
+          "name":"pg-master"
+        }
+      },
+      "desiredState": {
+        "replicas": 1,
+        "replicaSelector": {
+          "name": "pg-master"
+        },
+        "podTemplate": {
+          "labels": {
+            "name": "pg-master"
+          },
+          "desiredState": {
+            "manifest": {
+              "containers":[
+                {
+                  "name":  "server",
+                  "image": "openshift/postgresql-92-centos7",
+                  "env": [
+                    { "name": "POSTGRESQL_USER", "value": "user" },
+                    { "name": "POSTGRESQL_PASSWORD", "value": "pass" },
+                    { "name": "POSTGRESQL_DATABASE", "value": "db" }
+                  ],
+                  "ports":[
+                    {
+                      "containerPort": 5432
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "kind": "ReplicationController",
+      "apiVersion": "v1beta2",
+      "id": "pg-slave",
+      "metadata": {
+        "name": "pg-slave",
+        "labels": {
+          "name":"pg-slave"
+        }
+      },
+      "desiredState": {
+        "replicas": 2,
+        "replicaSelector": {
+          "name": "pg-slave"
+        },
+        "podTemplate": {
+          "labels": {
+            "name": "pg-slave"
+          },
+          "desiredState": {
+            "manifest": {
+              "containers":[
+                {
+                  "name":  "server",
+                  "image": "openshift/postgresql-92-centos7",
+                  "env": [
+                    { "name": "POSTGRESQL_USER", "value": "user" },
+                    { "name": "POSTGRESQL_PASSWORD", "value": "pass" },
+                    { "name": "POSTGRESQL_DATABASE", "value": "db" },
+                    { "name": "POSTGRESQL_MASTER", "value": "pg-master" },
+                    { "name": "POSTGRESQL_REPLICA", "value": "yes" }
+                  ],
+                  "ports":[
+                    {
+                      "containerPort": 5432
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}
