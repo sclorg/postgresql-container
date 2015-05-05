@@ -12,12 +12,15 @@ MAINTAINER  Martin Nagy <mnagy@redhat.com>
 #                           PostgreSQL administrative account
 
 # Image metadata
-ENV POSTGRESQL_VERSION      9.2
-ENV IMAGE_DESCRIPTION       PostgreSQL 9.2
-ENV IMAGE_TAGS              postgresql,postgresql92
-ENV IMAGE_EXPOSE_SERVICES   5432:postgresql
+ENV POSTGRESQL_VERSION=9.2 \
+    IMAGE_DESCRIPTION="PostgreSQL 9.2" \
+    IMAGE_TAGS=postgresql,postgresql92 \
+    IMAGE_EXPOSE_SERVICES=5432:postgresql
 
 EXPOSE 5432
+
+COPY run-postgresql.sh /usr/local/bin/
+COPY contrib /var/lib/pgsql/
 
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
@@ -28,12 +31,8 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs install nss_wrapper && \
     yum clean all && \
     mkdir -p /var/lib/pgsql/data && chown postgres.postgres /var/lib/pgsql/data && \
-    test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)"
-
-COPY run-postgresql.sh /usr/local/bin/
-COPY contrib /var/lib/pgsql/
-
-RUN chmod -R go+rwx /var/lib/pgsql && chmod go+w /var/run/postgresql
+    test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
+    chmod -R go+rwx /var/lib/pgsql && chmod go+w /var/run/postgresql
 
 VOLUME ["/var/lib/pgsql/data"]
 
