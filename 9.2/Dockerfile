@@ -11,11 +11,12 @@ MAINTAINER  Martin Nagy <mnagy@redhat.com>
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-# Image metadata
-ENV POSTGRESQL_VERSION=9.2 \
-    IMAGE_DESCRIPTION="PostgreSQL 9.2" \
-    IMAGE_TAGS=postgresql,postgresql92 \
-    IMAGE_EXPOSE_SERVICES=5432:postgresql
+ENV POSTGRESQL_VERSION=9.2
+
+LABEL k8s.io/description="PostgreSQL is an advanced Object-Relational database management system" \
+      k8s.io/display-name="PostgreSQL 9.2" \
+      openshift.io/expose-services="5432:postgresql" \
+      openshift.io/tags="database,postgresql,postgresql92"
 
 EXPOSE 5432
 
