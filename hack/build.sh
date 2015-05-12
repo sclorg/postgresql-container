@@ -9,6 +9,13 @@ declare -a VERSIONS=(9.2)
 OS=$1
 VERSION=$2
 
+function squash { 
+  # install the docker layer squashing tool
+  easy_install --user docker-scripts==0.3.2
+  base=$(awk '/^FROM/{print $2}' Dockerfile)
+  $HOME/.local/bin/docker-scripts squash -f $base ${IMAGE_NAME}
+}
+
 # TODO: Remove once docker 1.5 is in usage (support for named Dockerfiles)
 function docker_build() {
 	TAG=$1
@@ -22,6 +29,7 @@ function docker_build() {
 	fi
 
 	docker build -t ${TAG} . && trap - ERR
+	squash
 }
 
 if [ -z ${VERSION} ]; then
