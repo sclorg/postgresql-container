@@ -37,7 +37,7 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
 
 VOLUME ["/var/lib/pgsql/data"]
 
-USER postgres
+USER 26
 
 ENTRYPOINT ["run-postgresql.sh"]
 CMD ["postgres"]

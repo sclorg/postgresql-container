@@ -40,7 +40,7 @@ RUN yum install -y yum-utils gettext && \
 
 VOLUME ["/var/lib/pgsql/data"]
 
-USER postgres
+USER 26
 
 ENTRYPOINT ["run-postgresql.sh"]
 CMD ["postgres"]
