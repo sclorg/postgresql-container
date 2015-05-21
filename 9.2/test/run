@@ -153,6 +153,7 @@ function run_configuration_tests() {
 	echo "  Testing image configuration settings"
 	test_config_option POSTGRESQL_MAX_CONNECTIONS max_connections 42
 	test_config_option POSTGRESQL_SHARED_BUFFERS shared_buffers 64MB
+	test_config_option POSTGRESQL_MAX_PREPARED_TXS max_prepared_transactions 10
 	echo "  Success!"
 }
 

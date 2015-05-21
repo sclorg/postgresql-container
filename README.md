@@ -72,6 +72,7 @@ Following environment variables influence PostgreSQL configuration file. They ar
 | :---------------------------- | ----------------------------------------------------------------------- | -------------------------------
 |  `POSTGRESQL_MAX_CONNECTIONS` | The maximum number of client connections allowed. This also sets the maximum number of prepared transactions. |  100
 |  `POSTGRESQL_SHARED_BUFFERS`  | Sets how much memory is dedicated to PostgreSQL to use for caching data |  32M
+|  `POSTGRESQL_MAX_PREPARED_TXS | Sets the maximum number of simultaneous "prepared" transactions - XA support. |  0 (XA disabled)
 
 You can also set following mount points by passing `-v /host:/container` flag to docker.
 
