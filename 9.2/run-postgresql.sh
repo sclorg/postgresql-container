@@ -14,7 +14,9 @@ if [ -O $HOME/data ]; then
 else
   # If current user does not own data directory
   # create a subdirectory that the user does own
-  mkdir $HOME/data/userdata
+  if [ ! -d $HOME/data/userdata ]; then
+    mkdir $HOME/data/userdata
+  fi
   export PGDATA=$HOME/data/userdata
 fi
 POSTGRESQL_CONFIG_FILE=$HOME/openshift-custom-postgresql.conf
