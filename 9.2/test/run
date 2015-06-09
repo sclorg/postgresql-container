@@ -100,6 +100,12 @@ function assert_login_access() {
   fi
 }
 
+function assert_local_access() {
+  local id="$1" ; shift
+  docker exec -i $(get_cid "$id") bash -c psql <<< "SELECT 1;"
+}
+
+
 # Make sure the invocation of docker run fails.
 function assert_container_creation_fails() {
 
@@ -175,6 +181,7 @@ function run_tests() {
     assert_login_access postgres "foo" false
     assert_login_access postgres "" false
   fi
+  assert_local_access $name
   echo "  Success!"
   test_postgresql $name
 }

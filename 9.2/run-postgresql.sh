@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Set HOME variable
-export HOME=/var/lib/pgsql
-
-# For SCL enablement
-source $HOME/.bashrc
-
 set -eu
 
 # Data dir
