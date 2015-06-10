@@ -29,7 +29,9 @@ function docker_build() {
   fi
 
   docker build -t ${TAG} . && trap - ERR
-  squash
+  [ -z "${SKIP_SQUASH}" ] && squash
+
+  return 0
 }
 
 if [ -z ${VERSION} ]; then
@@ -59,5 +61,5 @@ for dir in ${dirs}; do
     IMAGE_NAME=${IMAGE_NAME} test/run
   fi
 
-   popd > /dev/null
+  popd > /dev/null
 done
