@@ -11,7 +11,10 @@ MAINTAINER  Martin Nagy <mnagy@redhat.com>
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-ENV POSTGRESQL_VERSION=9.2
+ENV POSTGRESQL_VERSION=9.2 \
+    HOME=/var/lib/pgsql \
+    PGUSER=postgres \
+    BASH_ENV=/var/lib/pgsql/.bashrc
 
 LABEL k8s.io/description="PostgreSQL is an advanced Object-Relational database management system" \
       k8s.io/display-name="PostgreSQL 9.2" \
