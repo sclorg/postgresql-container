@@ -13,8 +13,7 @@ MAINTAINER  Martin Nagy <mnagy@redhat.com>
 
 ENV POSTGRESQL_VERSION=9.2 \
     HOME=/var/lib/pgsql \
-    PGUSER=postgres \
-    BASH_ENV=/var/lib/pgsql/.bashrc
+    PGUSER=postgres
 
 LABEL k8s.io/description="PostgreSQL is an advanced Object-Relational database management system" \
       k8s.io/display-name="PostgreSQL 9.2" \
@@ -40,6 +39,15 @@ RUN yum install -y yum-utils gettext && \
     mkdir -p /var/lib/pgsql/data && chown postgres.postgres /var/lib/pgsql/data && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     chmod -R go+rwx /var/lib/pgsql && chmod go+w /var/run/postgresql
+
+# When bash is started non-interactively, to run a shell script, for example it
+# looks for this variable and source the content of this file. This will enable
+# the SCL for all scripts without need to do 'scl enable'.
+ENV BASH_ENV=/var/lib/pgsql/scl_enable \
+    ENV=/var/lib/pgsql/scl_enable \
+    PROMPT_COMMAND=". /var/lib/pgsql/scl_enable"
+
+
 
 VOLUME ["/var/lib/pgsql/data"]
 
