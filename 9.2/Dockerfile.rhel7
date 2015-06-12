@@ -38,9 +38,7 @@ RUN yum install -y yum-utils gettext && \
     yum-config-manager --enable rhel-server-rhscl-7-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum install -y --setopt=tsflags=nodocs postgresql92 && \
-    curl -O https://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm && \
-    rpm -Uvh epel-release-7-5.noarch.rpm && rm epel-release-7-5.noarch.rpm && \
-    yum install -y --enablerepo=epel --setopt=tsflags=nodocs nss_wrapper && \
+    yum install -y --disablerepo="epel" --setopt=tsflags=nodocs nss_wrapper && \
     yum clean all && \
     mkdir -p /var/lib/pgsql/data && chown postgres.postgres /var/lib/pgsql/data && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
