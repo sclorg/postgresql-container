@@ -12,7 +12,7 @@ VERSION=$2
 function squash {
   # install the docker layer squashing tool
   easy_install --user docker-scripts==0.4.1
-  base=$(awk '/^FROM/{print $2}' Dockerfile)
+  base=$(awk '/^FROM/{print $2}' $1)
   $HOME/.local/bin/docker-scripts squash -f $base ${IMAGE_NAME}
 }
 
@@ -35,11 +35,11 @@ for dir in ${dirs}; do
 
   if [ "$OS" == "rhel7" ]; then
     docker build -t ${IMAGE_NAME} -f Dockerfile.rhel7 .
+    [ -z "${SKIP_SQUASH}" ] && squash Dockerfile.rhel7
   else
     docker build -t ${IMAGE_NAME} .
+    [ -z "${SKIP_SQUASH}" ] && squash Dockerfile
   fi
-
-  [ -z "${SKIP_SQUASH}" ] && squash
 
   if [ -v TEST_MODE ]; then
     IMAGE_NAME=${IMAGE_NAME} test/run
