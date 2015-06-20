@@ -16,24 +16,6 @@ function squash {
   $HOME/.local/bin/docker-scripts squash -f $base ${IMAGE_NAME}
 }
 
-# TODO: Remove once docker 1.5 is in usage (support for named Dockerfiles)
-function docker_build() {
-  TAG=$1
-  DOCKERFILE=$2
-
-  if [ -n "$DOCKERFILE" -a "$DOCKERFILE" != "Dockerfile" ]; then
-    # Swap Dockerfiles and setup a trap restoring them
-    mv Dockerfile Dockerfile.centos7
-    mv "${DOCKERFILE}" Dockerfile
-    trap "mv Dockerfile ${DOCKERFILE} && mv Dockerfile.centos7 Dockerfile" ERR RETURN
-  fi
-
-  docker build -t ${TAG} . && trap - ERR
-  [ -z "${SKIP_SQUASH}" ] && squash
-
-  return 0
-}
-
 if [ -z ${VERSION} ]; then
   # Build all versions
   dirs=${VERSIONS}
@@ -52,10 +34,12 @@ for dir in ${dirs}; do
   pushd ${dir} > /dev/null
 
   if [ "$OS" == "rhel7" ]; then
-    docker_build ${IMAGE_NAME} Dockerfile.rhel7
+    docker build -t ${IMAGE_NAME} -f Dockerfile.rhel7 .
   else
-    docker_build ${IMAGE_NAME}
+    docker build -t ${IMAGE_NAME} .
   fi
+
+  [ -z "${SKIP_SQUASH}" ] && squash
 
   if [ -v TEST_MODE ]; then
     IMAGE_NAME=${IMAGE_NAME} test/run
