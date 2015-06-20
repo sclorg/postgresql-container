@@ -1,3 +1,4 @@
+SKIP_SQUASH?=0
 
 ifeq ($(TARGET),rhel7)
 	OS := rhel7
@@ -18,5 +19,5 @@ build:
 
 .PHONY: test
 test:
-	SKIP_SQUASH=1 TEST_MODE=true hack/build.sh $(OS) $(VERSION)
+	SKIP_SQUASH=$(SKIP_SQUASH) TEST_MODE=true hack/build.sh $(OS) $(VERSION)
 
