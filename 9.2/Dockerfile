@@ -22,7 +22,7 @@ LABEL io.k8s.description="PostgreSQL is an advanced Object-Relational database m
 
 EXPOSE 5432
 
-COPY run-postgresql.sh /usr/local/bin/
+COPY run-*.sh /usr/local/bin/
 COPY contrib /var/lib/pgsql/
 
 # This image must forever use UID 26 for postgres user so our volumes are
