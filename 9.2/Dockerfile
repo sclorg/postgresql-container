@@ -30,7 +30,7 @@ COPY contrib /var/lib/pgsql/
 # to make sure of that.
 RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs install https://www.softwarecollections.org/en/scls/rhscl/postgresql92/epel-7-x86_64/download/rhscl-postgresql92-epel-7-x86_64.noarch.rpm && \
-    yum -y --setopt=tsflags=nodocs --enablerepo=centosplus install gettext postgresql92 epel-release && \
+    yum -y --setopt=tsflags=nodocs --enablerepo=centosplus install gettext bind-utils postgresql92 epel-release && \
     yum -y --setopt=tsflags=nodocs install nss_wrapper && \
     yum clean all && \
     mkdir -p /var/lib/pgsql/data && chown postgres.postgres /var/lib/pgsql/data && \

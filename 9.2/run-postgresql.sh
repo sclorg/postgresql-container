@@ -16,14 +16,14 @@ else
   export PGDATA=$HOME/data/userdata
 fi
 
-if [ "$1" == "postgresql-master" ]; then
+if [ "$1" == "postgres-master" ]; then
   shift
-  exec /usr/local/bin/run-postgresql-master.sh $@
+  exec /usr/local/bin/run-postgresql-master.sh "$@"
 fi
 
-if [ "$1" == "postgresql-slave" ]; then
+if [ "$1" == "postgres-slave" ]; then
   shift
-  exec /usr/local/bin/run-postgresql-slave.sh $@
+  exec /usr/local/bin/run-postgresql-slave.sh "$@"
 fi
 
 generate_postgresql_config

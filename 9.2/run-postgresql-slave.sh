@@ -1,42 +1,28 @@
 #!/bin/bash
 
+set -eu
+
 source ${HOME}/common.sh
 
 function initialize_replica() {
-  echo "initialize replica called"
-  check_env_vars
-  #check_env_vars_for_replica
-  cd /tmp
-  pwd
-  ls -al
-  ps ax
-  cat >> ".pgpass" <<-EOF
-  *:*:*:*:${POSTGRESQL_PASSWORD}
-  EOF
-  chmod 0600 .pgpass
-  export PGPASSFILE=/tmp/.pgpass
-  rm -rf $PGDATA/*
+  echo "Initializing PostgreSQL slave ..."
   chmod 0700 $PGDATA
-  pg_basebackup -x --no-password --pgdata $PGDATA --host=$POSTGRESQL_MASTER --port=5432 -U $POSTGRESQL_USER
+  export MASTER_FQDN=$(postgresql_master_addr)
+  PGPASSWORD="${POSTGRESQL_MASTER_PASSWORD}" pg_basebackup -x --no-password --pgdata ${PGDATA} --host=${MASTER_FQDN} --port=5432 -U "${POSTGRESQL_MASTER_USER}"
+
   # PostgreSQL recovery configuration.
-  cat >> "$PGDATA/recovery.conf" <<-EOF
+  envsubst < ${POSTGRESQL_RECOVERY_FILE}.template > ${POSTGRESQL_RECOVERY_FILE}
+  cat >> "$PGDATA/recovery.conf" <<EOF
 
-    # Custom OpenShift recovery configuration:
-    include '../openshift-custom-recovery.conf'
+# Custom OpenShift recovery configuration:
+include '${POSTGRESQL_RECOVERY_FILE}'
 EOF
-
-  pg_ctl -w start
-
-  cat $PGDATA/pg_log/*
-
-  pg_ctl stop
 }
 
+check_env_vars
 generate_postgresql_config
 generate_passwd_file
-
-envsubst < ${POSTGRESQL_RECOVERY_FILE}.template > ${POSTGRESQL_RECOVERY_FILE}
 initialize_replica
-
 unset_env_vars
-exec "$@"
+
+exec postgres "$@"

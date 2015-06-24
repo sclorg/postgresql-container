@@ -12,6 +12,17 @@
   },
   "parameters": [
     {
+      "name": "POSTGRESQL_MASTER_USER",
+      "description": "The username used for master-slave replication",
+      "value": "master"
+    },
+    {
+      "name": "POSTGRESQL_MASTER_PASSWORD",
+      "description": "The password for the PostgreSQL replication user",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{12}"
+    },
+    {
       "name": "POSTGRESQL_USER",
       "description": "The username that clients will use to connect to PostgreSQL server",
       "value": "user"
@@ -29,18 +40,18 @@
     },
     {
       "name": "POSTGRESQL_ADMIN_PASSWORD",
-      "description": "The password for the PostgreSQL adminitrator",
+      "description": "The password for the PostgreSQL administrator",
       "generate": "expression",
       "from": "[a-zA-Z0-9]{12}"
     },
     {
       "name": "POSTGRESQL_MASTER_SERVICE_NAME",
-      "description": "The name of the MongoDB Service (used to DNS lookup, default: 'mongodb')",
+      "description": "The name of the PostgreSQL Service (used to DNS lookup, default: 'postgresql-master')",
       "value": "postgresql-master"
     },
     {
       "name": "POSTGRESQL_SLAVE_SERVICE_NAME",
-      "description": "The name of the MongoDB Service (used to DNS lookup, default: 'mongodb')",
+      "description": "The name of the PostgreSQL Service (used to DNS lookup, default: 'postgresql-slave')",
       "value": "postgresql-slave"
     }
   ],
@@ -103,7 +114,6 @@
         "loadBalancer": {}
       }
     },
-
     {
       "kind": "DeploymentConfig",
       "apiVersion": "v1",
@@ -137,8 +147,8 @@
               {
                 "name": "server",
                 "image": "openshift/postgresql-92-centos7",
-                "command": [
-                  "run-postgresql-master.sh"
+                "args": [
+                  "postgres-master"
                 ],
                 "ports": [
                   {
@@ -147,6 +157,14 @@
                   }
                 ],
                 "env": [
+                  {
+                    "name": "POSTGRESQL_MASTER_USER",
+                    "value": "${POSTGRESQL_MASTER_USER}"
+                  },
+                  {
+                    "name": "POSTGRESQL_MASTER_PASSWORD",
+                    "value": "${POSTGRESQL_MASTER_PASSWORD}"
+                  },
                   {
                     "name": "POSTGRESQL_USER",
                     "value": "${POSTGRESQL_USER}"
@@ -213,8 +231,8 @@
               {
                 "name": "server",
                 "image": "openshift/postgresql-92-centos7",
-                "command": [
-                  "run-postgresql-slave.sh"
+                "args": [
+                  "postgres-slave"
                 ],
                 "ports": [
                   {
@@ -223,6 +241,18 @@
                   }
                 ],
                 "env": [
+                  {
+                    "name": "POSTGRESQL_MASTER_SERVICE_NAME",
+                    "value": "${POSTGRESQL_MASTER_SERVICE_NAME}"
+                  },
+                  {
+                    "name": "POSTGRESQL_MASTER_USER",
+                    "value": "${POSTGRESQL_MASTER_USER}"
+                  },
+                  {
+                    "name": "POSTGRESQL_MASTER_PASSWORD",
+                    "value": "${POSTGRESQL_MASTER_PASSWORD}"
+                  },
                   {
                     "name": "POSTGRESQL_USER",
                     "value": "${POSTGRESQL_USER}"
