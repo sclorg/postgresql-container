@@ -15,10 +15,10 @@ ENV POSTGRESQL_VERSION=9.2 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres
 
-LABEL k8s.io/description="PostgreSQL is an advanced Object-Relational database management system" \
-      k8s.io/display-name="PostgreSQL 9.2" \
-      openshift.io/expose-services="5432:postgresql" \
-      openshift.io/tags="database,postgresql,postgresql92"
+LABEL io.k8s.description="PostgreSQL is an advanced Object-Relational database management system" \
+      io.k8s.display-name="PostgreSQL 9.2" \
+      io.openshift.expose-services="5432:postgresql" \
+      io.openshift.tags="database,postgresql,postgresql92"
 
 EXPOSE 5432
 
