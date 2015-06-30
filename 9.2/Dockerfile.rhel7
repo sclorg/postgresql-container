@@ -20,6 +20,11 @@ LABEL k8s.io/description="PostgreSQL is an advanced Object-Relational database m
       openshift.io/expose-services="5432:postgresql" \
       openshift.io/tags="database,postgresql,postgresql92"
 
+LABEL io.k8s.description="PostgreSQL is an advanced Object-Relational database management system" \
+      io.k8s.display-name="PostgreSQL 9.2" \
+      io.openshift.expose-services="5432:postgresql" \
+      io.openshift.tags="database,postgresql,postgresql92"
+
 # Labels consumed by Red Hat build service
 LABEL Component="postgresql92" \
       Name="openshift3/postgresql-92-rhel7" \
