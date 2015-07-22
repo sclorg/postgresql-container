@@ -22,7 +22,7 @@ LABEL io.k8s.description="PostgreSQL is an advanced Object-Relational database m
 
 EXPOSE 5432
 
-COPY run-postgresql.sh /usr/local/bin/
+COPY run-*.sh /usr/local/bin/
 COPY contrib /var/lib/pgsql/
 
 # This image must forever use UID 26 for postgres user so our volumes are
@@ -30,7 +30,7 @@ COPY contrib /var/lib/pgsql/
 # to make sure of that.
 RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs install https://www.softwarecollections.org/en/scls/rhscl/postgresql92/epel-7-x86_64/download/rhscl-postgresql92-epel-7-x86_64.noarch.rpm && \
-    yum -y --setopt=tsflags=nodocs --enablerepo=centosplus install gettext postgresql92 epel-release && \
+    yum -y --setopt=tsflags=nodocs --enablerepo=centosplus install gettext bind-utils postgresql92 epel-release && \
     yum -y --setopt=tsflags=nodocs install nss_wrapper && \
     yum clean all && \
     mkdir -p /var/lib/pgsql/data && chown postgres.postgres /var/lib/pgsql/data && \
