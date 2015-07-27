@@ -33,6 +33,7 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs --enablerepo=centosplus install gettext bind-utils postgresql92 epel-release && \
     yum -y --setopt=tsflags=nodocs install nss_wrapper && \
     yum clean all && \
+    localedef -f UTF-8 -i en_US en_US.UTF-8 && \
     mkdir -p /var/lib/pgsql/data && chown postgres.postgres /var/lib/pgsql/data && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     chmod -R go+rwx /var/lib/pgsql && chmod go+w /var/run/postgresql
