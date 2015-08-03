@@ -1,5 +1,4 @@
 FROM centos:centos7
-MAINTAINER  Martin Nagy <mnagy@redhat.com>
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -10,6 +9,8 @@ MAINTAINER  Martin Nagy <mnagy@redhat.com>
 #  * $POSTGRESQL_DATABASE - Name of the database to create
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
+
+MAINTAINER SoftwareCollections.org <sclorg@redhat.com>
 
 ENV POSTGRESQL_VERSION=9.2 \
     HOME=/var/lib/pgsql \
