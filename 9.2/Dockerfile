@@ -26,9 +26,6 @@ EXPOSE 5432
 COPY run-*.sh /usr/local/bin/
 COPY contrib /var/lib/pgsql/
 
-# This image must forever use UID 26 for postgres user so our volumes are
-# safe in the future. This should *never* change, the last test is there
-# to make sure of that.
 RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs install https://www.softwarecollections.org/en/scls/rhscl/postgresql92/epel-7-x86_64/download/rhscl-postgresql92-epel-7-x86_64.noarch.rpm && \
     yum -y --setopt=tsflags=nodocs --enablerepo=centosplus install gettext bind-utils postgresql92 epel-release && \
@@ -36,7 +33,6 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum clean all && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
     mkdir -p /var/lib/pgsql/data && chown postgres.postgres /var/lib/pgsql/data && \
-    test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     chmod -R go+rwx /var/lib/pgsql && chmod go+w /var/run/postgresql
 
 # When bash is started non-interactively, to run a shell script, for example it
@@ -49,7 +45,11 @@ ENV BASH_ENV=/var/lib/pgsql/scl_enable \
 
 VOLUME ["/var/lib/pgsql/data"]
 
-USER 26
+# uid 1001 represents an arbitrary user with no special permissions in the image.  Using it here
+# allows us to ensure the image is not relying on any permissions of a particular user when run,
+# which would cause problems when the image is run on OpenShift as OpenShift by default runs images
+# with a randomized uid, not the uid specified in the image.
+USER 1001
 
 ENTRYPOINT ["run-postgresql.sh"]
 CMD ["postgres"]
