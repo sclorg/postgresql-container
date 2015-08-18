@@ -12,7 +12,7 @@ function usage() {
   if [ $# == 2 ]; then
     echo "error: $1"
   fi
-  echo "You must specify following environment variables:"
+  echo "You must specify the following environment variables:"
   echo "  POSTGRESQL_USER (regex: '$psql_identifier_regex')"
   echo "  POSTGRESQL_PASSWORD (regex: '$psql_password_regex')"
   echo "  POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')"
