@@ -23,8 +23,40 @@ A standby server can also be used for read-only queries.
 
 ## Deployment
 
-To create a PostgreSQL replicated database cluster in OpenShift v3, you can use the template
-included in this repository and create a new deployment right away:
+This example uses a [PersistentVolumeClaim](https://docs.openshift.org/latest/architecture/additional_concepts/storage.html#persistent-volume-claims)
+to request persistent storage for the primary PostgreSQL server.
+
+You need to have persistent volumes configured and available in your project in
+order to continue. For trying out this example in a single node testing
+environment, you can create a temporary volume with:
+
+```
+$ oc create -f - <<EOF
+{
+  "kind": "PersistentVolume",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "postgres-data-volume"
+  },
+  "spec": {
+    "capacity": {
+      "storage": "512Mi"
+    },
+    "hostPath": {
+      "path": "`mktemp -d --tmpdir pg-data.XXXXX | tee >(xargs chmod a+rwx)`"
+    },
+    "accessModes": [
+      "ReadWriteOnce"
+    ]
+  }
+}
+EOF
+```
+
+It is recommended, however, that you use other [type of PersistentVolume](https://docs.openshift.org/latest/architecture/additional_concepts/storage.html#types-of-persistent-volumes)
+such as NFS.
+
+Now you can create a new database deployment:
 
 ```
 $ oc new-app examples/replica/postgresql_replica.json

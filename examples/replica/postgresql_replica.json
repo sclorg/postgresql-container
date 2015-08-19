@@ -3,7 +3,6 @@
   "apiVersion": "v1",
   "metadata": {
     "name": "pg-replica-example",
-    "creationTimestamp": null,
     "annotations": {
       "description": "PostgreSQL Replication Example",
       "iconClass": "icon-database",
@@ -14,48 +13,79 @@
     {
       "name": "POSTGRESQL_MASTER_USER",
       "description": "The username used for master-slave replication",
-      "value": "master"
+      "value": "master",
+      "required": true
     },
     {
       "name": "POSTGRESQL_MASTER_PASSWORD",
       "description": "The password for the PostgreSQL replication user",
       "generate": "expression",
-      "from": "[a-zA-Z0-9]{12}"
+      "from": "[a-zA-Z0-9]{12}",
+      "required": true
     },
     {
       "name": "POSTGRESQL_USER",
       "description": "The username that clients will use to connect to PostgreSQL server",
-      "value": "user"
+      "value": "user",
+      "required": true
     },
     {
       "name": "POSTGRESQL_PASSWORD",
       "description": "The password for the PostgreSQL master user",
       "generate": "expression",
-      "from": "[a-zA-Z0-9]{12}"
+      "from": "[a-zA-Z0-9]{12}",
+      "required": true
     },
     {
       "name": "POSTGRESQL_DATABASE",
       "description": "The name of the database that will be created",
-      "value": "userdb"
+      "value": "userdb",
+      "required": true
     },
     {
       "name": "POSTGRESQL_ADMIN_PASSWORD",
       "description": "The password for the PostgreSQL administrator",
       "generate": "expression",
-      "from": "[a-zA-Z0-9]{12}"
+      "from": "[a-zA-Z0-9]{12}",
+      "required": false
     },
     {
       "name": "POSTGRESQL_MASTER_SERVICE_NAME",
       "description": "The name of the PostgreSQL Service (used to DNS lookup, default: 'postgresql-master')",
-      "value": "postgresql-master"
+      "value": "postgresql-master",
+      "required": true
     },
     {
       "name": "POSTGRESQL_SLAVE_SERVICE_NAME",
       "description": "The name of the PostgreSQL Service (used to DNS lookup, default: 'postgresql-slave')",
-      "value": "postgresql-slave"
+      "value": "postgresql-slave",
+      "required": true
+    },
+    {
+      "name": "VOLUME_CAPACITY",
+      "description": "Volume space available for data, e.g. 512Mi, 2Gi",
+      "value": "512Mi",
+      "required": true
     }
   ],
   "objects": [
+    {
+      "kind": "PersistentVolumeClaim",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "postgresql-data-claim"
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "${VOLUME_CAPACITY}"
+          }
+        }
+      }
+    },
     {
       "kind": "Service",
       "apiVersion": "v1",
@@ -68,21 +98,14 @@
       "spec": {
         "ports": [
           {
-            "protocol": "TCP",
             "port": 5432,
-            "targetPort": 5432,
-            "nodePort": 0
+            "targetPort": 5432
           }
         ],
         "selector": {
           "name": "${POSTGRESQL_MASTER_SERVICE_NAME}"
         },
-        "portalIP": "None",
-        "type": "ClusterIP",
-        "sessionAffinity": "None"
-      },
-      "status": {
-        "loadBalancer": {}
+        "clusterIP": "None"
       }
     },
     {
@@ -97,34 +120,25 @@
       "spec": {
         "ports": [
           {
-            "protocol": "TCP",
             "port": 5432,
-            "targetPort": 5432,
-            "nodePort": 0
+            "targetPort": 5432
           }
         ],
         "selector": {
           "name": "${POSTGRESQL_SLAVE_SERVICE_NAME}"
         },
-        "portalIP": "None",
-        "type": "ClusterIP",
-        "sessionAffinity": "None"
-      },
-      "status": {
-        "loadBalancer": {}
+        "clusterIP": "None"
       }
     },
     {
       "kind": "DeploymentConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "${POSTGRESQL_MASTER_SERVICE_NAME}",
-        "creationTimestamp": null
+        "name": "${POSTGRESQL_MASTER_SERVICE_NAME}"
       },
       "spec": {
         "strategy": {
-          "type": "Recreate",
-          "resources": {}
+          "type": "Recreate"
         },
         "triggers": [
           {
@@ -137,23 +151,29 @@
         },
         "template": {
           "metadata": {
-            "creationTimestamp": null,
             "labels": {
               "name": "${POSTGRESQL_MASTER_SERVICE_NAME}"
             }
           },
           "spec": {
+            "volumes": [
+              {
+                "name": "postgresql-data",
+                "persistentVolumeClaim": {
+                  "claimName": "postgresql-data-claim"
+                }
+              }
+            ],
             "containers": [
               {
-                "name": "server",
+                "name": "postgresql-master",
                 "image": "openshift/postgresql-92-centos7",
                 "args": [
                   "postgres-master"
                 ],
                 "ports": [
                   {
-                    "containerPort": 5432,
-                    "protocol": "TCP"
+                    "containerPort": 5432
                   }
                 ],
                 "env": [
@@ -182,33 +202,27 @@
                     "value": "${POSTGRESQL_ADMIN_PASSWORD}"
                   }
                 ],
-                "resources": {},
-                "terminationMessagePath": "/dev/termination-log",
-                "imagePullPolicy": "IfNotPresent",
-                "securityContext": {
-                  "capabilities": {},
-                  "privileged": false
-                }
+                "volumeMounts": [
+                  {
+                    "name": "postgresql-data",
+                    "mountPath": "/var/lib/pgsql/data"
+                  }
+                ]
               }
-            ],
-            "restartPolicy": "Always",
-            "dnsPolicy": "ClusterFirst"
+            ]
           }
         }
-      },
-      "status": {}
+      }
     },
     {
       "kind": "DeploymentConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "${POSTGRESQL_SLAVE_SERVICE_NAME}",
-        "creationTimestamp": null
+        "name": "${POSTGRESQL_SLAVE_SERVICE_NAME}"
       },
       "spec": {
         "strategy": {
-          "type": "Recreate",
-          "resources": {}
+          "type": "Recreate"
         },
         "triggers": [
           {
@@ -221,23 +235,27 @@
         },
         "template": {
           "metadata": {
-            "creationTimestamp": null,
             "labels": {
               "name": "${POSTGRESQL_SLAVE_SERVICE_NAME}"
             }
           },
           "spec": {
+            "volumes": [
+              {
+                "name": "postgresql-data",
+                "emptyDir": {}
+              }
+            ],
             "containers": [
               {
-                "name": "server",
+                "name": "postgresql-slave",
                 "image": "openshift/postgresql-92-centos7",
                 "args": [
                   "postgres-slave"
                 ],
                 "ports": [
                   {
-                    "containerPort": 5432,
-                    "protocol": "TCP"
+                    "containerPort": 5432
                   }
                 ],
                 "env": [
@@ -266,21 +284,17 @@
                     "value": "${POSTGRESQL_DATABASE}"
                   }
                 ],
-                "resources": {},
-                "terminationMessagePath": "/dev/termination-log",
-                "imagePullPolicy": "IfNotPresent",
-                "securityContext": {
-                  "capabilities": {},
-                  "privileged": false
-                }
+                "volumeMounts": [
+                  {
+                    "name": "postgresql-data",
+                    "mountPath": "/var/lib/pgsql/data"
+                  }
+                ]
               }
-            ],
-            "restartPolicy": "Always",
-            "dnsPolicy": "ClusterFirst"
+            ]
           }
         }
-      },
-      "status": {}
+      }
     }
   ]
 }
