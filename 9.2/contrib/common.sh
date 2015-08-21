@@ -107,10 +107,20 @@ EOF
   pg_ctl -w start
   createuser "$POSTGRESQL_USER"
   createdb --owner="$POSTGRESQL_USER" "$POSTGRESQL_DATABASE"
-  psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_PASSWORD}';"
 
   if [ -v POSTGRESQL_MASTER_USER ]; then
     createuser "$POSTGRESQL_MASTER_USER"
+  fi
+
+  set_passwords
+
+  pg_ctl stop
+}
+
+function set_passwords() {
+  psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_PASSWORD}';"
+
+  if [ -v POSTGRESQL_MASTER_USER ]; then
     psql --command "ALTER USER \"${POSTGRESQL_MASTER_USER}\" WITH REPLICATION;"
     psql --command "ALTER USER \"${POSTGRESQL_MASTER_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_MASTER_PASSWORD}';"
   fi
@@ -118,6 +128,4 @@ EOF
   if [ -v POSTGRESQL_ADMIN_PASSWORD ]; then
     psql --command "ALTER USER \"postgres\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_ADMIN_PASSWORD}';"
   fi
-
-  pg_ctl stop
 }

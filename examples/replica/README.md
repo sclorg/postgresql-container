@@ -128,7 +128,7 @@ $ oc scale dc postgresql-slave --replicas=2
 
 Using `oc scale` with `postgresql-master` is not supported.
 
-After scaling, you can ensure that all slaves are streaming changes from the
+After scaling, you can verify that all slaves are streaming changes from the
 master with:
 
 ```
@@ -141,3 +141,100 @@ $ oc exec $master_name -- bash -c 'psql -c "select client_addr, state from pg_st
 ```
 
 There should be one row per slave (number of replicas defined via `oc scale`).
+
+## Changing passwords
+
+You can change the passwords for the database user and admin, as well as the
+password used for replication, by changing the appropriate environment variables
+in the deployment configurations described earlier.
+No other method is supported.
+
+On every deploy, passwords are reset to match the values in the environment
+variables of the DeploymentConfig 'postgresql-master'.
+
+### POSTGRESQL_PASSWORD and POSTGRESQL_ADMIN_PASSWORD
+
+These are, respectively, the passwords for the regular database user defined
+by `POSTGRESQL_USER` and the admin user 'postgres'.
+
+You can change these passwords with:
+
+```
+$ oc env dc postgresql-master POSTGRESQL_PASSWORD=NewPassword POSTGRESQL_ADMIN_PASSWORD=NewAdminPassword
+deploymentconfigs/postgresql-master
+```
+
+This will trigger the redeployment of the primary server.
+Note that you can change one password but not the other by simply omitting one
+of the arguments to `oc env` above.
+
+You can verify that the new password is in effect with:
+
+```
+$ oc exec $master_name -- bash -c 'PGPASSWORD=NewPassword psql -h postgresql-master $POSTGRESQL_DATABASE $POSTGRESQL_USER -c "select * from (select inet_server_addr()) ra cross join (select current_database()) cdb cross join (select current_user) cu"'
+ inet_server_addr | current_database | current_user
+------------------+------------------+--------------
+ 172.17.1.38      | userdb           | user
+(1 row)
+```
+
+You should also be able to connect to a slave using the new password:
+
+```
+$ oc exec $master_name -- bash -c 'PGPASSWORD=NewPassword psql -h postgresql-slave $POSTGRESQL_DATABASE $POSTGRESQL_USER -c "select * from (select inet_server_addr()) ra cross join (select current_database()) cdb cross join (select current_user) cu"'
+ inet_server_addr | current_database | current_user
+------------------+------------------+--------------
+ 172.17.1.35      | userdb           | user
+(1 row)
+```
+
+For completeness, here's how to verify the new admin password:
+
+```
+$ oc exec $master_name -- bash -c 'PGPASSWORD=NewAdminPassword psql -h postgresql-master $POSTGRESQL_DATABASE -c "select * from (select inet_server_addr()) ra cross join (select current_database()) cdb cross join (select current_user) cu"'
+ inet_server_addr | current_database | current_user
+------------------+------------------+--------------
+ 172.17.1.38      | userdb           | postgres
+(1 row)
+```
+
+```
+$ oc exec $master_name -- bash -c 'PGPASSWORD=NewAdminPassword psql -h postgresql-slave $POSTGRESQL_DATABASE -c "select * from (select inet_server_addr()) ra cross join (select current_database()) cdb cross join (select current_user) cu"'
+ inet_server_addr | current_database | current_user
+------------------+------------------+--------------
+ 172.17.1.35      | userdb           | postgres
+(1 row)
+```
+
+### POSTGRESQL_MASTER_PASSWORD
+
+This password is used by standby servers to connect to the primary. Both
+deployment configurations in this example setup need to agree on the value of
+this password to have replication working correctly.
+
+You can change the environment variable with the password on both deployment
+configurations at once:
+
+```
+$ oc env dc postgresql-master postgresql-slave POSTGRESQL_MASTER_PASSWORD=NewReplicationPassword
+deploymentconfigs/postgresql-master
+deploymentconfigs/postgresql-slave
+```
+
+This will trigger the redeployment of both primary and standby servers.
+
+Note that, as a current limitation in this example, the standby servers store
+replicated data in an an ephemeral [emptyDir](https://docs.openshift.org/latest/dev_guide/volumes.html).
+This means that redeploying a standby server will cause it to start replicating
+again from scratch.
+
+After the primary and standby servers are ready, you can verify that the standby
+servers are successfully connected to the primary:
+
+```
+$ oc exec $master_name -- bash -c 'psql -c "select client_addr, state from pg_stat_replication;"'
+ client_addr |   state
+-------------+-----------
+ 172.17.1.35 | streaming
+(1 row)
+```

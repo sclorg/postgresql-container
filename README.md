@@ -97,7 +97,7 @@ $ docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL
 This will create a container named `postgresql_database` running PostgreSQL with
 database `db` and user with credentials `user:pass`. Port 5432 will be exposed
 and mapped to the host. If you want your database to be persistent across container
-executions, also add a `-v /host/db/path:/var/lib/pgsql/data` argument. This will be 
+executions, also add a `-v /host/db/path:/var/lib/pgsql/data` argument. This will be
 the PostgreSQL database cluster directory.
 
 If the database cluster directory is not initialized, the entrypoint script will
@@ -114,6 +114,19 @@ The admin account `postgres` has no password set by default, only allowing local
 connections.  You can set it by setting the `POSTGRESQL_ADMIN_PASSWORD` environment
 variable when initializing your container. This will allow you to login to the
 `postgres` account remotely. Local connections will still not require a password.
+
+
+Changing passwords
+------------------
+
+When you use a persistent volume to store your data, you may want to update
+passwords of an existing database. Since passwords are part of the image
+configuration, you are not supposed to change any database password through
+SQL statements or any database client whatsoever.
+
+The only supported method to change passwords for the database user (defined
+by `POSTGRESQL_USER`) and admin ('postgres') is by changing the environment
+variables `POSTGRESQL_PASSWORD` and `POSTGRESQL_ADMIN_PASSWORD`, respectively.
 
 
 Test

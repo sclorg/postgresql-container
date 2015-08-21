@@ -29,8 +29,13 @@ fi
 generate_postgresql_config
 generate_passwd_file
 
-if [ "$1" = "postgres" -a ! -f "$PGDATA/postgresql.conf" ]; then
-  initialize_database
+if [ "$1" = "postgres" ]; then
+  if [ ! -f "$PGDATA/postgresql.conf" ]; then
+    initialize_database
+  fi
+  pg_ctl -w start
+  set_passwords
+  pg_ctl stop
 fi
 
 unset_env_vars

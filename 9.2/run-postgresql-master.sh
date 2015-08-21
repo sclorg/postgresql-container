@@ -20,5 +20,9 @@ EOF
   #            would be a nice-to-have.
 fi
 
+pg_ctl -w start
+set_passwords
+pg_ctl stop
+
 unset_env_vars
 exec postgres "$@"
