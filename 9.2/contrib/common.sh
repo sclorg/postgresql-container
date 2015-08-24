@@ -109,8 +109,6 @@ EOF
     createuser "$POSTGRESQL_MASTER_USER"
   fi
 
-  set_passwords
-
   pg_ctl stop
 }
 
