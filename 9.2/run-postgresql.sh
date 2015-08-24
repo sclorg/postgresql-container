@@ -2,8 +2,6 @@
 
 set -eu
 
-source ${HOME}/common.sh
-
 # Data dir
 if [ -O $HOME/data ]; then
   export PGDATA=$HOME/data
@@ -16,27 +14,13 @@ else
   export PGDATA=$HOME/data/userdata
 fi
 
-if [ "$1" == "postgres-master" ]; then
-  shift
-  exec /usr/local/bin/run-postgresql-master.sh "$@"
-fi
+case "${1:-}" in
+  'postgres-slave' )
+    set -- run-postgresql-slave.sh "${@:2}"
+  ;;
+  'postgres' | 'postgres-master' )
+    set -- run-postgresql-master.sh "${@:2}"
+  ;;
+esac
 
-if [ "$1" == "postgres-slave" ]; then
-  shift
-  exec /usr/local/bin/run-postgresql-slave.sh "$@"
-fi
-
-generate_postgresql_config
-generate_passwd_file
-
-if [ "$1" = "postgres" ]; then
-  if [ ! -f "$PGDATA/postgresql.conf" ]; then
-    initialize_database
-  fi
-  pg_ctl -w start
-  set_passwords
-  pg_ctl stop
-fi
-
-unset_env_vars
 exec "$@"

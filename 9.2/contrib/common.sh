@@ -76,8 +76,6 @@ function generate_passwd_file() {
 }
 
 function initialize_database() {
-  check_env_vars
-
   # Initialize the database cluster with utf8 support enabled by default.
   # This might affect performance, see:
   # http://www.postgresql.org/docs/9.2/static/locale.html
@@ -91,6 +89,8 @@ include '${POSTGRESQL_CONFIG_FILE}'
 EOF
 
   # Access control configuration.
+  # FIXME: would be nice-to-have if we could allow connections only from
+  #        specific hosts / subnet
   cat >> "$PGDATA/pg_hba.conf" <<EOF
 
 #
@@ -99,6 +99,9 @@ EOF
 
 # Allow connections from all hosts.
 host all all all md5
+
+# Allow replication connections from all hosts.
+host replication all all md5
 EOF
 
   pg_ctl -w start
