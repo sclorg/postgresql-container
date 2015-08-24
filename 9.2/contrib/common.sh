@@ -10,17 +10,17 @@ psql_password_regex='^[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]+$'
 
 function usage() {
   if [ $# == 2 ]; then
-    echo "error: $1"
+    echo >&2 "error: $1"
   fi
-  echo "You must specify the following environment variables:"
-  echo "  POSTGRESQL_USER (regex: '$psql_identifier_regex')"
-  echo "  POSTGRESQL_PASSWORD (regex: '$psql_password_regex')"
-  echo "  POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')"
-  echo "Optional:"
-  echo "  POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')"
-  echo "Settings:"
-  echo "  POSTGRESQL_MAX_CONNECTIONS (default: 100)"
-  echo "  POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
+  echo >&2 "You must specify the following environment variables:"
+  echo >&2 "  POSTGRESQL_USER (regex: '$psql_identifier_regex')"
+  echo >&2 "  POSTGRESQL_PASSWORD (regex: '$psql_password_regex')"
+  echo >&2 "  POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')"
+  echo >&2 "Optional:"
+  echo >&2 "  POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')"
+  echo >&2 "Settings:"
+  echo >&2 "  POSTGRESQL_MAX_CONNECTIONS (default: 100)"
+  echo >&2 "  POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
   exit 1
 }
 
