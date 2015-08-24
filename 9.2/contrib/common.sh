@@ -41,10 +41,7 @@ function check_env_vars() {
 
 # Make sure env variables don't propagate to PostgreSQL process.
 function unset_env_vars() {
-  unset POSTGRESQL_USER
-  unset POSTGRESQL_PASSWORD
-  unset POSTGRESQL_DATABASE
-  unset POSTGRESQL_ADMIN_PASSWORD
+  unset POSTGRESQL_{DATABASE,USER,PASSWORD,ADMIN_PASSWORD}
 }
 
 # postgresql_master_addr lookups the 'postgresql-master' DNS and get list of the available
