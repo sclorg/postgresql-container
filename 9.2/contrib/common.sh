@@ -104,7 +104,12 @@ host all all all md5
 host replication all all md5
 EOF
 
-  pg_ctl -w start
+  create_users
+}
+
+function create_users() {
+  pg_ctl -w start -o "-h ''"
+
   createuser "$POSTGRESQL_USER"
   createdb --owner="$POSTGRESQL_USER" "$POSTGRESQL_DATABASE"
 
@@ -116,6 +121,8 @@ EOF
 }
 
 function set_passwords() {
+  pg_ctl -w start -o "-h ''"
+
   psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_PASSWORD}';"
 
   if [ -v POSTGRESQL_MASTER_USER ]; then
@@ -126,4 +133,6 @@ function set_passwords() {
   if [ -v POSTGRESQL_ADMIN_PASSWORD ]; then
     psql --command "ALTER USER \"postgres\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_ADMIN_PASSWORD}';"
   fi
+
+  pg_ctl stop
 }
