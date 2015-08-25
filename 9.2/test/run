@@ -90,14 +90,26 @@ function assert_login_access() {
   local USER=$1 ; shift
   local PASS=$1 ; shift
   local success=$1 ; shift
+  (
+    set +e
+    postgresql_cmd <<< "SELECT 1;"
+    status=$?
 
-  if $success; then
-    postgresql_cmd <<< "SELECT 1;" &&
-      echo "    $USER($PASS) access granted as expected"
-  else
-    postgresql_cmd <<< "SELECT 1;" ||
-      echo "    $USER($PASS) access denied as expected"
-  fi
+    if $success; then
+      if [ $status -eq 0 ]; then
+        echo "    $USER($PASS) access granted as expected"
+        exit 0
+      fi
+    else
+      if [ $status -ne 0 ]; then
+        echo "    $USER($PASS) access denied as expected"
+        exit 0
+      fi
+    fi
+    echo "    $USER($PASS) login assertion failed"
+    exit 1
+  )
+  test $?
 }
 
 function assert_local_access() {
