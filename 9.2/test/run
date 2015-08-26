@@ -198,7 +198,7 @@ function run_tests() {
   if [ -v ADMIN_PASS ]; then
     envs="$envs -e POSTGRESQL_ADMIN_PASSWORD=$ADMIN_PASS"
   fi
-  DOCKER_ARGS="$envs" create_container $name
+  DOCKER_ARGS="${DOCKER_ARGS:-} $envs" create_container $name
   CONTAINER_IP=$(get_container_ip $name)
   test_connection $name
   echo "  Testing scl usage"
