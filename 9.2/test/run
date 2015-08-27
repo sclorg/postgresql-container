@@ -218,6 +218,72 @@ function run_tests() {
   test_postgresql $name
 }
 
+function run_change_password_test() {
+  local name="change_password"
+
+  local database='db'
+  local user='user'
+  local password='password'
+  local admin_password='adminPassword'
+
+  local volume_dir
+  volume_dir=`mktemp -d --tmpdir pg-testdata.XXXXX`
+  chmod a+rwx ${volume_dir}
+
+  DOCKER_ARGS="
+-e POSTGRESQL_DATABASE=${database}
+-e POSTGRESQL_USER=${user}
+-e POSTGRESQL_PASSWORD=${password}
+-e POSTGRESQL_ADMIN_PASSWORD=${admin_password}
+-v ${volume_dir}:/var/lib/pgsql/data
+" create_container ${name}
+
+  # need to set these because `postgresql_cmd` relies on global variables
+  USER=${user}
+  PASS=${password}
+
+  # need this to wait for the container to start up
+  CONTAINER_IP=$(get_container_ip ${name})
+  test_connection ${name}
+
+  echo "  Testing login"
+
+  assert_login_access ${user} ${password} true
+  assert_login_access 'postgres' ${admin_password} true
+
+  echo "  Changing passwords"
+
+  docker stop $(get_cid ${name})
+  DOCKER_ARGS="
+-e POSTGRESQL_DATABASE=${database}
+-e POSTGRESQL_USER=${user}
+-e POSTGRESQL_PASSWORD=NEW_${password}
+-e POSTGRESQL_ADMIN_PASSWORD=NEW_${admin_password}
+-v ${volume_dir}:/var/lib/pgsql/data
+" create_container "${name}_NEW"
+
+  # need to set this because `postgresql_cmd` relies on global variables
+  PASS="NEW_${password}"
+
+  # need this to wait for the container to start up
+  CONTAINER_IP=$(get_container_ip "${name}_NEW")
+  test_connection "${name}_NEW"
+
+  echo "  Testing login with new passwords"
+
+  assert_login_access ${user} "NEW_${password}" true
+  assert_login_access ${user} ${password} false
+
+  assert_login_access 'postgres' "NEW_${admin_password}" true
+  assert_login_access 'postgres' ${admin_password} false
+
+  # need to remove volume_dir with sudo because of permissions of files written
+  # by the Docker container
+  sudo rm -rf ${volume_dir}
+
+  echo "  Success!"
+}
+
 # Tests.
 
 run_container_creation_tests
@@ -227,3 +293,4 @@ USER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin
 # Test with arbitrary uid for the container
 DOCKER_ARGS="-u 12345" USER=user2 PASS=pass run_tests no_admin_altuid
 DOCKER_ARGS="-u 12345" USER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid
+run_change_password_test
