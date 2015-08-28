@@ -10,17 +10,17 @@ psql_password_regex='^[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]+$'
 
 function usage() {
   if [ $# == 2 ]; then
-    echo "error: $1"
+    echo >&2 "error: $1"
   fi
-  echo "You must specify the following environment variables:"
-  echo "  POSTGRESQL_USER (regex: '$psql_identifier_regex')"
-  echo "  POSTGRESQL_PASSWORD (regex: '$psql_password_regex')"
-  echo "  POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')"
-  echo "Optional:"
-  echo "  POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')"
-  echo "Settings:"
-  echo "  POSTGRESQL_MAX_CONNECTIONS (default: 100)"
-  echo "  POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
+  echo >&2 "You must specify the following environment variables:"
+  echo >&2 "  POSTGRESQL_USER (regex: '$psql_identifier_regex')"
+  echo >&2 "  POSTGRESQL_PASSWORD (regex: '$psql_password_regex')"
+  echo >&2 "  POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')"
+  echo >&2 "Optional:"
+  echo >&2 "  POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')"
+  echo >&2 "Settings:"
+  echo >&2 "  POSTGRESQL_MAX_CONNECTIONS (default: 100)"
+  echo >&2 "  POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
   exit 1
 }
 
@@ -41,10 +41,7 @@ function check_env_vars() {
 
 # Make sure env variables don't propagate to PostgreSQL process.
 function unset_env_vars() {
-  unset POSTGRESQL_USER
-  unset POSTGRESQL_PASSWORD
-  unset POSTGRESQL_DATABASE
-  unset POSTGRESQL_ADMIN_PASSWORD
+  unset POSTGRESQL_{DATABASE,USER,PASSWORD,ADMIN_PASSWORD}
 }
 
 # postgresql_master_addr lookups the 'postgresql-master' DNS and get list of the available
@@ -79,8 +76,6 @@ function generate_passwd_file() {
 }
 
 function initialize_database() {
-  check_env_vars
-
   # Initialize the database cluster with utf8 support enabled by default.
   # This might affect performance, see:
   # http://www.postgresql.org/docs/9.2/static/locale.html
@@ -94,6 +89,8 @@ include '${POSTGRESQL_CONFIG_FILE}'
 EOF
 
   # Access control configuration.
+  # FIXME: would be nice-to-have if we could allow connections only from
+  #        specific hosts / subnet
   cat >> "$PGDATA/pg_hba.conf" <<EOF
 
 #
@@ -102,9 +99,17 @@ EOF
 
 # Allow connections from all hosts.
 host all all all md5
+
+# Allow replication connections from all hosts.
+host replication all all md5
 EOF
 
-  pg_ctl -w start
+  create_users
+}
+
+function create_users() {
+  pg_ctl -w start -o "-h ''"
+
   createuser "$POSTGRESQL_USER"
   createdb --owner="$POSTGRESQL_USER" "$POSTGRESQL_DATABASE"
 
@@ -112,12 +117,12 @@ EOF
     createuser "$POSTGRESQL_MASTER_USER"
   fi
 
-  set_passwords
-
   pg_ctl stop
 }
 
 function set_passwords() {
+  pg_ctl -w start -o "-h ''"
+
   psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_PASSWORD}';"
 
   if [ -v POSTGRESQL_MASTER_USER ]; then
@@ -128,4 +133,6 @@ function set_passwords() {
   if [ -v POSTGRESQL_ADMIN_PASSWORD ]; then
     psql --command "ALTER USER \"postgres\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_ADMIN_PASSWORD}';"
   fi
+
+  pg_ctl stop
 }
