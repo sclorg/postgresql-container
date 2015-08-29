@@ -23,9 +23,6 @@ LABEL io.k8s.description="PostgreSQL is an advanced Object-Relational database m
 
 EXPOSE 5432
 
-COPY run-*.sh /usr/local/bin/
-COPY contrib /var/lib/pgsql/
-
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
@@ -37,7 +34,14 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
     mkdir -p /var/lib/pgsql/data && chown postgres.postgres /var/lib/pgsql/data && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
-    chmod -R go+rwx /var/lib/pgsql && chmod go+w /var/run/postgresql
+    # Loosen permission bits to avoid problems running container with arbitrary UID
+    chmod -R a+rwx /var/run/postgresql
+
+COPY run-*.sh /usr/local/bin/
+COPY contrib /var/lib/pgsql/
+
+# Loosen permission bits to avoid problems running container with arbitrary UID
+RUN chmod -R a+rwx /var/lib/pgsql
 
 # When bash is started non-interactively, to run a shell script, for example it
 # looks for this variable and source the content of this file. This will enable
@@ -45,7 +49,6 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
 ENV BASH_ENV=/var/lib/pgsql/scl_enable \
     ENV=/var/lib/pgsql/scl_enable \
     PROMPT_COMMAND=". /var/lib/pgsql/scl_enable"
-
 
 VOLUME ["/var/lib/pgsql/data"]
 
