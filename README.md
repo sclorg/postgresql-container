@@ -119,14 +119,16 @@ variable when initializing your container. This will allow you to login to the
 Changing passwords
 ------------------
 
-When you use a persistent volume to store your data, you may want to update
-passwords of an existing database. Since passwords are part of the image
-configuration, you are not supposed to change any database password through
-SQL statements or any database client whatsoever.
+Since passwords are part of the image configuration, the only supported method
+to change passwords for the database user (`POSTGRESQL_USER`) and `postgres`
+admin user is by changing the environment variables `POSTGRESQL_PASSWORD` and
+`POSTGRESQL_ADMIN_PASSWORD`, respectively.
 
-The only supported method to change passwords for the database user (defined
-by `POSTGRESQL_USER`) and admin ('postgres') is by changing the environment
-variables `POSTGRESQL_PASSWORD` and `POSTGRESQL_ADMIN_PASSWORD`, respectively.
+Changing database passwords through SQL statements or any way other than through
+the environment variables aforementioned will cause a mismatch between the
+values stored in the variables and the actual passwords. Whenever a database
+container starts it will reset the passwords to the values stored in the
+environment variables.
 
 
 Usage on Atomic host

@@ -20,9 +20,10 @@ EOF
 }
 
 check_env_vars
-generate_postgresql_config
 generate_passwd_file
-initialize_replica
-unset_env_vars
+generate_postgresql_config
 
+initialize_replica
+
+unset_env_vars
 exec postgres "$@"

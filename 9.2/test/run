@@ -152,19 +152,18 @@ function run_container_creation_tests() {
 }
 
 function test_config_option() {
-  local env_var=$1 ; shift
+  local name=$1 ; shift
   local setting=$1 ; shift
   local value=$1 ; shift
 
-  # If $value is a string, it needs to be in simple quotes ''.
-  # If nothing is found, grep returns 1 and test fails.
-  docker run --rm -e $env_var=${value//\'/} $IMAGE_NAME cat /var/lib/pgsql/openshift-custom-postgresql.conf | grep -q "$setting = $value"
+  docker exec $(get_cid ${name}) grep -q "${setting} = ${value}" /var/lib/pgsql/openshift-custom-postgresql.conf
 }
 
 function run_configuration_tests() {
+  local name=$1 ; shift
   echo "  Testing image configuration settings"
-  test_config_option POSTGRESQL_MAX_CONNECTIONS max_connections 42
-  test_config_option POSTGRESQL_SHARED_BUFFERS shared_buffers 64MB
+  test_config_option ${name} max_connections ${POSTGRESQL_MAX_CONNECTIONS}
+  test_config_option ${name} shared_buffers ${POSTGRESQL_SHARED_BUFFERS}
   echo "  Success!"
 }
 
@@ -198,7 +197,13 @@ function run_tests() {
   if [ -v ADMIN_PASS ]; then
     envs="$envs -e POSTGRESQL_ADMIN_PASSWORD=$ADMIN_PASS"
   fi
-  DOCKER_ARGS="$envs" create_container $name
+  if [ -v POSTGRESQL_MAX_CONNECTIONS ]; then
+    envs="$envs -e POSTGRESQL_MAX_CONNECTIONS=$POSTGRESQL_MAX_CONNECTIONS"
+  fi
+  if [ -v POSTGRESQL_SHARED_BUFFERS ]; then
+    envs="$envs -e POSTGRESQL_SHARED_BUFFERS=$POSTGRESQL_SHARED_BUFFERS"
+  fi
+  DOCKER_ARGS="${DOCKER_ARGS:-} $envs" create_container $name
   CONTAINER_IP=$(get_container_ip $name)
   test_connection $name
   echo "  Testing scl usage"
@@ -214,6 +219,7 @@ function run_tests() {
     assert_login_access postgres "" false
   fi
   assert_local_access $name
+  run_configuration_tests $name
   echo "  Success!"
   test_postgresql $name
 }
@@ -284,11 +290,14 @@ function run_change_password_test() {
   echo "  Success!"
 }
 
+# configuration defaults
+POSTGRESQL_MAX_CONNECTIONS=100
+POSTGRESQL_SHARED_BUFFERS=32MB
+
 # Tests.
 
 run_container_creation_tests
-run_configuration_tests
-USER=user PASS=pass run_tests no_admin
+USER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin
 USER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin
 # Test with arbitrary uid for the container
 DOCKER_ARGS="-u 12345" USER=user2 PASS=pass run_tests no_admin_altuid
