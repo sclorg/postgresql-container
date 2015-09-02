@@ -192,6 +192,7 @@ test_scl_usage() {
 
 
 function run_tests() {
+  echo "  Testing general usage (run_tests) with '$1' as argument"
   local name=$1 ; shift
   envs="-e POSTGRESQL_USER=$USER -e POSTGRESQL_PASSWORD=$PASS -e POSTGRESQL_DATABASE=db"
   if [ -v ADMIN_PASS ]; then
@@ -225,6 +226,7 @@ function run_tests() {
 }
 
 function run_change_password_test() {
+  echo "  Testing password change"
   local name="change_password"
 
   local database='db'
@@ -235,13 +237,14 @@ function run_change_password_test() {
   local volume_dir
   volume_dir=`mktemp -d --tmpdir pg-testdata.XXXXX`
   chmod a+rwx ${volume_dir}
+  chcon -t svirt_sandbox_file_t ${volume_dir}
 
   DOCKER_ARGS="
 -e POSTGRESQL_DATABASE=${database}
 -e POSTGRESQL_USER=${user}
 -e POSTGRESQL_PASSWORD=${password}
 -e POSTGRESQL_ADMIN_PASSWORD=${admin_password}
--v ${volume_dir}:/var/lib/pgsql/data
+-v ${volume_dir}:/var/lib/pgsql/data:Z
 " create_container ${name}
 
   # need to set these because `postgresql_cmd` relies on global variables
@@ -265,7 +268,7 @@ function run_change_password_test() {
 -e POSTGRESQL_USER=${user}
 -e POSTGRESQL_PASSWORD=NEW_${password}
 -e POSTGRESQL_ADMIN_PASSWORD=NEW_${admin_password}
--v ${volume_dir}:/var/lib/pgsql/data
+-v ${volume_dir}:/var/lib/pgsql/data:Z
 " create_container "${name}_NEW"
 
   # need to set this because `postgresql_cmd` relies on global variables
