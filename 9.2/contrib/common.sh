@@ -69,6 +69,7 @@ function generate_postgresql_config() {
 # Generate passwd file based on current uid
 function generate_passwd_file() {
   export USER_ID=$(id -u)
+  export GROUP_ID=$(id -g)
   envsubst < ${HOME}/passwd.template > ${HOME}/passwd
   export LD_PRELOAD=libnss_wrapper.so
   export NSS_WRAPPER_PASSWD=/var/lib/pgsql/passwd
