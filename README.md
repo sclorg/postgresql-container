@@ -9,6 +9,7 @@ Versions
 ---------------
 PostgreSQL versions currently provided are:
 * postgresql-9.2
+* postgresql-9.4
 
 RHEL versions currently supported are:
 * RHEL7
@@ -29,7 +30,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone https://github.com/openshift/postgresql.git
     $ cd postgresql
-    $ make build TARGET=rhel7 VERSION=9.2
+    $ make build TARGET=rhel7 VERSION=9.4
     ```
 
 *  **CentOS7 based image**
@@ -49,8 +50,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
 
 **Notice: By omitting the `VERSION` parameter, the build/test action will be performed
-on all provided versions of PostgreSQL. Since we are currently providing only version `9.2`,
-you can omit this parameter.**
+on all provided versions of PostgreSQL.**
 
 
 Environment variables and volumes
@@ -157,5 +157,4 @@ Users can choose between testing PostgreSQL based on a RHEL or CentOS image.
     ```
 
 **Notice: By omitting the `VERSION` parameter, the build/test action will be performed
-on all provided versions of PostgreSQL. Since we are currently providing only version `9.2`,
-you can omit this parameter.**
+on all provided versions of PostgreSQL.**

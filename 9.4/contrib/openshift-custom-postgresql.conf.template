@@ -1,0 +1,26 @@
+#
+# Custom OpenShift configuration.
+#
+# NOTE: This file is rewritten every time the container is started!
+#       Changes to this file will be overwritten.
+#
+
+# Listen on all interfaces.
+listen_addresses = '*'
+
+# Determines the maximum number of concurrent connections to the database server. Default: 100
+max_connections = ${POSTGRESQL_MAX_CONNECTIONS}
+
+# Allow each connection to use a prepared transaction
+max_prepared_transactions = ${POSTGRESQL_MAX_CONNECTIONS}
+
+# Sets the amount of memory the database server uses for shared memory buffers. Default: 32MB
+shared_buffers = ${POSTGRESQL_SHARED_BUFFERS}
+
+# required on master for replication
+wal_level = hot_standby         # minimal, archive, hot_standby, or logical
+max_wal_senders = 6             # max number of walsender processes
+wal_keep_segments = 400         # in logfile segments, 16MB each; 0 disables
+
+# required on replicas for replication
+hot_standby = on
