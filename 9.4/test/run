@@ -9,7 +9,7 @@
 set -exo nounset
 shopt -s nullglob
 
-IMAGE_NAME=${IMAGE_NAME-openshift/postgresql-94-centos7-candidate}
+IMAGE_NAME=${IMAGE_NAME-rhscl/postgresql-94-centos7-candidate}
 CIDFILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
 
 function cleanup() {
