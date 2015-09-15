@@ -10,8 +10,6 @@ FROM rhel7
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-MAINTAINER SoftwareCollections.org <sclorg@redhat.com>
-
 ENV POSTGRESQL_VERSION=9.2 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres
