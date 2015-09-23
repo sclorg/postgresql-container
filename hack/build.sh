@@ -13,7 +13,8 @@ VERSION=$2
 
 DOCKERFILE_PATH=""
 BASE_DIR_NAME=$(echo $(basename `pwd`) | sed -e 's/-[0-9]*$//g')
-BASE_IMAGE_NAME="openshift/${BASE_DIR_NAME#sti-}"
+BASE_IMAGE_NAME="${BASE_DIR_NAME#sti-}"
+NAMESPACE="openshift/"
 
 # Cleanup the temporary Dockerfile created by docker build with version
 trap "rm -f ${DOCKERFILE_PATH}.version" SIGINT SIGQUIT EXIT
@@ -48,7 +49,14 @@ function squash {
 dirs=${VERSION:-$VERSIONS}
 
 for dir in ${dirs}; do
-  IMAGE_NAME="${BASE_IMAGE_NAME}-${dir//./}-${OS}"
+  if [ "$dir" == "9.4" ]; then
+    if [ "${OS}" == "centos7" ]; then
+      NAMESPACE="centos/"
+    else
+      NAMESPACE="rhscl/"
+    fi
+  fi
+  IMAGE_NAME="${NAMESPACE}${BASE_IMAGE_NAME}-${dir//./}-${OS}"
 
   if [[ -v TEST_MODE ]]; then
     IMAGE_NAME+="-candidate"
