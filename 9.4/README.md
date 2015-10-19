@@ -1,5 +1,5 @@
-PostgreSQL for general usage and OpenShift - Docker images
-==========================================================
+PostgreSQL Docker image
+=======================
 
 This repository contains Dockerfiles for PostgreSQL images for general usage and OpenShift.
 Users can choose between RHEL and CentOS based images.
