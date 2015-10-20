@@ -1,4 +1,4 @@
-FROM rhel7
+FROM rhel7.1
 
 # PostgreSQL image for OpenShift.
 # Volumes:
