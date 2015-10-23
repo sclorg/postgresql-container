@@ -20,10 +20,11 @@ LABEL io.k8s.description="PostgreSQL is an advanced Object-Relational database m
       io.openshift.tags="database,postgresql,postgresql94,rh-postgresql94"
 
 # Labels consumed by Red Hat build service
-LABEL Component="rh-postgresql94" \
-      Name="openshift3/postgresql-94-rhel7" \
+LABEL Name="rhscl/postgresql-94-rhel7" \
+      BZComponent="rh-postgresql94-docker" \
       Version="9.4" \
-      Release="1"
+      Release="1" \
+      Architecture="x86_64"
 
 EXPOSE 5432
 
