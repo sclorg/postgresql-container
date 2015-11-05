@@ -42,22 +42,25 @@ RUN yum install -y yum-utils gettext && \
     # Loosen permission bits to avoid problems running container with arbitrary UID
     chmod -R a+rwx /var/run/postgresql
 
-COPY run-*.sh /usr/local/bin/
-COPY contrib /var/lib/pgsql/
-
 # Loosen permission bits to avoid problems running container with arbitrary UID
 RUN chmod -R a+rwx /var/lib/pgsql
+
+# Get prefix path and path to scripts rather than hard-code them in scripts
+ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
+    ENABLED_COLLECTIONS=postgresql92
 
 # When bash is started non-interactively, to run a shell script, for example it
 # looks for this variable and source the content of this file. This will enable
 # the SCL for all scripts without need to do 'scl enable'.
-ENV BASH_ENV=/var/lib/pgsql/scl_enable \
-    ENV=/var/lib/pgsql/scl_enable \
-    PROMPT_COMMAND=". /var/lib/pgsql/scl_enable"
+ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
+    ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
+    PROMPT_COMMAND=". ${CONTAINER_SCRIPTS_PATH}/scl_enable"
+
+ADD root /
 
 VOLUME ["/var/lib/pgsql/data"]
 
 USER 26
 
-ENTRYPOINT ["run-postgresql.sh"]
-CMD ["postgres"]
+ENTRYPOINT ["container-entrypoint"]
+CMD ["run-postgresql"]

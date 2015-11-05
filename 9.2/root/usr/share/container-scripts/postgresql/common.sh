@@ -63,14 +63,16 @@ function postgresql_master_addr() {
 # New config is generated every time a container is created. It only contains
 # additional custom settings and is included from $PGDATA/postgresql.conf.
 function generate_postgresql_config() {
-  envsubst < ${POSTGRESQL_CONFIG_FILE}.template > ${POSTGRESQL_CONFIG_FILE}
+  envsubst \
+      < "${CONTAINER_SCRIPTS_PATH}/openshift-custom-postgresql.conf.template" \
+      > "${POSTGRESQL_CONFIG_FILE}"
 }
 
 # Generate passwd file based on current uid
 function generate_passwd_file() {
   export USER_ID=$(id -u)
   export GROUP_ID=$(id -g)
-  envsubst < ${HOME}/passwd.template > ${HOME}/passwd
+  envsubst < "${CONTAINER_SCRIPTS_PATH}/passwd.template" > "${HOME}/passwd"
   export LD_PRELOAD=libnss_wrapper.so
   export NSS_WRAPPER_PASSWD=/var/lib/pgsql/passwd
   export NSS_WRAPPER_GROUP=/etc/group
@@ -79,7 +81,7 @@ function generate_passwd_file() {
 function initialize_database() {
   # Initialize the database cluster with utf8 support enabled by default.
   # This might affect performance, see:
-  # http://www.postgresql.org/docs/9.4/static/locale.html
+  # http://www.postgresql.org/docs/9.2/static/locale.html
   LANG=${LANG:-en_US.utf8} initdb
 
   # PostgreSQL configuration.
@@ -136,4 +138,23 @@ function set_passwords() {
   fi
 
   pg_ctl stop
+}
+
+function set_pgdata ()
+{
+  # TODO:  Remove this.
+  # Container should not choose different PGDATA location based on the way how
+  # data directory is "mounted";  mount permissions might change among different
+  # 'docker run' invocations (openshift/postgresql/issues/76).
+
+  if [ -O "${HOME}/data" ]; then
+    export PGDATA=$HOME/data
+  else
+    # If current user does not own data directory
+    # create a subdirectory that the user does own
+    if [ ! -d "${HOME}/data/userdata" ]; then
+      mkdir "${HOME}/data/userdata"
+    fi
+    export PGDATA=$HOME/data/userdata
+  fi
 }

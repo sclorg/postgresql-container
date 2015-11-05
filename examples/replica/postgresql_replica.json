@@ -169,7 +169,7 @@
                 "name": "postgresql-master",
                 "image": "openshift/postgresql-92-centos7",
                 "args": [
-                  "postgres-master"
+                  "run-postgresql-master"
                 ],
                 "ports": [
                   {
@@ -251,7 +251,7 @@
                 "name": "postgresql-slave",
                 "image": "openshift/postgresql-92-centos7",
                 "args": [
-                  "postgres-slave"
+                  "run-postgresql-slave"
                 ],
                 "ports": [
                   {

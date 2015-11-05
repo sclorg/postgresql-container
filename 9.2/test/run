@@ -237,7 +237,6 @@ function run_change_password_test() {
   local volume_dir
   volume_dir=`mktemp -d --tmpdir pg-testdata.XXXXX`
   chmod a+rwx ${volume_dir}
-  chcon -t svirt_sandbox_file_t ${volume_dir}
 
   DOCKER_ARGS="
 -e POSTGRESQL_DATABASE=${database}
