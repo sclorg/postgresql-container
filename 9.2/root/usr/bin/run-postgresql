@@ -2,8 +2,9 @@
 
 set -eu
 
-source ${HOME}/common.sh
+source "${CONTAINER_SCRIPTS_PATH}/common.sh"
 
+set_pgdata
 check_env_vars
 generate_passwd_file
 generate_postgresql_config
