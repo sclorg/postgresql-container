@@ -42,7 +42,7 @@ function get_container_ip() {
 }
 
 function postgresql_cmd() {
-  docker run --rm -e PGPASSWORD="${PASS}" $IMAGE_NAME psql postgresql://$USER@$CONTAINER_IP:5432/db "$@"
+  docker run --rm -e PGPASSWORD="${PASS}" $IMAGE_NAME psql postgresql://$PGUSER@$CONTAINER_IP:5432/"${DB-db}" "$@"
 }
 
 function test_connection() {
@@ -54,7 +54,13 @@ function test_connection() {
   for i in $(seq $max_attempts); do
     echo "    Trying to connect..."
     set +e
-    CONTAINER_IP=$ip postgresql_cmd <<< "SELECT 1;"
+    # Don't let the code come here if neither user nor admin is able to
+    # connect.
+    if [ -v PGUSER ] && [ -v PASS ]; then
+      CONTAINER_IP=$ip postgresql_cmd <<< "SELECT 1;"
+    else
+      PGUSER=postgres PASS=$ADMIN_PASS CONTAINER_IP=$ip DB=postgres postgresql_cmd <<< "SELECT 1;"
+    fi
     status=$?
     set -e
     if [ $status -eq 0 ]; then
@@ -87,22 +93,24 @@ function create_container() {
 }
 
 function assert_login_access() {
-  local USER=$1 ; shift
+  local PGUSER=$1 ; shift
   local PASS=$1 ; shift
   local success=$1 ; shift
 
+  echo "testing login as $PGUSER:$PASS; should_success=$success"
+
   if postgresql_cmd <<<'SELECT 1;' ; then
     if $success ; then
-      echo "    $USER($PASS) access granted as expected"
+      echo "    $PGUSER($PASS) access granted as expected"
       return
     fi
   else
     if ! $success ; then
-      echo "    $USER($PASS) access denied as expected"
+      echo "    $PGUSER($PASS) access denied as expected"
       return
     fi
   fi
-  echo "    $USER($PASS) login assertion failed"
+  echo "    $PGUSER($PASS) login assertion failed"
   exit 1
 }
 
@@ -130,7 +138,6 @@ function assert_container_creation_fails() {
 }
 
 function try_image_invalid_combinations() {
-  assert_container_creation_fails "$@"
   assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass "$@"
   assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_DATABASE=db "$@"
   assert_container_creation_fails -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db "$@"
@@ -194,9 +201,22 @@ test_scl_usage() {
 function run_tests() {
   echo "  Testing general usage (run_tests) with '$1' as argument"
   local name=$1 ; shift
-  envs="-e POSTGRESQL_USER=$USER -e POSTGRESQL_PASSWORD=$PASS -e POSTGRESQL_DATABASE=db"
+
+  user_login=false
+  admin_login=false
+  envs=
+  # NOTE: We work wrongly with variables so please don't try to pass spaces
+  # within PGUSER/PASS/ADMIN_PASS variables.
+  [ -v PGUSER ] && envs+=" -e POSTGRESQL_USER=$PGUSER"
+  [ -v PASS ] && envs+=" -e POSTGRESQL_PASSWORD=$PASS"
+  if [ -v PGUSER ] && [ -v PASS ]; then
+    envs+=" -e POSTGRESQL_DATABASE=db"
+    user_login=:
+  fi
+
   if [ -v ADMIN_PASS ]; then
     envs="$envs -e POSTGRESQL_ADMIN_PASSWORD=$ADMIN_PASS"
+    admin_login=:
   fi
   if [ -v POSTGRESQL_MAX_CONNECTIONS ]; then
     envs="$envs -e POSTGRESQL_MAX_CONNECTIONS=$POSTGRESQL_MAX_CONNECTIONS"
@@ -209,20 +229,25 @@ function run_tests() {
   test_connection $name
   echo "  Testing scl usage"
   test_scl_usage $name 'psql --version' '9.2'
+
   echo "  Testing login accesses"
-  assert_login_access $USER $PASS true
-  assert_login_access $USER "${PASS}_foo" false
-  if [ -v ADMIN_PASS ]; then
-    assert_login_access postgres $ADMIN_PASS true
-    assert_login_access postgres "${ADMIN_PASS}_foo" false
-  else
-    assert_login_access postgres "foo" false
-    assert_login_access postgres "" false
-  fi
+  assert_login_access "${PGUSER:-}"     "${PASS-}"            "$user_login"
+  assert_login_access "${PGUSER:-}"     "${PASS-}_foo"        false
+
+  assert_login_access postgres          "${ADMIN_PASS-}"      "$admin_login"
+  assert_login_access postgres          "${ADMIN_PASS-}_foo"  false
+
   assert_local_access $name
   run_configuration_tests $name
   echo "  Success!"
-  test_postgresql $name
+
+  if $user_login; then
+    test_postgresql $name
+  fi
+
+  if $admin_login; then
+    DB=postgres PGUSER=postgres PASS=$ADMIN_PASS test_postgresql $name
+  fi
 }
 
 function run_change_password_test() {
@@ -247,7 +272,7 @@ function run_change_password_test() {
 " create_container ${name}
 
   # need to set these because `postgresql_cmd` relies on global variables
-  USER=${user}
+  PGUSER=${user}
   PASS=${password}
 
   # need this to wait for the container to start up
@@ -299,9 +324,11 @@ POSTGRESQL_SHARED_BUFFERS=32MB
 # Tests.
 
 run_container_creation_tests
-USER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin
-USER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin
+PGUSER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin
+PGUSER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin
+DB=postgres ADMIN_PASS=r00t run_tests only_admin
 # Test with arbitrary uid for the container
-DOCKER_ARGS="-u 12345" USER=user2 PASS=pass run_tests no_admin_altuid
-DOCKER_ARGS="-u 12345" USER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid
+DOCKER_ARGS="-u 12345" PGUSER=user2 PASS=pass run_tests no_admin_altuid
+DOCKER_ARGS="-u 12345" PGUSER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid
+DB=postgres DOCKER_ARGS="-u 12345" ADMIN_PASS=rOOt run_tests only_admin_altuid
 run_change_password_test

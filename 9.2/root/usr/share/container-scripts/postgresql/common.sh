@@ -5,6 +5,8 @@ export POSTGRESQL_SHARED_BUFFERS=${POSTGRESQL_SHARED_BUFFERS:-32MB}
 export POSTGRESQL_RECOVERY_FILE=$HOME/openshift-custom-recovery.conf
 export POSTGRESQL_CONFIG_FILE=$HOME/openshift-custom-postgresql.conf
 
+postinitdb_actions=
+
 psql_identifier_regex='^[a-zA-Z_][a-zA-Z0-9_]*$'
 psql_password_regex='^[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]+$'
 
@@ -12,31 +14,41 @@ function usage() {
   if [ $# == 2 ]; then
     echo >&2 "error: $1"
   fi
-  echo >&2 "You must specify the following environment variables:"
+  echo >&2 "You must either specify the following environment variables:"
   echo >&2 "  POSTGRESQL_USER (regex: '$psql_identifier_regex')"
   echo >&2 "  POSTGRESQL_PASSWORD (regex: '$psql_password_regex')"
   echo >&2 "  POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')"
-  echo >&2 "Optional:"
+  echo >&2 "Or the following environment variable:"
   echo >&2 "  POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')"
-  echo >&2 "Settings:"
+  echo >&2 "Or both."
+  echo >&2 "Optional settings:"
   echo >&2 "  POSTGRESQL_MAX_CONNECTIONS (default: 100)"
   echo >&2 "  POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
   exit 1
 }
 
 function check_env_vars() {
-  if ! [[ -v POSTGRESQL_USER && -v POSTGRESQL_PASSWORD && -v POSTGRESQL_DATABASE ]]; then
-    usage
+  if [[ -v POSTGRESQL_USER || -v POSTGRESQL_PASSWORD || -v POSTGRESQL_DATABASE ]]; then
+    # one var means all three must be specified
+    [[ -v POSTGRESQL_USER && -v POSTGRESQL_PASSWORD && -v POSTGRESQL_DATABASE ]] || usage
+    [[ "$POSTGRESQL_USER"     =~ $psql_identifier_regex ]] || usage
+    [[ "$POSTGRESQL_PASSWORD" =~ $psql_password_regex   ]] || usage
+    [[ "$POSTGRESQL_DATABASE" =~ $psql_identifier_regex ]] || usage
+    [ ${#POSTGRESQL_USER}     -le 63 ] || usage "PostgreSQL username too long (maximum 63 characters)"
+    [ ${#POSTGRESQL_DATABASE} -le 63 ] || usage "Database name too long (maximum 63 characters)"
+    postinitdb_actions+=",simple_db"
   fi
 
-  [[ "$POSTGRESQL_USER"     =~ $psql_identifier_regex ]] || usage
-  [[ "$POSTGRESQL_PASSWORD" =~ $psql_password_regex   ]] || usage
-  [[ "$POSTGRESQL_DATABASE" =~ $psql_identifier_regex ]] || usage
   if [ -v POSTGRESQL_ADMIN_PASSWORD ]; then
     [[ "$POSTGRESQL_ADMIN_PASSWORD" =~ $psql_password_regex ]] || usage
+    postinitdb_actions+=",admin_pass"
   fi
-  [ ${#POSTGRESQL_USER}     -le 63 ] || usage "PostgreSQL username too long (maximum 63 characters)"
-  [ ${#POSTGRESQL_DATABASE} -le 63 ] || usage "Database name too long (maximum 63 characters)"
+
+  case ",$postinitdb_actions," in
+    *,admin_pass,*|*,simple_db,*) ;;
+    *) usage ;;
+  esac
+
 }
 
 # Make sure env variables don't propagate to PostgreSQL process.
@@ -113,8 +125,10 @@ EOF
 function create_users() {
   pg_ctl -w start -o "-h ''"
 
-  createuser "$POSTGRESQL_USER"
-  createdb --owner="$POSTGRESQL_USER" "$POSTGRESQL_DATABASE"
+  if [[ ",$postinitdb_actions," = *,simple_db,* ]]; then
+    createuser "$POSTGRESQL_USER"
+    createdb --owner="$POSTGRESQL_USER" "$POSTGRESQL_DATABASE"
+  fi
 
   if [ -v POSTGRESQL_MASTER_USER ]; then
     createuser "$POSTGRESQL_MASTER_USER"
@@ -126,7 +140,9 @@ function create_users() {
 function set_passwords() {
   pg_ctl -w start -o "-h ''"
 
-  psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_PASSWORD}';"
+  if [[ ",$postinitdb_actions," = *,simple_db,* ]]; then
+    psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_PASSWORD}';"
+  fi
 
   if [ -v POSTGRESQL_MASTER_USER ]; then
     psql --command "ALTER USER \"${POSTGRESQL_MASTER_USER}\" WITH REPLICATION;"
