@@ -9,7 +9,6 @@ set_pgdata
 function initialize_replica() {
   echo "Initializing PostgreSQL slave ..."
   chmod 0700 $PGDATA
-  export MASTER_FQDN=$(postgresql_master_addr)
   PGPASSWORD="${POSTGRESQL_MASTER_PASSWORD}" pg_basebackup -x --no-password --pgdata ${PGDATA} --host=${MASTER_FQDN} --port=5432 -U "${POSTGRESQL_MASTER_USER}"
 
   # PostgreSQL recovery configuration.
@@ -25,6 +24,8 @@ check_env_vars
 generate_passwd_file
 generate_postgresql_config
 
+wait_for_postgresql_master
+export MASTER_FQDN=$(postgresql_master_addr)
 initialize_replica
 
 unset_env_vars
