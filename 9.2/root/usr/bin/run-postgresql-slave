@@ -13,7 +13,7 @@ function initialize_replica() {
   PGPASSWORD="${POSTGRESQL_MASTER_PASSWORD}" pg_basebackup -x --no-password --pgdata ${PGDATA} --host=${MASTER_FQDN} --port=5432 -U "${POSTGRESQL_MASTER_USER}"
 
   # PostgreSQL recovery configuration.
-  envsubst < ${POSTGRESQL_RECOVERY_FILE}.template > ${POSTGRESQL_RECOVERY_FILE}
+  generate_postgresql_recovery_config
   cat >> "$PGDATA/recovery.conf" <<EOF
 
 # Custom OpenShift recovery configuration:

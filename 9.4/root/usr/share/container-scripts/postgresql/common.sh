@@ -80,6 +80,12 @@ function generate_postgresql_config() {
       > "${POSTGRESQL_CONFIG_FILE}"
 }
 
+function generate_postgresql_recovery_config() {
+  envsubst \
+      < "${CONTAINER_SCRIPTS_PATH}/openshift-custom-recovery.conf.template" \
+      > "${POSTGRESQL_RECOVERY_FILE}"
+}
+
 # Generate passwd file based on current uid
 function generate_passwd_file() {
   export USER_ID=$(id -u)
