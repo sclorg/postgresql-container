@@ -8,7 +8,8 @@ set_pgdata
 
 function initialize_replica() {
   echo "Initializing PostgreSQL slave ..."
-  chmod 0700 $PGDATA
+  # TODO: Validate and reuse existing data?
+  rm -rf $PGDATA
   PGPASSWORD="${POSTGRESQL_MASTER_PASSWORD}" pg_basebackup -x --no-password --pgdata ${PGDATA} --host=${MASTER_FQDN} --port=5432 -U "${POSTGRESQL_MASTER_USER}"
 
   # PostgreSQL recovery configuration.
