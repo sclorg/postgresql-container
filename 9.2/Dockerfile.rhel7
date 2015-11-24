@@ -37,13 +37,13 @@ RUN yum install -y yum-utils gettext && \
     yum install -y --disablerepo="epel" --setopt=tsflags=nodocs nss_wrapper && \
     yum clean all && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
-    mkdir -p /var/lib/pgsql/data && chown postgres.postgres /var/lib/pgsql/data && \
-    test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
-    # Loosen permission bits to avoid problems running container with arbitrary UID
-    chmod -R a+rwx /var/run/postgresql
+    mkdir -p /var/lib/pgsql/data && \
+    test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)"
 
 # Loosen permission bits to avoid problems running container with arbitrary UID
-RUN chmod -R a+rwx /var/lib/pgsql
+ADD root /
+RUN /usr/libexec/fix-permissions /var/lib/pgsql && \
+    /usr/libexec/fix-permissions /var/run/postgresql
 
 # Get prefix path and path to scripts rather than hard-code them in scripts
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
@@ -55,8 +55,6 @@ ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
 ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     PROMPT_COMMAND=". ${CONTAINER_SCRIPTS_PATH}/scl_enable"
-
-ADD root /
 
 VOLUME ["/var/lib/pgsql/data"]
 
