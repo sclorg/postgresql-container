@@ -26,10 +26,8 @@ EXPOSE 5432
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
-    yum -y --setopt=tsflags=nodocs install https://www.softwarecollections.org/en/scls/rhscl/rh-postgresql94/epel-7-x86_64/download/rhscl-rh-postgresql94-epel-7-x86_64.noarch.rpm && \
-    yum -y --setopt=tsflags=nodocs --enablerepo=centosplus install gettext bind-utils rh-postgresql94 epel-release && \
-    yum -y --setopt=tsflags=nodocs install nss_wrapper && \
+RUN yum install -y centos-release-scl epel-release && \
+    yum -y --setopt=tsflags=nodocs install gettext bind-utils rh-postgresql94 nss_wrapper && \
     yum clean all && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
     mkdir -p /var/lib/pgsql/data && \
