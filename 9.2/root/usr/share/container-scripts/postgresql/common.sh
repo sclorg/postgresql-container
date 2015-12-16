@@ -11,7 +11,7 @@ psql_identifier_regex='^[a-zA-Z_][a-zA-Z0-9_]*$'
 psql_password_regex='^[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]+$'
 
 function usage() {
-  if [ $# == 2 ]; then
+  if [ $# == 1 ]; then
     echo >&2 "error: $1"
   fi
   echo >&2 "You must either specify the following environment variables:"
