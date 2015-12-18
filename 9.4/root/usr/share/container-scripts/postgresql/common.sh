@@ -164,19 +164,12 @@ function set_passwords() {
 
 function set_pgdata ()
 {
-  # TODO:  Remove this.
-  # Container should not choose different PGDATA location based on the way how
-  # data directory is "mounted";  mount permissions might change among different
-  # 'docker run' invocations (openshift/postgresql/issues/76).
-
-  if [ -O "${HOME}/data" ]; then
+  # backwards compatibility case, we used to put the data here
+  if [ -e ${HOME}/data/PG_VERSION ]; then
     export PGDATA=$HOME/data
-  else
-    # If current user does not own data directory
-    # create a subdirectory that the user does own
-    if [ ! -d "${HOME}/data/userdata" ]; then
-      mkdir "${HOME}/data/userdata"
-    fi
+  else 
+    # create a subdirectory that the user owns
+    mkdir -p "${HOME}/data/userdata"
     export PGDATA=$HOME/data/userdata
   fi
 }
