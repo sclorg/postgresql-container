@@ -27,7 +27,9 @@ EXPOSE 5432
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN yum install -y centos-release-scl epel-release && \
-    yum -y --setopt=tsflags=nodocs install gettext bind-utils postgresql92 nss_wrapper && \
+    INSTALL_PKGS="gettext bind-utils postgresql92 nss_wrapper" && \
+    yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
+    rpm -V $INSTALL_PKGS && \
     yum clean all && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
     mkdir -p /var/lib/pgsql/data && \
