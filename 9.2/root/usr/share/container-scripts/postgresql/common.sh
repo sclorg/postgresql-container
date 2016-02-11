@@ -10,6 +10,11 @@ postinitdb_actions=
 psql_identifier_regex='^[a-zA-Z_][a-zA-Z0-9_]*$'
 psql_password_regex='^[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]+$'
 
+# match . files when moving userdata below
+shopt -s dotglob
+# extglob enables the !(userdata) glob pattern below.
+shopt -s extglob
+
 function usage() {
   if [ $# == 1 ]; then
     echo >&2 "error: $1"
@@ -165,14 +170,19 @@ function set_passwords() {
 
 function set_pgdata ()
 {
-  # backwards compatibility case, we used to put the data here
+  # backwards compatibility case, we used to put the data here,
+  # move it into our new expected location (userdata)
   if [ -e ${HOME}/data/PG_VERSION ]; then
-    export PGDATA=$HOME/data
+    mkdir -p "${HOME}/data/userdata"
+    pushd "${HOME}/data"
+    # move everything except the userdata directory itself, into the userdata directory.
+    mv !(userdata) "userdata"
+    popd
   else 
     # create a subdirectory that the user owns
     mkdir -p "${HOME}/data/userdata"
-    export PGDATA=$HOME/data/userdata
   fi
+  export PGDATA=$HOME/data/userdata
 }
 
 function wait_for_postgresql_master() {
