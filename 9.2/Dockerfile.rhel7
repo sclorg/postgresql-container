@@ -33,7 +33,7 @@ EXPOSE 5432
 RUN yum install -y yum-utils && \
     yum-config-manager --enable rhel-server-rhscl-7-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
-    INSTALL_PKGS="gettext bind-utils postgresql92 nss_wrapper" && \
+    INSTALL_PKGS="gettext bind-utils postgresql92 postgresql92-postgresql-contrib nss_wrapper" && \
     yum install -y --disablerepo="epel" --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \

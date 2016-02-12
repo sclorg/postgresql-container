@@ -27,7 +27,7 @@ EXPOSE 5432
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN yum install -y centos-release-scl epel-release && \
-    INSTALL_PKGS="gettext bind-utils rh-postgresql94 nss_wrapper" && \
+    INSTALL_PKGS="gettext bind-utils rh-postgresql94 rh-postgresql94-postgresql-contrib nss_wrapper" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \

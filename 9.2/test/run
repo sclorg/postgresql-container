@@ -74,6 +74,7 @@ function test_connection() {
 
 function test_postgresql() {
   echo "  Testing PostgreSQL"
+  postgresql_cmd <<< "CREATE EXTENSION 'uuid-ossp';" # to test contrib package
   postgresql_cmd <<< "CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));"
   postgresql_cmd <<< "INSERT INTO tbl VALUES ('foo1', 'bar1');"
   postgresql_cmd <<< "INSERT INTO tbl VALUES ('foo2', 'bar2');"
