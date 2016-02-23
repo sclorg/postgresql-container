@@ -183,6 +183,8 @@ function set_pgdata ()
     mkdir -p "${HOME}/data/userdata"
   fi
   export PGDATA=$HOME/data/userdata
+  # ensure sane perms for postgresql startup
+  chmod 700 "$PGDATA"
 }
 
 function wait_for_postgresql_master() {
