@@ -77,6 +77,15 @@ function postgresql_master_addr() {
   echo -n "$(echo $endpoints | cut -d ' ' -f 1)"
 }
 
+# get_postgresql_config downalods the custom config from POSTGRESQL_CONFIG_URL instead of
+# calling generate_postgresql_config().
+function get_postgresql_config() {
+  if ! curl -o "${POSTGRESQL_CONFIG_FILE}" -L -O ${POSTGRESQL_CONFIG_URL} > /dev/null ; then
+    echo "Failed to download ${POSTGRESQL_CONFIG_URL}"
+    exit 1
+  fi
+}
+
 # New config is generated every time a container is created. It only contains
 # additional custom settings and is included from $PGDATA/postgresql.conf.
 function generate_postgresql_config() {
