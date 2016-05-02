@@ -24,6 +24,7 @@ The following environment variables influence the PostgreSQL configuration file.
 | :---------------------------- | ----------------------------------------------------------------------- | -------------------------------
 |  `POSTGRESQL_MAX_CONNECTIONS` | The maximum number of client connections allowed. This also sets the maximum number of prepared transactions. |  100
 |  `POSTGRESQL_SHARED_BUFFERS`  | Sets how much memory is dedicated to PostgreSQL to use for caching data |  32M
+|  `POSTGRESQL_EFFECTIVE_CACHE_SIZE`  | Set to an estimate of how much memory is available for disk caching by the operating system and within the database itself |  128M
 
 You can also set the following mount points by passing the `-v /host:/container` flag to Docker.
 
@@ -59,6 +60,18 @@ or if it was already present, [`postgres`](http://www.postgresql.org/docs/9.4/st
 is executed and will run as PID 1. You can stop the detached container by running
 `docker stop postgresql_database`.
 
+PostgreSQL auto-tuning
+--------------------
+
+When the PostgreSQL image is run with the `--memory` parameter set and if there
+are no values provided for `POSTGRESQL_SHARED_BUFFERS` and
+`POSTGRESQL_EFFECTIVE_CACHE_SIZE` those values are automatically calculated
+based on the value provided in the `--memory` parameter.
+
+The values are calculated based on the
+[upstream](https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server)
+formulas. For the `shared_buffers` we use 1/4 of given memory and for the
+`effective_cache_size` we set the value to 1/2 of the given memory.
 
 PostgreSQL admin account
 ------------------------

@@ -1,6 +1,21 @@
 # Configuration settings.
 export POSTGRESQL_MAX_CONNECTIONS=${POSTGRESQL_MAX_CONNECTIONS:-100}
-export POSTGRESQL_SHARED_BUFFERS=${POSTGRESQL_SHARED_BUFFERS:-32MB}
+
+# Perform auto-tuning based on the container cgroups limits (only when the
+# limits are set).
+# Users can still override this by setting the POSTGRESQL_SHARED_BUFFERS
+# and POSTGRESQL_EFFECTIVE_CACHE_SIZE variables.
+if [[ "${NO_MEMORY_LIMIT}" == "true" || -z "${MEMORY_LIMIT_IN_BYTES}" ]]; then
+    export POSTGRESQL_SHARED_BUFFERS=${POSTGRESQL_SHARED_BUFFERS:-32MB}
+    export POSTGRESQL_EFFECTIVE_CACHE_SIZE=${POSTGRESQL_EFFECTIVE_CACHE_SIZE:-128MB}
+else
+    # Use 1/4 of given memory for shared buffers
+    shared_buffers_computed="$(($MEMORY_LIMIT_IN_BYTES/1024/1024/4))M"
+    # Setting effective_cache_size to 1/2 of total memory would be a normal conservative setting,
+    effective_cache="$(($MEMORY_LIMIT_IN_BYTES/1024/1024/2))M"
+    export POSTGRESQL_SHARED_BUFFERS=${POSTGRESQL_SHARED_BUFFERS:-$shared_buffers_computed}
+    export POSTGRESQL_EFFECTIVE_CACHE_SIZE=${POSTGRESQL_EFFECTIVE_CACHE_SIZE:-$effective_cache}
+fi
 
 export POSTGRESQL_RECOVERY_FILE=$HOME/openshift-custom-recovery.conf
 export POSTGRESQL_CONFIG_FILE=$HOME/openshift-custom-postgresql.conf
