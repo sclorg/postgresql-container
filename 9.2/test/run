@@ -171,6 +171,7 @@ function run_configuration_tests() {
   local name=$1 ; shift
   echo "  Testing image configuration settings"
   test_config_option ${name} max_connections ${POSTGRESQL_MAX_CONNECTIONS}
+  test_config_option ${name} max_prepared_transactions ${POSTGRESQL_MAX_PREPARED_TRANSACTIONS}
   test_config_option ${name} shared_buffers ${POSTGRESQL_SHARED_BUFFERS}
   echo "  Success!"
 }
@@ -221,6 +222,9 @@ function run_tests() {
   fi
   if [ -v POSTGRESQL_MAX_CONNECTIONS ]; then
     envs="$envs -e POSTGRESQL_MAX_CONNECTIONS=$POSTGRESQL_MAX_CONNECTIONS"
+  fi
+  if [ -v POSTGRESQL_MAX_PREPARED_TRANSACTIONS ]; then
+    envs="$envs -e POSTGRESQL_MAX_PREPARED_TRANSACTIONS=$POSTGRESQL_MAX_PREPARED_TRANSACTIONS"
   fi
   if [ -v POSTGRESQL_SHARED_BUFFERS ]; then
     envs="$envs -e POSTGRESQL_SHARED_BUFFERS=$POSTGRESQL_SHARED_BUFFERS"
@@ -320,12 +324,13 @@ function run_change_password_test() {
 
 # configuration defaults
 POSTGRESQL_MAX_CONNECTIONS=100
+POSTGRESQL_MAX_PREPARED_TRANSACTIONS=0
 POSTGRESQL_SHARED_BUFFERS=32MB
 
 # Tests.
 
 run_container_creation_tests
-PGUSER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin
+PGUSER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_MAX_PREPARED_TRANSACTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin
 PGUSER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin
 DB=postgres ADMIN_PASS=r00t run_tests only_admin
 # Test with arbitrary uid for the container
