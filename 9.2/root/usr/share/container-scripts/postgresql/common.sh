@@ -15,7 +15,6 @@ else
     effective_cache="$(($MEMORY_LIMIT_IN_BYTES/1024/1024/2))MB"
     export POSTGRESQL_SHARED_BUFFERS=${POSTGRESQL_SHARED_BUFFERS:-$shared_buffers_computed}
     export POSTGRESQL_EFFECTIVE_CACHE_SIZE=${POSTGRESQL_EFFECTIVE_CACHE_SIZE:-$effective_cache}
-
 fi
 
 export POSTGRESQL_RECOVERY_FILE=$HOME/openshift-custom-recovery.conf
@@ -146,13 +145,9 @@ host all all all md5
 # Allow replication connections from all hosts.
 host replication all all md5
 EOF
-
-  create_users
 }
 
 function create_users() {
-  pg_ctl -w start -o "-h ''"
-
   if [[ ",$postinitdb_actions," = *,simple_db,* ]]; then
     createuser "$POSTGRESQL_USER"
     createdb --owner="$POSTGRESQL_USER" "$POSTGRESQL_DATABASE"
@@ -161,13 +156,9 @@ function create_users() {
   if [ -v POSTGRESQL_MASTER_USER ]; then
     createuser "$POSTGRESQL_MASTER_USER"
   fi
-
-  pg_ctl stop
 }
 
 function set_passwords() {
-  pg_ctl -w start -o "-h ''"
-
   if [[ ",$postinitdb_actions," = *,simple_db,* ]]; then
     psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_PASSWORD}';"
   fi
@@ -180,8 +171,6 @@ function set_passwords() {
   if [ -v POSTGRESQL_ADMIN_PASSWORD ]; then
     psql --command "ALTER USER \"postgres\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_ADMIN_PASSWORD}';"
   fi
-
-  pg_ctl stop
 }
 
 function set_pgdata ()
