@@ -1,5 +1,6 @@
 # Configuration settings.
 export POSTGRESQL_MAX_CONNECTIONS=${POSTGRESQL_MAX_CONNECTIONS:-100}
+export POSTGRESQL_MAX_PREPARED_TRANSACTIONS=${POSTGRESQL_MAX_PREPARED_TRANSACTIONS:-0}
 
 # Perform auto-tuning based on the container cgroups limits (only when the
 # limits are set).
@@ -43,6 +44,7 @@ function usage() {
   echo >&2 "Or both."
   echo >&2 "Optional settings:"
   echo >&2 "  POSTGRESQL_MAX_CONNECTIONS (default: 100)"
+  echo >&2 "  POSTGRESQL_MAX_PREPARED_TRANSACTIONS (default: 0)"
   echo >&2 "  POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
   exit 1
 }
