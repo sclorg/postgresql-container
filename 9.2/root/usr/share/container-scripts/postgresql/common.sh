@@ -36,17 +36,23 @@ function usage() {
   if [ $# == 1 ]; then
     echo >&2 "error: $1"
   fi
-  echo >&2 "You must either specify the following environment variables:"
-  echo >&2 "  POSTGRESQL_USER (regex: '$psql_identifier_regex')"
-  echo >&2 "  POSTGRESQL_PASSWORD (regex: '$psql_password_regex')"
-  echo >&2 "  POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')"
-  echo >&2 "Or the following environment variable:"
-  echo >&2 "  POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')"
-  echo >&2 "Or both."
-  echo >&2 "Optional settings:"
-  echo >&2 "  POSTGRESQL_MAX_CONNECTIONS (default: 100)"
-  echo >&2 "  POSTGRESQL_MAX_PREPARED_TRANSACTIONS (default: 0)"
-  echo >&2 "  POSTGRESQL_SHARED_BUFFERS (default: 32MB)"
+
+  cat >&2 <<EOF
+You must either specify the following environment variables:
+  POSTGRESQL_USER (regex: '$psql_identifier_regex')
+  POSTGRESQL_PASSWORD (regex: '$psql_password_regex')
+  POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')
+Or the following environment variable:
+  POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')
+Or both.
+Optional settings:
+  POSTGRESQL_MAX_CONNECTIONS (default: 100)
+  POSTGRESQL_MAX_PREPARED_TRANSACTIONS (default: 0)
+  POSTGRESQL_SHARED_BUFFERS (default: 32MB)
+
+For more information see /usr/share/container-scripts/postgresql/README.md
+within the container or visit https://github.com/openshift/postgresql.
+EOF
   exit 1
 }
 
