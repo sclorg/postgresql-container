@@ -20,6 +20,11 @@ if [ "${NEED_TO_CREATE_USERS:-}" == "yes" ]; then
   create_users
 fi
 set_passwords
+
+if [ -x ${CONTAINER_SCRIPTS_PATH}/post-init ]; then
+  log_info 'Executing post-init ...'
+  ${CONTAINER_SCRIPTS_PATH}/post-init
+fi
 pg_ctl stop
 
 unset_env_vars
