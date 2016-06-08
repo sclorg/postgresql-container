@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -eu
+export_vars=$(cgroup-limits) ; export $export_vars
 
 source "$CONTAINER_SCRIPTS_PATH"/common.sh
 
