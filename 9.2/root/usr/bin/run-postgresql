@@ -21,11 +21,12 @@ if [ "${NEED_TO_CREATE_USERS:-}" == "yes" ]; then
 fi
 set_passwords
 
-if [ -x ${CONTAINER_SCRIPTS_PATH}/post-init ]; then
+if [ -x ${CONTAINER_SCRIPTS_PATH}/hooks.d/post-init ]; then
+  # Execute post-init script
   log_info 'Executing post-init ...'
-  ${CONTAINER_SCRIPTS_PATH}/post-init
+  ${CONTAINER_SCRIPTS_PATH}/hooks.d/post-init
 fi
-pg_ctl stop
 
+pg_ctl stop
 unset_env_vars
 exec postgres "$@"
