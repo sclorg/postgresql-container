@@ -31,10 +31,13 @@ EXPOSE 5432
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
+# rhel-7-server-ose-3.2-rpms is enabled for nss_wrapper until this pkg is
+# in base RHEL
 RUN yum install -y yum-utils gettext && \
     yum-config-manager --enable rhel-server-rhscl-7-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum-config-manager --enable rhel-7-server-ose-3.2-rpms && \
+    yum-config-manager --disable epel >/dev/null && \
     INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql95 rh-postgresql95-postgresql-contrib nss_wrapper" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
