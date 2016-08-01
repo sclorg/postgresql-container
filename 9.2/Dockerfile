@@ -32,7 +32,7 @@ RUN yum install -y centos-release-scl epel-release && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
-    mkdir -p /var/lib/pgsql/data && \
+    mkdir -p /var/lib/pgsql/data && chown postgres /var/lib/pgsql/data && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)"
 
 # Loosen permission bits to avoid problems running container with arbitrary UID
