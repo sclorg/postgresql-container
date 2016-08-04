@@ -68,6 +68,12 @@
       "required": true
     },
     {
+      "name": "IMAGESTREAMTAG",
+      "displayName": "ImageStreamTag",
+      "description": "The OpenShift ImageStreamTag to use for PostgreSQL.",
+      "value": "postgresql:9.5"
+    },
+    {
       "name": "NAMESPACE",
       "displayName": "Namespace",
       "description": "The OpenShift Namespace where the ImageStream resides.",
@@ -156,7 +162,7 @@
               ],
               "from": {
                 "kind": "ImageStreamTag",
-                "name": "postgresql:9.5",
+                "name": "${IMAGESTREAMTAG}",
                 "namespace": "${NAMESPACE}"
               },
               "lastTriggeredImage": ""
@@ -269,7 +275,7 @@
               ],
               "from": {
                 "kind": "ImageStreamTag",
-                "name": "postgresql:9.5",
+                "name": "${IMAGESTREAMTAG}",
                 "namespace": "${NAMESPACE}"
               },
               "lastTriggeredImage": ""
