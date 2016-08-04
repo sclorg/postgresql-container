@@ -62,16 +62,16 @@
       "required": true
     },
     {
-      "name": "POSTGRESQL_IMAGE",
-      "description": "PostgreSQL Docker image to use",
-      "value": "openshift/postgresql-92-centos7",
-      "required": true
-    },
-    {
       "name": "VOLUME_CAPACITY",
       "description": "Volume space available for data, e.g. 512Mi, 2Gi",
       "value": "512Mi",
       "required": true
+    },
+    {
+      "name": "NAMESPACE",
+      "displayName": "Namespace",
+      "description": "The OpenShift Namespace where the ImageStream resides.",
+      "value": "openshift"
     }
   ],
   "objects": [
@@ -148,6 +148,21 @@
         },
         "triggers": [
           {
+            "type": "ImageChange",
+            "imageChangeParams": {
+              "automatic": true,
+              "containerNames": [
+                "postgresql-master"
+              ],
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "postgresql:9.5",
+                "namespace": "${NAMESPACE}"
+              },
+              "lastTriggeredImage": ""
+            }
+          },
+          {
             "type": "ConfigChange"
           }
         ],
@@ -173,7 +188,7 @@
             "containers": [
               {
                 "name": "postgresql-master",
-                "image": "${POSTGRESQL_IMAGE}",
+                "image": " ",
                 "args": [
                   "run-postgresql-master"
                 ],
@@ -182,6 +197,20 @@
                     "containerPort": 5432
                   }
                 ],
+                "readinessProbe": {
+                  "timeoutSeconds": 1,
+                  "initialDelaySeconds": 5,
+                  "exec": {
+                    "command": [ "/bin/sh", "-i", "-c", "psql -h 127.0.0.1 -U $POSTGRESQL_USER -q -d $POSTGRESQL_DATABASE -c 'SELECT 1'"]
+                  }
+                },
+                "livenessProbe": {
+                  "timeoutSeconds": 1,
+                  "initialDelaySeconds": 30,
+                  "tcpSocket": {
+                    "port": 5432
+                  }
+                },
                 "env": [
                   {
                     "name": "POSTGRESQL_MASTER_USER",
@@ -232,6 +261,21 @@
         },
         "triggers": [
           {
+            "type": "ImageChange",
+            "imageChangeParams": {
+              "automatic": true,
+              "containerNames": [
+                "postgresql-slave"
+              ],
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "postgresql:9.5",
+                "namespace": "${NAMESPACE}"
+              },
+              "lastTriggeredImage": ""
+            }
+          },
+          {
             "type": "ConfigChange"
           }
         ],
@@ -255,7 +299,7 @@
             "containers": [
               {
                 "name": "postgresql-slave",
-                "image": "${POSTGRESQL_IMAGE}",
+                "image": " ",
                 "args": [
                   "run-postgresql-slave"
                 ],
@@ -264,6 +308,20 @@
                     "containerPort": 5432
                   }
                 ],
+                "readinessProbe": {
+                  "timeoutSeconds": 1,
+                  "initialDelaySeconds": 5,
+                  "exec": {
+                    "command": [ "/bin/sh", "-i", "-c", "psql -h 127.0.0.1 -U $POSTGRESQL_USER -q -d $POSTGRESQL_DATABASE -c 'SELECT 1'"]
+                  }
+                },
+                "livenessProbe": {
+                  "timeoutSeconds": 1,
+                  "initialDelaySeconds": 30,
+                  "tcpSocket": {
+                    "port": 5432
+                  }
+                },
                 "env": [
                   {
                     "name": "POSTGRESQL_MASTER_SERVICE_NAME",
