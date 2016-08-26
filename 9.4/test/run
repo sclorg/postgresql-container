@@ -255,6 +255,88 @@ function run_tests() {
   fi
 }
 
+function run_slave() {
+  local master_ip="$1"; shift
+  local suffix="$1"; shift
+  docker run $cluster_args -e POSTGRESQL_MASTER_IP=${master_ip} \
+    -d --cidfile ${CIDFILE_DIR}/slave-${suffix}.cid $IMAGE_NAME run-postgresql-slave >/dev/null
+}
+
+function run_master() {
+  local suffix="$1"; shift
+  docker run $cluster_args -p 5432  \
+    -d --cidfile ${CIDFILE_DIR}/master-${suffix}.cid $IMAGE_NAME run-postgresql-master >/dev/null
+}
+
+function run_replication_test() {
+  echo "Testing master-slave replication"
+  local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
+  local max_attempts=30
+  local cid_suffix="basic"
+
+  # Run the PostgreSQL master
+  run_master $cid_suffix
+  local master_ip
+  master_ip=$(get_container_ip master-$cid_suffix.cid)
+
+  # Run the PostgreSQL slaves
+  local i
+  for i in $(seq ${SLAVE_NUM:-1}); do
+    run_slave $master_ip $cid_suffix-$i
+  done
+
+  # Check if the master knows about the slaves
+  CONTAINER_IP=$master_ip
+  local f
+  local slave_ip
+  for f in `find ${CIDFILE_DIR} -type f -name "slave-$cid_suffix-*"`; do
+    cidfile=$(basename $f)
+    slave_ip=$(get_container_ip $cidfile)
+    for i in $(seq $max_attempts); do
+      result="$(postgresql_cmd -c "select client_addr from pg_stat_replication;" | grep "$slave_ip" || true)"
+      if [[ -n "${result}" ]]; then
+        echo "${slave_ip} successfully registered as SLAVE for ${master_ip}"
+        break
+      fi
+      if [[ "${i}" == "${max_attempts}" ]]; then
+        echo "The ${slave_ip} failed to register in MASTER"
+        echo "Dumping logs for $(get_cid $cidfile)"
+        docker logs $(get_cid $cidfile)
+        return 1
+      fi
+      sleep 1
+    done
+  done
+
+  local value
+  value=24
+  # Do some real work to test replication in practice
+  postgresql_cmd -c "CREATE TABLE t1 (a integer); INSERT INTO t1 VALUES ($value);"
+
+  # Read value from slaves and check whether it is expected
+  local f
+  local slave_ip
+  for f in `find ${CIDFILE_DIR} -type f -name "slave-*"`; do
+    cidfile=$(basename $f)
+    slave_ip=$(get_container_ip $cidfile)
+    CONTAINER_IP=$slave_ip
+    for i in $(seq $max_attempts); do
+      result="$(postgresql_cmd -At -c "select * from t1")"
+      if [[ ! -z "${result}" ]]; then
+        echo "${slave_ip} successfully got value from MASTER ${master_ip}"
+        break
+      fi
+      if [[ "${i}" == "${max_attempts}" ]]; then
+        echo "The ${slave_ip} failed to see value added on MASTER"
+        echo "Dumping logs for $(get_cid $cidfile)"
+        docker logs $(get_cid $cidfile)
+        return 1
+      fi
+      sleep 1
+    done
+  done
+}
+
 function run_change_password_test() {
   echo "  Testing password change"
   local name="change_password"
@@ -338,3 +420,4 @@ DOCKER_ARGS="-u 12345" PGUSER=user2 PASS=pass run_tests no_admin_altuid
 DOCKER_ARGS="-u 12345" PGUSER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid
 DB=postgres DOCKER_ARGS="-u 12345" ADMIN_PASS=rOOt run_tests only_admin_altuid
 run_change_password_test
+DB=postgres PGUSER=master PASS=master run_replication_test
