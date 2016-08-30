@@ -351,12 +351,14 @@ function run_change_password_test() {
   volume_dir=`mktemp -d --tmpdir pg-testdata.XXXXX`
   chmod a+rwx ${volume_dir}
 
+  local volume_options="-v ${volume_dir}:/var/lib/pgsql/data:Z"
+
   DOCKER_ARGS="
 -e POSTGRESQL_DATABASE=${database}
 -e POSTGRESQL_USER=${user}
 -e POSTGRESQL_PASSWORD=${password}
 -e POSTGRESQL_ADMIN_PASSWORD=${admin_password}
--v ${volume_dir}:/var/lib/pgsql/data:Z
+$volume_options
 " create_container ${name}
 
   # need to set these because `postgresql_cmd` relies on global variables
@@ -380,7 +382,7 @@ function run_change_password_test() {
 -e POSTGRESQL_USER=${user}
 -e POSTGRESQL_PASSWORD=NEW_${password}
 -e POSTGRESQL_ADMIN_PASSWORD=NEW_${admin_password}
--v ${volume_dir}:/var/lib/pgsql/data:Z
+$volume_options
 " create_container "${name}_NEW"
 
   # need to set this because `postgresql_cmd` relies on global variables
@@ -398,9 +400,14 @@ function run_change_password_test() {
   assert_login_access 'postgres' "NEW_${admin_password}" true
   assert_login_access 'postgres' ${admin_password} false
 
-  # need to remove volume_dir with sudo because of permissions of files written
-  # by the Docker container
-  sudo rm -rf ${volume_dir}
+  # When we run this test script as non-root (we should?), the PostgreSQL server
+  # within container is still run under 'postgres' user.  It means that, taking
+  # into account 0077 umask of PostgreSQL server, we are unable to remove files
+  # created by server.  That's why we need to let docker escalate the privileges
+  # again.
+  local rm_cmd='/bin/rm -rf /var/lib/pgsql/data/*'
+  docker run $volume_options --rm $IMAGE_NAME /bin/sh -c "$rm_cmd"
+  rmdir ${volume_dir}
 
   echo "  Success!"
 }
