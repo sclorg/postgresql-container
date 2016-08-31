@@ -269,27 +269,14 @@ function run_master() {
     -d --cidfile ${CIDFILE_DIR}/master-${suffix}.cid $IMAGE_NAME run-postgresql-master >/dev/null
 }
 
-function run_replication_test() {
-  echo "Testing master-slave replication"
-  local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
+function test_slave_visibility() {
+  local cid_suffix="$1"; shift
   local max_attempts=30
-  local cid_suffix="basic"
 
-  # Run the PostgreSQL master
-  run_master $cid_suffix
-  local master_ip
-  master_ip=$(get_container_ip master-$cid_suffix.cid)
-
-  # Run the PostgreSQL slaves
-  local i
-  for i in $(seq ${SLAVE_NUM:-1}); do
-    run_slave $master_ip $cid_suffix-$i
-  done
-
-  # Check if the master knows about the slaves
-  CONTAINER_IP=$master_ip
   local f
   local slave_ip
+  local cidfile
+  local master_ip=$(get_container_ip master-$cid_suffix.cid)
   for f in `find ${CIDFILE_DIR} -type f -name "slave-$cid_suffix-*"`; do
     cidfile=$(basename $f)
     slave_ip=$(get_container_ip $cidfile)
@@ -308,21 +295,29 @@ function run_replication_test() {
       sleep 1
     done
   done
+}
 
+function test_value_replication() {
+  local table_name="$1"; shift
+  local max_attempts=30
+
+  # Setup the replication data
   local value
   value=24
-  # Do some real work to test replication in practice
-  postgresql_cmd -c "CREATE TABLE t1 (a integer); INSERT INTO t1 VALUES ($value);"
+  local table_name="t1"
+  postgresql_cmd -c "CREATE TABLE $table_name (a integer); INSERT INTO $table_name VALUES ($value);"
 
   # Read value from slaves and check whether it is expected
   local f
   local slave_ip
+  local cidfile
+  local master_ip=$(get_container_ip master-$cid_suffix.cid)
   for f in `find ${CIDFILE_DIR} -type f -name "slave-*"`; do
     cidfile=$(basename $f)
     slave_ip=$(get_container_ip $cidfile)
     CONTAINER_IP=$slave_ip
     for i in $(seq $max_attempts); do
-      result="$(postgresql_cmd -At -c "select * from t1")"
+      result="$(postgresql_cmd -At -c "select * from $table_name")"
       if [[ ! -z "${result}" ]]; then
         echo "${slave_ip} successfully got value from MASTER ${master_ip}"
         break
@@ -336,6 +331,36 @@ function run_replication_test() {
       sleep 1
     done
   done
+}
+
+function setup_replication_cluster() {
+  # Run the PostgreSQL master
+  run_master $cid_suffix
+  local master_ip
+  master_ip=$(get_container_ip master-$cid_suffix.cid)
+
+  # Run the PostgreSQL slaves
+  local i
+  for i in $(seq ${SLAVE_NUM:-1}); do
+    run_slave $master_ip $cid_suffix-$i
+  done
+
+  # Check if the master knows about the slaves
+  CONTAINER_IP=$master_ip
+  test_slave_visibility $cid_suffix
+}
+
+function run_replication_test() {
+  echo "Testing master-slave replication"
+  local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
+  local cid_suffix="basic"
+  local table_name="t1"
+
+  # Setup the cluster
+  setup_replication_cluster
+
+  # Do some real work to test replication in practice
+  test_value_replication $table_name
 }
 
 function run_change_password_test() {
