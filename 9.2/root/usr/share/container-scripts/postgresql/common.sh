@@ -114,6 +114,19 @@ function generate_postgresql_recovery_config() {
       > "${POSTGRESQL_RECOVERY_FILE}"
 }
 
+# this function iterates over hooks.d and seek for folders
+# which contains post-init executables
+function execture_post_init_scripts() {
+  for i in ${CONTAINER_SCRIPTS_PATH}/hooks.d/*
+  do
+    if [ -d $i ]; then
+      if [ -x $i ]; then
+        $i/post-init
+      fi
+    fi
+  done
+}
+
 # Generate passwd file based on current uid
 function generate_passwd_file() {
   export USER_ID=$(id -u)
