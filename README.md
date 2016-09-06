@@ -30,7 +30,7 @@ Choose either the CentOS7 or RHEL7 based image:
     subscribed RHEL machine.
 
     ```
-    $ git clone https://github.com/openshift/postgresql.git
+    $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
     $ make build TARGET=rhel7 VERSION=9.5
     ```
@@ -46,7 +46,7 @@ Choose either the CentOS7 or RHEL7 based image:
     To build a PostgreSQL image from scratch run:
 
     ```
-    $ git clone https://github.com/openshift/postgresql.git
+    $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
     $ make build TARGET=centos7 VERSION=9.5
     ```
