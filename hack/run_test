@@ -32,6 +32,17 @@ function cleanup() {
 }
 trap cleanup EXIT
 
+function cleanup_volume() {
+  local volume_dir="$1"; shift
+  local cid="$1"; shift
+  local volume_args="-v ${volume_dir}:/var/lib/pgsql/data:Z"
+
+  docker stop $cid
+  local rm_cmd='/bin/rm -rf /var/lib/pgsql/data/*'
+  docker run $volume_args --rm $IMAGE_NAME /bin/sh -c "$rm_cmd"
+  rmdir ${volume_dir}
+}
+
 function get_cid() {
   local id="$1" ; shift || return 1
   echo $(cat "$CIDFILE_DIR/$id")
@@ -40,6 +51,11 @@ function get_cid() {
 function get_container_ip() {
   local id="$1" ; shift
   docker inspect --format='{{.NetworkSettings.IPAddress}}' $(get_cid "$id")
+}
+
+function get_ip_from_cid() {
+  local cid="$1"; shift
+  docker inspect --format='{{.NetworkSettings.IPAddress}}' $cid
 }
 
 function postgresql_cmd() {
@@ -92,6 +108,13 @@ function create_container() {
   # create container with a cidfile in a directory for cleanup
   docker run $cargs --cidfile $cidfile -d $IMAGE_NAME "$@"
   echo "Created container $(cat $cidfile)"
+}
+
+function create_volume() {
+  local volume_dir
+  volume_dir=`mktemp -d --tmpdir pg-testdata.XXXXX`
+  chmod a+rwx ${volume_dir}
+  echo $volume_dir
 }
 
 function assert_login_access() {
@@ -257,42 +280,23 @@ function run_tests() {
 }
 
 function run_slave() {
-  local master_ip="$1"; shift
   local suffix="$1"; shift
   docker run $cluster_args -e POSTGRESQL_MASTER_IP=${master_ip} \
-    -d --cidfile ${CIDFILE_DIR}/slave-${suffix}.cid $IMAGE_NAME run-postgresql-slave >/dev/null
+    -d --cidfile ${CIDFILE_DIR}/slave-${suffix}.cid $IMAGE_NAME run-postgresql-slave
 }
 
 function run_master() {
   local suffix="$1"; shift
-  docker run $cluster_args -p 5432  \
+  master_args=${master_args-}
+  docker run $cluster_args $master_args \
     -d --cidfile ${CIDFILE_DIR}/master-${suffix}.cid $IMAGE_NAME run-postgresql-master >/dev/null
 }
 
-function run_replication_test() {
-  echo "Testing master-slave replication"
-  local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
+function test_slave_visibility() {
   local max_attempts=30
-  local cid_suffix="basic"
 
-  # Run the PostgreSQL master
-  run_master $cid_suffix
-  local master_ip
-  master_ip=$(get_container_ip master-$cid_suffix.cid)
-
-  # Run the PostgreSQL slaves
-  local i
-  for i in $(seq ${SLAVE_NUM:-1}); do
-    run_slave $master_ip $cid_suffix-$i
-  done
-
-  # Check if the master knows about the slaves
-  CONTAINER_IP=$master_ip
-  local f
-  local slave_ip
-  for f in `find ${CIDFILE_DIR} -type f -name "slave-$cid_suffix-*"`; do
-    cidfile=$(basename $f)
-    slave_ip=$(get_container_ip $cidfile)
+  for slave in $slave_cids; do
+    slave_ip=$(get_ip_from_cid $slave)
     for i in $(seq $max_attempts); do
       result="$(postgresql_cmd -c "select client_addr from pg_stat_replication;" | grep "$slave_ip" || true)"
       if [[ -n "${result}" ]]; then
@@ -301,41 +305,110 @@ function run_replication_test() {
       fi
       if [[ "${i}" == "${max_attempts}" ]]; then
         echo "The ${slave_ip} failed to register in MASTER"
-        echo "Dumping logs for $(get_cid $cidfile)"
-        docker logs $(get_cid $cidfile)
+        echo "Dumping logs for $slave"
+        docker logs $slave
         return 1
       fi
       sleep 1
     done
   done
+}
 
+function test_value_replication() {
+  local max_attempts=30
+
+  # Setup the replication data
   local value
   value=24
-  # Do some real work to test replication in practice
-  postgresql_cmd -c "CREATE TABLE t1 (a integer); INSERT INTO t1 VALUES ($value);"
+  postgresql_cmd -c "CREATE TABLE $table_name (a integer); INSERT INTO $table_name VALUES ($value);"
 
   # Read value from slaves and check whether it is expected
-  local f
-  local slave_ip
-  for f in `find ${CIDFILE_DIR} -type f -name "slave-*"`; do
-    cidfile=$(basename $f)
-    slave_ip=$(get_container_ip $cidfile)
+  for slave in $slave_cids; do
+    slave_ip=$(get_ip_from_cid $slave)
     CONTAINER_IP=$slave_ip
     for i in $(seq $max_attempts); do
-      result="$(postgresql_cmd -At -c "select * from t1")"
-      if [[ ! -z "${result}" ]]; then
+      result="$(postgresql_cmd -At -c "select * from $table_name" || :)"
+      if [[ "$result" == "$value" ]]; then
         echo "${slave_ip} successfully got value from MASTER ${master_ip}"
         break
       fi
       if [[ "${i}" == "${max_attempts}" ]]; then
         echo "The ${slave_ip} failed to see value added on MASTER"
-        echo "Dumping logs for $(get_cid $cidfile)"
-        docker logs $(get_cid $cidfile)
+        echo "Dumping logs for $slave"
+        docker logs $slave
         return 1
       fi
       sleep 1
     done
   done
+}
+
+function setup_replication_cluster() {
+  # Run the PostgreSQL master
+  run_master $cid_suffix
+  master_ip=$(get_container_ip master-$cid_suffix.cid)
+
+  # Run the PostgreSQL slaves
+  local i
+  for i in $(seq ${slave_num:-1}); do
+    slave_cids="$slave_cids $(run_slave $cid_suffix-$i)"
+  done
+
+}
+
+function run_master_restart_test() {
+  echo "Testing failed master restart"
+  local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
+  local cid_suffix="mrestart"
+  local table_name="t1"
+  local master_ip=
+  local slave_cids=
+
+  local volume_dir=$(create_volume)
+  local master_args="-v ${volume_dir}:/var/lib/pgsql/data:Z"
+
+  # Setup the cluster
+  slave_num=2 setup_replication_cluster
+
+  # Check if the master knows about the slaves
+  CONTAINER_IP=$master_ip
+  test_slave_visibility
+
+  echo "Kill the master and create a new one"
+  local cidfile=$CIDFILE_DIR/master-$cid_suffix.cid
+  docker kill $(cat $cidfile)
+  # Don't forget to remove its .cid file
+  rm $cidfile
+
+  run_master $cid_suffix
+  CONTAINER_IP=$(get_container_ip master-$cid_suffix.cid)
+
+  # Check if the new master sees existing slaves
+  test_slave_visibility
+
+  # Check if the replication works
+  table_name="t1" test_value_replication
+
+  # Cleanup the volume
+  cleanup_volume $volume_dir $(cat $cidfile)
+}
+
+function run_replication_test() {
+  echo "Testing master-slave replication"
+  local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
+  local cid_suffix="basic"
+  local master_ip=
+  local slave_cids=
+
+  # Setup the cluster
+  setup_replication_cluster
+
+  # Check if the master knows about the slaves
+  CONTAINER_IP=$master_ip
+  test_slave_visibility
+
+  # Do some real work to test replication in practice
+  table_name="t1" test_value_replication
 }
 
 function run_change_password_test() {
@@ -347,10 +420,7 @@ function run_change_password_test() {
   local password='password'
   local admin_password='adminPassword'
 
-  local volume_dir
-  volume_dir=`mktemp -d --tmpdir pg-testdata.XXXXX`
-  chmod a+rwx ${volume_dir}
-
+  local volume_dir=$(create_volume)
   local volume_options="-v ${volume_dir}:/var/lib/pgsql/data:Z"
 
   DOCKER_ARGS="
@@ -405,9 +475,7 @@ $volume_options
   # into account 0077 umask of PostgreSQL server, we are unable to remove files
   # created by server.  That's why we need to let docker escalate the privileges
   # again.
-  local rm_cmd='/bin/rm -rf /var/lib/pgsql/data/*'
-  docker run $volume_options --rm $IMAGE_NAME /bin/sh -c "$rm_cmd"
-  rmdir ${volume_dir}
+  cleanup_volume $volume_dir $(get_cid ${name})
 
   echo "  Success!"
 }
@@ -429,3 +497,4 @@ DOCKER_ARGS="-u 12345" PGUSER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_a
 DB=postgres DOCKER_ARGS="-u 12345" ADMIN_PASS=rOOt run_tests only_admin_altuid
 run_change_password_test
 DB=postgres PGUSER=master PASS=master run_replication_test
+DB=postgres PGUSER=master PASS=master run_master_restart_test
