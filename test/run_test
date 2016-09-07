@@ -9,7 +9,11 @@
 set -exo nounset
 shopt -s nullglob
 
-. test/test_lib
+# library from container-common-scripts
+. test/test-lib.sh
+
+# local library
+. test/pg-test-lib.sh
 
 TEST_LIST="\
 run_upgrade_test
@@ -29,6 +33,7 @@ test -n "${OS-}" || false 'make sure $OS is defined'
 
 CIDFILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
 
+volumes_to_clean=
 
 function cleanup() {
   for cidfile in $CIDFILE_DIR/* ; do
@@ -46,18 +51,22 @@ function cleanup() {
     echo "Done."
   done
   rmdir $CIDFILE_DIR
+
+  ct_path_foreach "$volumes_to_clean" cleanup_volume_dir
 }
 trap cleanup EXIT
 
-function cleanup_volume() {
-  local volume_dir="$1"; shift
-  local cid="$1"; shift
-  local volume_args="-v ${volume_dir}:/var/lib/pgsql/data:Z"
-
-  docker stop $cid
-  local rm_cmd='/bin/rm -rf /var/lib/pgsql/data/userdata'
-  docker run $volume_args --rm $IMAGE_NAME /bin/sh -c "$rm_cmd"
-  rmdir ${volume_dir}
+cleanup_volume_dir ()
+{
+  test ! -d "$1" && : "WARN: cleaned $1 for some reason" && return 0
+  # When we run this test script as non-root (we should?), the PostgreSQL server
+  # within container is still run under 'postgres' user.  It means that, taking
+  # into account 0077 umask of PostgreSQL server, we are unable to remove files
+  # created by server.  That's why we need to let docker escalate the privileges
+  # again.
+  local datadir=/var/lib/pgsql/data
+  docker run -v "$1:$datadir:Z" --rm "$IMAGE_NAME" /bin/sh -c "/bin/rm -rf $datadir/userdata"
+  rmdir "$1"
 }
 
 function get_cid() {
@@ -127,12 +136,14 @@ function create_container() {
   echo "Created container $(cat $cidfile)"
 }
 
-function create_volume() {
-  local volume_dir
+
+create_volume_dir ()
+{
   volume_dir=`mktemp -d --tmpdir pg-testdata.XXXXX`
   setfacl -m u:26:-wx "$volume_dir"
-  echo "$volume_dir"
+  ct_path_append volumes_to_clean "$volume_dir"
 }
+
 
 function assert_login_access() {
   local PGUSER=$1 ; shift
@@ -385,7 +396,7 @@ function run_master_restart_test() {
   local master_ip=
   local slave_cids=
 
-  local volume_dir=$(create_volume)
+  create_volume_dir
   local master_args="-v ${volume_dir}:/var/lib/pgsql/data:Z"
 
   # Setup the cluster
@@ -409,9 +420,6 @@ function run_master_restart_test() {
 
   # Check if the replication works
   table_name="t1" test_value_replication
-
-  # Cleanup the volume
-  cleanup_volume $volume_dir $(cat $cidfile)
 }
 
 function run_replication_test() {
@@ -445,7 +453,7 @@ function run_change_password_test() {
   local password='password'
   local admin_password='adminPassword'
 
-  local volume_dir=$(create_volume)
+  create_volume_dir
   local volume_options="-v ${volume_dir}:/var/lib/pgsql/data:Z"
 
   DOCKER_ARGS="
@@ -494,13 +502,6 @@ $volume_options
 
   assert_login_access 'postgres' "NEW_${admin_password}" true
   assert_login_access 'postgres' ${admin_password} false
-
-  # When we run this test script as non-root (we should?), the PostgreSQL server
-  # within container is still run under 'postgres' user.  It means that, taking
-  # into account 0077 umask of PostgreSQL server, we are unable to remove files
-  # created by server.  That's why we need to let docker escalate the privileges
-  # again.
-  cleanup_volume $volume_dir $(get_cid ${name})
 
   echo "  Success!"
 }

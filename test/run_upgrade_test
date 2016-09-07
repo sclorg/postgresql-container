@@ -2,7 +2,7 @@
 
 set -e
 
-. test/test_lib
+. test/pg-test-lib.sh
 
 ADMIN_PASSWORD=redhat
 
