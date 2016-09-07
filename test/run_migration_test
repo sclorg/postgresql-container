@@ -1,7 +1,7 @@
 #! /bin/bash
 
 set -e
-. test/test_lib
+. test/pg-test-lib.sh
 ADMIN_PASSWORD=redhat
 
 test $# -eq 2 || error "two args expected: $0 FROM TO"
