@@ -92,6 +92,11 @@ Users can choose between testing PostgreSQL based on a RHEL or CentOS image.
     $ cd postgresql
     $ make test VERSION=9.2
     ```
++By using the `TEST_CASE` parameter you can choose a test case subset to be run against the image, eg:
+
+    $ cd postgresql
+    $ make test VERSION=9.2 TEST_CASE="run_general_tests run_replication_test"
+
 
 **Notice: By omitting the `VERSION` parameter, the build/test action will be performed
 on all provided versions of PostgreSQL.**

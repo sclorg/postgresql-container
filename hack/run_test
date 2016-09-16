@@ -9,9 +9,19 @@
 set -exo nounset
 shopt -s nullglob
 
+TEST_LIST="\
+run_container_creation_tests
+run_general_tests
+run_change_password_test
+run_replication_test
+run_master_restart_test"
+
+test $# -eq 1 -a ${1-} == --list && echo "$TEST_LIST" && exit 0
 test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
 test -n "${VERSION-}" || false 'make sure $VERSION is defined'
+
 CIDFILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
+
 
 function cleanup() {
   for cidfile in $CIDFILE_DIR/* ; do
@@ -357,6 +367,10 @@ function setup_replication_cluster() {
 }
 
 function run_master_restart_test() {
+  local DB=postgres
+  local PGUSER=master
+  local PASS=master
+
   echo "Testing failed master restart"
   local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
   local cid_suffix="mrestart"
@@ -394,6 +408,10 @@ function run_master_restart_test() {
 }
 
 function run_replication_test() {
+  local DB=postgres
+  local PGUSER=master
+  local PASS=master
+
   echo "Testing master-slave replication"
   local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
   local cid_suffix="basic"
@@ -480,21 +498,27 @@ $volume_options
   echo "  Success!"
 }
 
+function run_general_tests() {
+  PGUSER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_MAX_PREPARED_TRANSACTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin
+  PGUSER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin
+  DB=postgres ADMIN_PASS=r00t run_tests only_admin
+  # Test with arbitrary uid for the container
+  DOCKER_ARGS="-u 12345" PGUSER=user2 PASS=pass run_tests no_admin_altuid
+  DOCKER_ARGS="-u 12345" PGUSER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid
+  DB=postgres DOCKER_ARGS="-u 12345" ADMIN_PASS=rOOt run_tests only_admin_altuid
+}
+
+function run_all_tests() {
+  for test_case in $TEST_LIST; do
+    : "Running test $test_case"
+    $test_case
+  done;
+}
+
 # configuration defaults
 POSTGRESQL_MAX_CONNECTIONS=100
 POSTGRESQL_MAX_PREPARED_TRANSACTIONS=0
 POSTGRESQL_SHARED_BUFFERS=32MB
 
-# Tests.
-
-run_container_creation_tests
-PGUSER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_MAX_PREPARED_TRANSACTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin
-PGUSER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin
-DB=postgres ADMIN_PASS=r00t run_tests only_admin
-# Test with arbitrary uid for the container
-DOCKER_ARGS="-u 12345" PGUSER=user2 PASS=pass run_tests no_admin_altuid
-DOCKER_ARGS="-u 12345" PGUSER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid
-DB=postgres DOCKER_ARGS="-u 12345" ADMIN_PASS=rOOt run_tests only_admin_altuid
-run_change_password_test
-DB=postgres PGUSER=master PASS=master run_replication_test
-DB=postgres PGUSER=master PASS=master run_master_restart_test
+# Run the chosen tests
+TEST_LIST=${@:-$TEST_LIST} run_all_tests
