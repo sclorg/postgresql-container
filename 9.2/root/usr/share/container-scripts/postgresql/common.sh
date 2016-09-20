@@ -106,6 +106,12 @@ function generate_postgresql_config() {
   envsubst \
       < "${CONTAINER_SCRIPTS_PATH}/openshift-custom-postgresql.conf.template" \
       > "${POSTGRESQL_CONFIG_FILE}"
+
+  if [ "${ENABLE_REPLICATION}" == "true" ]; then
+    envsubst \
+        < "${CONTAINER_SCRIPTS_PATH}/openshift-custom-postgresql-replication.conf.template" \
+        >> "${POSTGRESQL_CONFIG_FILE}"
+  fi
 }
 
 function generate_postgresql_recovery_config() {
