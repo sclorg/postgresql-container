@@ -22,7 +22,6 @@ test -n "${VERSION-}" || false 'make sure $VERSION is defined'
 
 CIDFILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
 
-
 function cleanup() {
   for cidfile in $CIDFILE_DIR/* ; do
     CONTAINER=$(cat $cidfile)
@@ -38,6 +37,7 @@ function cleanup() {
     rm $cidfile
     echo "Done."
   done
+  test ! -z "${DOCKER_NETS-}" && docker network rm $DOCKER_NETS
   rmdir $CIDFILE_DIR
 }
 trap cleanup EXIT
@@ -60,16 +60,18 @@ function get_cid() {
 
 function get_container_ip() {
   local id="$1" ; shift
-  docker inspect --format='{{.NetworkSettings.IPAddress}}' $(get_cid "$id")
+  local net=${network:-bridge}
+  docker inspect --format="{{.NetworkSettings.Networks.$net.IPAddress}}" $(get_cid "$id")
 }
 
 function get_ip_from_cid() {
   local cid="$1"; shift
-  docker inspect --format='{{.NetworkSettings.IPAddress}}' $cid
+  local net=${network:-bridge}
+  docker inspect --format="{{.NetworkSettings.Networks.$net.IPAddress}}" $cid
 }
 
 function postgresql_cmd() {
-  docker run --rm -e PGPASSWORD="${PASS}" $IMAGE_NAME psql postgresql://$PGUSER@$CONTAINER_IP:5432/"${DB-db}" "$@"
+  docker run --rm ${docker_args:-} -e PGPASSWORD="${PASS}" $IMAGE_NAME psql postgresql://$PGUSER@$CONTAINER_IP:5432/"${DB-db}" "$@"
 }
 
 function test_connection() {
@@ -354,6 +356,8 @@ function test_value_replication() {
 }
 
 function setup_replication_cluster() {
+  test ! -z ${network-} && docker network create --driver bridge $network
+
   # Run the PostgreSQL master
   run_master $cid_suffix
   master_ip=$(get_container_ip master-$cid_suffix.cid)
@@ -372,14 +376,18 @@ function run_master_restart_test() {
   local PASS=master
 
   echo "Testing failed master restart"
-  local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
   local cid_suffix="mrestart"
+  local network=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+  local docker_args="--net=$network"
+  local cluster_args="$docker_args -e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
   local table_name="t1"
   local master_ip=
   local slave_cids=
 
   local volume_dir=$(create_volume)
   local master_args="-v ${volume_dir}:/var/lib/pgsql/data:Z"
+
+  DOCKER_NETS="${DOCKER_NETS:-} $network"
 
   # Setup the cluster
   slave_num=2 setup_replication_cluster
@@ -396,6 +404,7 @@ function run_master_restart_test() {
 
   run_master $cid_suffix
   CONTAINER_IP=$(get_container_ip master-$cid_suffix.cid)
+  echo "New master is: $CONTAINER_IP"
 
   # Check if the new master sees existing slaves
   test_slave_visibility
