@@ -43,7 +43,7 @@ You must either specify the following environment variables:
   POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')
 Or the following environment variable:
   POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')
-Or both.
+Or both (or mount secrets in /run/secrets/pgusers/user or /run/secrets/pgusers/admin).
 Optional settings:
   POSTGRESQL_MAX_CONNECTIONS (default: 100)
   POSTGRESQL_MAX_PREPARED_TRANSACTIONS (default: 0)
@@ -55,8 +55,17 @@ EOF
   exit 1
 }
 
+check_cred_secret() {
+    local credpath="$1"
+    [ -f "$credpath/username" ] && \
+    [ -f "$credpath/password" ] && \
+    [[ "$(<"$credpath/username")" =~ $psql_identifier_regex ]] && \
+    [[ "$(<"$credpath/password")" =~ $psql_password_regex ]] &&
+    [ "$(wc -c < "$credpath/username")" -le 63 ]
+}
+
 function check_env_vars() {
-  if [[ -v POSTGRESQL_USER || -v POSTGRESQL_PASSWORD || -v POSTGRESQL_DATABASE ]]; then
+  if [[ -v POSTGRESQL_USER || -v POSTGRESQL_PASSWORD ]]; then
     # one var means all three must be specified
     [[ -v POSTGRESQL_USER && -v POSTGRESQL_PASSWORD && -v POSTGRESQL_DATABASE ]] || usage
     [[ "$POSTGRESQL_USER"     =~ $psql_identifier_regex ]] || usage
@@ -65,11 +74,29 @@ function check_env_vars() {
     [ ${#POSTGRESQL_USER}     -le 63 ] || usage "PostgreSQL username too long (maximum 63 characters)"
     [ ${#POSTGRESQL_DATABASE} -le 63 ] || usage "Database name too long (maximum 63 characters)"
     postinitdb_actions+=",simple_db"
+  elif check_cred_secret "/run/secrets/pgusers/user" && [ -v POSTGRESQL_DATABASE ]; then
+    # one var means all three must be specified
+    [[ "$POSTGRESQL_DATABASE" =~ $psql_identifier_regex ]] || usage
+    [ ${#POSTGRESQL_DATABASE} -le 63 ] || usage "Database name too long (maximum 63 characters)"
+    POSTGRESQL_USER="$(</run/secrets/pgusers/user/username)"
+    POSTGRESQL_PASSWORD="$(</run/secrets/pgusers/user/password)"
+    postinitdb_actions+=",simple_db"
   fi
 
   if [ -v POSTGRESQL_ADMIN_PASSWORD ]; then
     [[ "$POSTGRESQL_ADMIN_PASSWORD" =~ $psql_password_regex ]] || usage
     postinitdb_actions+=",admin_pass"
+  fi
+
+  if check_cred_secret "/run/secrets/pgusers/admin"; then
+    [ "$(<"/run/secrets/pgusers/admin/username")" = "postgres" ] || usage
+    POSTGRESQL_ADMIN_PASSWORD="$(<"/run/secrets/pgusers/admin/password")"
+    postinitdb_actions+=",admin_pass"
+  fi
+
+  if check_cred_secret "/run/secrets/pgusers/master"; then
+    POSTGRESQL_MASTER_USER="$(<"/run/secrets/pgusers/master/username")"
+    POSTGRESQL_MASTER_PASSWORD="$(<"/run/secrets/pgusers/master/password")"
   fi
 
   case ",$postinitdb_actions," in
@@ -172,19 +199,52 @@ function create_users() {
   fi
 }
 
+create_user_if_not_exists() {
+    local username="$1"
+    psql <<EOF
+DO
+\$body$
+BEGIN
+    IF NOT EXISTS (
+        SELECT * FROM pg_catalog.pg_user
+        WHERE usename = '${username}')
+    THEN
+        CREATE USER "${username}" LOGIN;
+    END IF;
+END
+\$body$
+EOF
+}
+
+function set_password() {
+    local user="$1" password="$2"
+    psql --command "ALTER USER \"${user}\" WITH ENCRYPTED PASSWORD '${password}';"
+}
+
 function set_passwords() {
   if [[ ",$postinitdb_actions," = *,simple_db,* ]]; then
-    psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_PASSWORD}';"
+    set_password "$POSTGRESQL_USER" "$POSTGRESQL_PASSWORD"
   fi
 
   if [ -v POSTGRESQL_MASTER_USER ]; then
     psql --command "ALTER USER \"${POSTGRESQL_MASTER_USER}\" WITH REPLICATION;"
-    psql --command "ALTER USER \"${POSTGRESQL_MASTER_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_MASTER_PASSWORD}';"
+    set_password "$POSTGRESQL_MASTER_USER" "$POSTGRESQL_MASTER_PASSWORD"
   fi
 
   if [ -v POSTGRESQL_ADMIN_PASSWORD ]; then
-    psql --command "ALTER USER \"postgres\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_ADMIN_PASSWORD}';"
+    set_password postgres "$POSTGRESQL_ADMIN_PASSWORD"
   fi
+
+  # This does not check for recurring user names nor overlaps with passwords
+  # set above
+  for cred in /run/secrets/pgusers/*; do
+      if check_cred_secret "$cred"; then
+          local username; username="$(< "$cred/username" )"
+          local password; password="$(< "$cred/password" )"
+          create_user_if_not_exists "$username"
+          set_password "$username" "$password"
+      fi
+  done
 }
 
 function set_pgdata ()
