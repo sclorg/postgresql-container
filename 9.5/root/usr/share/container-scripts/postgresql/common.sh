@@ -200,16 +200,15 @@ function create_users() {
 }
 
 create_user_if_not_exists() {
-    local username="$1"
-    psql <<EOF
+    psql --set user="$1" <<EOF
 DO
 \$body$
 BEGIN
     IF NOT EXISTS (
         SELECT * FROM pg_catalog.pg_user
-        WHERE usename = '${username}')
+        WHERE usename = :'user' )
     THEN
-        CREATE USER "${username}" LOGIN;
+        CREATE USER :"user" LOGIN;
     END IF;
 END
 \$body$
@@ -217,8 +216,8 @@ EOF
 }
 
 function set_password() {
-    local user="$1" password="$2"
-    psql --command "ALTER USER \"${user}\" WITH ENCRYPTED PASSWORD '${password}';"
+    psql --set user="$1" --set pass="$2" \
+        --command "ALTER USER :\"user\" WITH ENCRYPTED PASSWORD :'pass';"
 }
 
 function set_passwords() {
@@ -227,7 +226,8 @@ function set_passwords() {
   fi
 
   if [ -v POSTGRESQL_MASTER_USER ]; then
-    psql --command "ALTER USER \"${POSTGRESQL_MASTER_USER}\" WITH REPLICATION;"
+    psql --set user="$POSTGRESQL_MASTER_USER" \
+        --command "ALTER USER :\"user\" WITH REPLICATION;"
     set_password "$POSTGRESQL_MASTER_USER" "$POSTGRESQL_MASTER_PASSWORD"
   fi
 
