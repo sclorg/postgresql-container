@@ -36,13 +36,17 @@ CIDFILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
 volumes_to_clean=
 
 function cleanup() {
+  script_exit_status=$?
+
   for cidfile in $CIDFILE_DIR/* ; do
     CONTAINER=$(cat $cidfile)
 
     echo "Stopping and removing container $CONTAINER..."
     docker stop $CONTAINER
-    exit_status=$(docker inspect -f '{{.State.ExitCode}}' $CONTAINER)
-    if [ "$exit_status" != "0" ]; then
+
+    if test 0 -ne $script_exit_status -o \
+            0 -ne "$(docker inspect -f '{{.State.ExitCode}}' $CONTAINER)"
+    then
       echo "Dumping logs for $CONTAINER"
       docker logs $CONTAINER
     fi
@@ -88,7 +92,7 @@ function get_ip_from_cid() {
 }
 
 function postgresql_cmd() {
-  docker run --rm ${docker_args:-} -e PGPASSWORD="${PASS}" $IMAGE_NAME psql postgresql://$PGUSER@$CONTAINER_IP:5432/"${DB-db}" "$@"
+  docker run --rm ${psql_docker_args:-} -e PGPASSWORD="${PASS}" $IMAGE_NAME psql postgresql://$PGUSER@$CONTAINER_IP:5432/"${DB-db}" "$@"
 }
 
 function test_connection() {
@@ -310,36 +314,33 @@ function run_tests() {
   fi
 }
 
-function run_slave() {
-  local suffix="$1"; shift
-  docker run $cluster_args -e POSTGRESQL_MASTER_IP=${master_ip} \
-    -d --cidfile ${CIDFILE_DIR}/slave-${suffix}.cid $IMAGE_NAME run-postgresql-slave
-}
-
-function run_master() {
-  local suffix="$1"; shift
-  master_args=${master_args-}
-  docker run $cluster_args $master_args \
-    -d --cidfile ${CIDFILE_DIR}/master-${suffix}.cid $IMAGE_NAME run-postgresql-master >/dev/null
+# run_replication_container {master|slave} IP PRETTY_NAME [CID_SUFFIX]
+# --------------------------------------------------------------------
+# Consumes also '$network', '$cid_suffix', '$test_random_id', '$cluster_args'
+# and either $master_args or $slave_args (based on the first argument).
+run_replication_container ()
+{
+  local container_args=
+  eval "container_args+=\${${1}_args-}"
+  docker run $cluster_args ${container_args} \
+        --name $test_random_id-postgresql-$VERSION-$3 \
+        -e POSTGRESQL_MASTER_IP=$master_ip \
+        --net=$network --ip=$2 \
+        -d --cidfile ${CIDFILE_DIR}/$1-${cid_suffix}${4+-$4}.cid \
+        $IMAGE_NAME run-postgresql-$1
 }
 
 function test_slave_visibility() {
   local max_attempts=30
-
-  for slave in $slave_cids; do
-    slave_ip=$(get_ip_from_cid $slave)
+  for slave_ip in $slave_ips; do
+    : "checking master visibility from slave: $slave_ip"
     for i in $(seq $max_attempts); do
       result="$(postgresql_cmd -c "select client_addr from pg_stat_replication;" | grep "$slave_ip" || true)"
       if [[ -n "${result}" ]]; then
         echo "${slave_ip} successfully registered as SLAVE for ${master_ip}"
         break
       fi
-      if [[ "${i}" == "${max_attempts}" ]]; then
-        echo "The ${slave_ip} failed to register in MASTER"
-        echo "Dumping logs for $slave"
-        docker logs $slave
-        return 1
-      fi
+      test $i -lt $max_attempts
       sleep 1
     done
   done
@@ -354,8 +355,7 @@ function test_value_replication() {
   postgresql_cmd -c "CREATE TABLE $table_name (a integer); INSERT INTO $table_name VALUES ($value);"
 
   # Read value from slaves and check whether it is expected
-  for slave in $slave_cids; do
-    slave_ip=$(get_ip_from_cid $slave)
+  for slave_ip in $slave_ips; do
     CONTAINER_IP=$slave_ip
     for i in $(seq $max_attempts); do
       result="$(postgresql_cmd -At -c "select * from $table_name" || :)"
@@ -363,30 +363,95 @@ function test_value_replication() {
         echo "${slave_ip} successfully got value from MASTER ${master_ip}"
         break
       fi
-      if [[ "${i}" == "${max_attempts}" ]]; then
-        echo "The ${slave_ip} failed to see value added on MASTER"
-        echo "Dumping logs for $slave"
-        docker logs $slave
-        return 1
-      fi
+      test $i -lt $max_attempts
       sleep 1
     done
   done
 }
 
+# random_string VARNAME LENGTH=16
+# -------------------------------
+# Set $VARNAME to random string of length $LENGTH.
+random_string ()
+{
+    local val=$(cat /dev/urandom | LC_ALL=C tr -dc "[:alpha:]" | head -c ${2-16})
+    eval $1=\$val
+}
+
+# allocate_docker_network NAME
+# ----------------------------
+# Create docker network usable with --net && --ip parameters later (craeting the
+# network requires explicitly specified --subnet).  Make sure the network of
+# name NAME does not exist, yet.
+allocate_docker_network ()
+{
+  local name pattern found check
+
+  name="$1"
+  pattern=172.18.X.0
+
+  found=false
+  for check in {1..255}
+  do
+    docker network create --driver bridge \
+            --subnet=${pattern//X/$check}/24 "$name" &>/dev/null \
+        || continue
+    found=:
+    DOCKER_NETS="${DOCKER_NETS:-} $name"
+    break
+  done
+
+  # Error when we were unable to find free subnet.
+  $found || false "can not allocate Docker network with IP pattern '$pattern'"
+
+  network=$name
+  network_ip=${pattern//X/$check}
+}
+
+create_pg_network ()
+{
+  allocate_docker_network "${test_random_id}_postgresql_${VERSION}"
+}
+
+# allocate_ip
+# -----------
+# Based on $network variable, generate lowest unused IP address as $allocated_ip
+# variable.
+allocate_ip ()
+{
+  # Make sure IP_LOOKUP_TABLE is declared "globally"
+  test -n "${IP_LOOKUP_TABLE[*]-}" || declare -g -A IP_LOOKUP_TABLE
+
+  local network_base=${network_ip%%.0}
+
+  # Search for the last used IP, or start from 1.
+  allocated_ip=${IP_LOOKUP_TABLE[$network_base]-1}
+
+  # Increment and remember the last used IP.
+  allocated_ip=$(( allocated_ip + 1 ))
+  IP_LOOKUP_TABLE[$network_base]=$allocated_ip
+
+  # "export" the resulting IP address
+  allocated_ip="${network_base}.$allocated_ip"
+}
+
+
 function setup_replication_cluster() {
-  test ! -z ${network-} && docker network create --driver bridge $network
+  create_pg_network
+  psql_docker_args="${psql_docker_args-} --net=$network"
 
   # Run the PostgreSQL master
-  run_master $cid_suffix
-  master_ip=$(get_container_ip master-$cid_suffix.cid)
+  allocate_ip
+  master_ip=$allocated_ip
+  run_replication_container master "$master_ip" master
 
   # Run the PostgreSQL slaves
   local i
   for i in $(seq ${slave_num:-1}); do
-    slave_cids="$slave_cids $(run_slave $cid_suffix-$i)"
+    allocate_ip
+    run_replication_container slave "$allocated_ip" slave-$i $i
+    slave_ips="$slave_ips $allocated_ip"
   done
-
 }
 
 function run_master_restart_test() {
@@ -396,34 +461,23 @@ function run_master_restart_test() {
 
   echo "Testing failed master restart"
   local cid_suffix="mrestart"
-  local network=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-  local docker_args="--net=$network"
-  local cluster_args="$docker_args -e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
+  local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
   local table_name="t1"
-  local master_ip=
-  local slave_cids=
 
   create_volume_dir
   local master_args="-v ${volume_dir}:/var/lib/pgsql/data:Z"
 
-  DOCKER_NETS="${DOCKER_NETS:-} $network"
-
-  # Setup the cluster
+  # Setup the cluster, keep exported vars local only.
+  local network network_ip master_ip slave_ips= psql_docker_args
   slave_num=2 setup_replication_cluster
 
   # Check if the master knows about the slaves
   CONTAINER_IP=$master_ip
   test_slave_visibility
 
-  echo "Kill the master and create a new one"
-  local cidfile=$CIDFILE_DIR/master-$cid_suffix.cid
-  docker kill $(cat $cidfile)
-  # Don't forget to remove its .cid file
-  rm $cidfile
-
-  run_master $cid_suffix
-  CONTAINER_IP=$(get_container_ip master-$cid_suffix.cid)
-  echo "New master is: $CONTAINER_IP"
+  : "Kill the master and create a new one"
+  docker kill "$(cat "$CIDFILE_DIR/master-$cid_suffix.cid")"
+  run_replication_container master "$master_ip" master-restarted restarted
 
   # Check if the new master sees existing slaves
   test_slave_visibility
@@ -440,10 +494,9 @@ function run_replication_test() {
   echo "Testing master-slave replication"
   local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
   local cid_suffix="basic"
-  local master_ip=
-  local slave_cids=
 
-  # Setup the cluster
+  # Setup the cluster, keep exported vars local only.
+  local network network_ip master_ip slave_ips= psql_docker_args
   setup_replication_cluster
 
   # Check if the master knows about the slaves
@@ -581,6 +634,7 @@ function run_general_tests() {
 function run_all_tests() {
   for test_case in $TEST_LIST; do
     : "Running test $test_case"
+    random_string test_random_id 6
     $test_case
   done;
 }
