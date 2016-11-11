@@ -78,7 +78,7 @@ for dir in ${dirs}; do
 
   IMAGE_NAME="${NAMESPACE}${BASE_IMAGE_NAME}-${dir//./}-${OS}"
 
-  if [[ -v TEST_MODE ]]; then
+  if [[ "${TEST_MODE}" == "true" ]]; then
     IMAGE_NAME+="-candidate"
   fi
 
@@ -91,7 +91,7 @@ for dir in ${dirs}; do
     docker_build_with_version Dockerfile
   fi
 
-  if [[ -v TEST_MODE ]]; then
+  if [[ "${TEST_MODE}" == "true" ]]; then
     make -C ../ ${TEST_CASE:-runtests} VERSION=$dir IMAGE_NAME=${IMAGE_NAME}
     if [[ $? -eq 0 ]] && [[ "${TAG_ON_SUCCESS}" == "true" ]]; then
       echo "-> Re-tagging ${IMAGE_NAME} image to ${IMAGE_NAME%"-candidate"}"
