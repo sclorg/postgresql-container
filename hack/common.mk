@@ -24,10 +24,10 @@ build: $(VERSIONS)
 
 .PHONY: $(VERSIONS)
 $(VERSIONS):
-	VERSION=$@ TEST_MODE=$(TEST_MODE) $(script_env) $(build)
+	VERSION=$@ $(script_env) $(build)
 
 .PHONY: test
-test: TEST_MODE=true
+test: script_env += TEST_MODE=true
 test: build
 
 .PHONY: runtests
