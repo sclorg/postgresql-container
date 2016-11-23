@@ -33,6 +33,8 @@ You can also set the following mount points by passing the `-v /host:/container`
 | :----------------------- | ------------------------------------- |
 |  `/var/lib/pgsql/data`   | PostgreSQL database cluster directory |
 
+Location `${CONTAINER_SCRIPTS_PATH}/hooks.d/` is used as placeholder for folders with scripts which defines all post initialization tasks. You can either use this image as base image or mount folder with post-init executable. Folders can contain arbitrary files, but there has to be post-init with execute permision. In case of first option you should do `COPY path-to-your-folder ${CONTAINER_SCRIPTS_PATH}/hooks.d/${YOUR_FOLDER_NAME}`. Other way is to mount folder from host machine. This way you must use -v flag `docker -v path-to-your-folder:${CONTAINER_SCRIPTS_PATH}/hooks.d/${YOUR_FOLDER_NAME}`. You can check more about mouting folders [at docker wiki](https://docs.docker.com/engine/userguide/containers/dockervolumes/#mount-a-host-file-as-a-data-volume).
+
 **Notice: When mouting a directory from the host into the container, ensure that the mounted
 directory has the appropriate permissions and that the owner and group of the directory
 matches the user UID or name which is running inside the container.**

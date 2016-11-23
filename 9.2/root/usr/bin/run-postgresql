@@ -22,7 +22,9 @@ if [ "${NEED_TO_CREATE_USERS:-}" == "yes" ]; then
   create_users
 fi
 set_passwords
-pg_ctl stop
 
+execture_post_init_scripts
+
+pg_ctl stop
 unset_env_vars
 exec postgres "$@"
