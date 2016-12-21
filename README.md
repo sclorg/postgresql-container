@@ -10,7 +10,6 @@ official [OpenShift Documentation](https://docs.openshift.org/latest/using_image
 Versions
 ---------------
 PostgreSQL versions currently provided are:
-* postgresql-9.2
 * postgresql-9.4
 * postgresql-9.5
 
@@ -33,7 +32,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone https://github.com/openshift/postgresql.git
     $ cd postgresql
-    $ make build TARGET=rhel7 VERSION=9.4
+    $ make build TARGET=rhel7 VERSION=9.5
     ```
 
 *  **CentOS7 based image**
@@ -41,7 +40,7 @@ Choose either the CentOS7 or RHEL7 based image:
     This image is available on DockerHub. To download it run:
 
     ```
-    $ docker pull openshift/postgresql-92-centos7
+    $ docker pull centos/postgresql-95-centos7
     ```
 
     To build a PostgreSQL image from scratch run:
@@ -49,7 +48,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone https://github.com/openshift/postgresql.git
     $ cd postgresql
-    $ make build VERSION=9.2
+    $ make build TARGET=centos7 VERSION=9.5
     ```
 
 **Notice: By omitting the `VERSION` parameter, the build/test action will be performed
@@ -58,9 +57,6 @@ on all provided versions of PostgreSQL.**
 
 Usage
 ---------------------------------
-
-For information about usage of Dockerfile for PostgreSQL 9.2,
-see [usage documentation](9.2/README.md).
 
 For information about usage of Dockerfile for PostgreSQL 9.4,
 see [usage documentation](9.4/README.md).
@@ -83,19 +79,19 @@ Users can choose between testing PostgreSQL based on a RHEL or CentOS image.
 
     ```
     $ cd postgresql
-    $ make test TARGET=rhel7 VERSION=9.2
+    $ make test TARGET=rhel7 VERSION=9.5
     ```
 
 *  **CentOS based image**
 
     ```
     $ cd postgresql
-    $ make test VERSION=9.2
+    $ make test TARGET=centos7 VERSION=9.5
     ```
 +By using the `TEST_CASE` parameter you can choose a test case subset to be run against the image, eg:
 
     $ cd postgresql
-    $ make test VERSION=9.2 TEST_CASE="run_general_tests run_replication_test"
+    $ make test VERSION=9.5 TEST_CASE="run_general_tests run_replication_test"
 
 
 **Notice: By omitting the `VERSION` parameter, the build/test action will be performed
