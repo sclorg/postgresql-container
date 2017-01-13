@@ -12,16 +12,21 @@ check_env_vars
 generate_passwd_file
 generate_postgresql_config
 
-if [ ! -f "$PGDATA/postgresql.conf" ]; then
+if [ ! -f "$PGDATA/status/1.initialize_database_done" ]; then
   initialize_database
-  NEED_TO_CREATE_USERS=yes
+  mkdir -p $PGDATA/status/
+  touch $PGDATA/status/1.initialize_database_done
 fi
 
 pg_ctl -w start -o "-h ''"
-if [ "${NEED_TO_CREATE_USERS:-}" == "yes" ]; then
+if [ ! -f "$PGDATA/status/2.create_users_done" ]; then
   create_users
+  touch $PGDATA/status/2.create_users_done
 fi
-set_passwords
+if [ ! -f "$PGDATA/status/3.set_passwords_done" ]; then
+  set_passwords
+  touch $PGDATA/status/3.set_passwords_done
+fi
 pg_ctl stop
 
 unset_env_vars
