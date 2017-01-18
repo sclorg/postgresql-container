@@ -13,6 +13,7 @@ generate_passwd_file
 generate_postgresql_config
 
 if [ ! -f "$PGDATA/status/1.initialize_database_done" ]; then
+  find $PGDATA -mindepth 1 -delete
   initialize_database
   mkdir -p $PGDATA/status/
   touch $PGDATA/status/1.initialize_database_done
