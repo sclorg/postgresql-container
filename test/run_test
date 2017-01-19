@@ -369,6 +369,25 @@ function test_value_replication() {
   done
 }
 
+
+# critical_section LOCK_FILE CMD [ARGS...]
+# -------------------------------------------
+# Use LOCK_FILE as a semaphore before running shell CMD.  Flock tool from
+# util-linux is used to lock the file for time being.  We don't clean the file,
+# so ideally put the file somewhere were it is going to be garbage collected.
+critical_section()
+(
+    file=$1 ; shift
+    while :; do
+        # TODO: sleep or not?
+        flock -n 9 || continue
+        : running the command in critical section!
+        "$@"
+        exit $?
+    done 9>"$1"
+)
+
+
 # random_string VARNAME LENGTH=16
 # -------------------------------
 # Set $VARNAME to random string of length $LENGTH.
@@ -393,8 +412,10 @@ allocate_docker_network ()
   found=false
   for check in {1..255}
   do
+    # Hack!  Docker should perform atomic network-creation!
+    critical_section "/var/tmp/docker-networks.lock" \
     docker network create --driver bridge \
-            --subnet=${pattern//X/$check}/24 "$name" &>/dev/null \
+            --subnet=${pattern//X/$check}/24 "$name" \
         || continue
     found=:
     DOCKER_NETS="${DOCKER_NETS:-} $name"
