@@ -500,6 +500,8 @@ function run_master_restart_test() {
   test_slave_visibility
 
   : "Kill the master and create a new one"
+  critical_section "/var/tmp/docker-networks.lock" \
+  docker network disconnect "$network" "$(cat "$CIDFILE_DIR/master-$cid_suffix.cid")"
   docker kill "$(cat "$CIDFILE_DIR/master-$cid_suffix.cid")"
   run_replication_container master "$master_ip" master-restarted restarted
 
