@@ -321,13 +321,16 @@ function run_tests() {
 run_replication_container ()
 {
   local container_args=
+  local container_name=$test_random_id-postgresql-$VERSION-$3
   eval "container_args+=\${${1}_args-}"
   docker run $cluster_args ${container_args} \
-        --name $test_random_id-postgresql-$VERSION-$3 \
+        --name "$container_name" \
         -e POSTGRESQL_MASTER_IP=$master_ip \
-        --net=$network --ip=$2 \
         -d --cidfile ${CIDFILE_DIR}/$1-${cid_suffix}${4+-$4}.cid \
         $IMAGE_NAME run-postgresql-$1
+
+  critical_section "/var/tmp/docker-networks.lock" \
+  docker network connect --ip=$2 "$network" "$container_name"
 }
 
 function test_slave_visibility() {
