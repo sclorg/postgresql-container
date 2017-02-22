@@ -14,7 +14,8 @@ run_container_creation_tests
 run_general_tests
 run_change_password_test
 run_replication_test
-run_master_restart_test"
+run_master_restart_test
+run_doc_test"
 
 test $# -eq 1 -a ${1-} == --list && echo "$TEST_LIST" && exit 0
 test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
@@ -498,7 +499,7 @@ $volume_options
   echo "  Success!"
 }
 
-run_doc_check() {
+run_doc_test() {
   local tmpdir=$(mktemp -d)
   echo "  Testing documentation in the container image"
   # Extract the help files from the container
@@ -531,7 +532,6 @@ function run_general_tests() {
   DOCKER_ARGS="-u 12345" PGUSER=user2 PASS=pass run_tests no_admin_altuid
   DOCKER_ARGS="-u 12345" PGUSER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid
   DB=postgres DOCKER_ARGS="-u 12345" ADMIN_PASS=rOOt run_tests only_admin_altuid
-  run_doc_check
 }
 
 function run_all_tests() {
