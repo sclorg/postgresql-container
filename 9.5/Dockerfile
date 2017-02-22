@@ -23,7 +23,6 @@ LABEL io.k8s.description="PostgreSQL is an advanced Object-Relational database m
 
 EXPOSE 5432
 
-ADD README.md /help.md
 ADD root /
 
 # This image must forever use UID 26 for postgres user so our volumes are
