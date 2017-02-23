@@ -14,7 +14,8 @@ run_container_creation_tests
 run_general_tests
 run_change_password_test
 run_replication_test
-run_master_restart_test"
+run_master_restart_test
+run_doc_test"
 
 test $# -eq 1 -a ${1-} == --list && echo "$TEST_LIST" && exit 0
 test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
@@ -496,6 +497,30 @@ $volume_options
   cleanup_volume $volume_dir $(get_cid ${name})
 
   echo "  Success!"
+}
+
+run_doc_test() {
+  local tmpdir=$(mktemp -d)
+  local f
+  echo "  Testing documentation in the container image"
+  # Extract the help files from the container
+  for f in /usr/share/container-scripts/postgresql/README.md help.1 ; do
+    docker run --rm ${IMAGE_NAME} /bin/bash -c "cat /${f}" >${tmpdir}/$(basename ${f})
+    # Check whether the files include some important information
+    for term in POSTGRESQL_ADMIN_PASSWORD volume 5432 ; do
+      if ! cat ${tmpdir}/$(basename ${f}) | grep -q -e "${term}" ; then
+        echo "ERROR: File /${f} does not include '${term}'."
+        return 1
+      fi
+    done
+  done
+  # Check whether the files use the correct format
+  if ! file ${tmpdir}/help.1 | grep -q roff ; then
+    echo "ERROR: /help.1 is not in troff or groff format"
+    return 1
+  fi
+  echo "  Success!"
+  echo
 }
 
 function run_general_tests() {
