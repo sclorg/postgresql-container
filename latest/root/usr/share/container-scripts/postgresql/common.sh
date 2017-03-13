@@ -37,13 +37,21 @@ function usage() {
   fi
 
   cat >&2 <<EOF
-You must either specify the following environment variables:
+For general container run, you must either specify the following environment
+variables:
   POSTGRESQL_USER (regex: '$psql_identifier_regex')
   POSTGRESQL_PASSWORD (regex: '$psql_password_regex')
   POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')
 Or the following environment variable:
   POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')
 Or both.
+
+To migrate data from different PostgreSQL container:
+  POSTGRESQL_MIGRATION_REMOTE_HOST (hostname or IP address)
+  POSTGRESQL_MIGRATION_ADMIN_PASSWORD (password of remote 'postgres' user)
+And optionally:
+  POSTGRESQL_MIGRATION_IGNORE_ERRORS=yes (default is 'no')
+
 Optional settings:
   POSTGRESQL_MAX_CONNECTIONS (default: 100)
   POSTGRESQL_MAX_PREPARED_TRANSACTIONS (default: 0)
@@ -72,11 +80,16 @@ function check_env_vars() {
     postinitdb_actions+=",admin_pass"
   fi
 
-  case ",$postinitdb_actions," in
-    *,admin_pass,*|*,simple_db,*) ;;
+  if [ -v POSTGRESQL_MIGRATION_REMOTE_HOST -a \
+       -v POSTGRESQL_MIGRATION_ADMIN_PASSWORD ]; then
+    postinitdb_actions+=",migration"
+  fi
+
+  case "$postinitdb_actions" in
+    ,simple_db,admin_pass) ;;
+    ,migration|,simple_db|,admin_pass) ;;
     *) usage ;;
   esac
-
 }
 
 # Make sure env variables don't propagate to PostgreSQL process.
@@ -190,6 +203,23 @@ function set_passwords() {
   if [ -v POSTGRESQL_ADMIN_PASSWORD ]; then
     psql --command "ALTER USER \"postgres\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_ADMIN_PASSWORD}';"
   fi
+}
+
+migrate_db ()
+{
+    test "$postinitdb_actions" = ",migration" || return 0
+
+    # Migration path.
+    (
+        if [ ${POSTGRESQL_MIGRATION_IGNORE_ERRORS-no} = no ]; then
+            echo '\set ON_ERROR_STOP on'
+        fi
+        # initdb automatically creates 'postgres' role;  creating it again would
+        # fail the whole migration so we drop it here
+        PGPASSWORD="$POSTGRESQL_MIGRATION_ADMIN_PASSWORD" \
+        pg_dumpall -h "$POSTGRESQL_MIGRATION_REMOTE_HOST" \
+            | grep -v '^CREATE ROLE postgres;'
+    ) | psql
 }
 
 function set_pgdata ()

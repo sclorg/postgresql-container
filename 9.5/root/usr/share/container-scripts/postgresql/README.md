@@ -18,6 +18,14 @@ initialization by passing `-e VAR=VALUE` to the Docker run command.
 |  `POSTGRESQL_DATABASE`       | Database name                                  |
 |  `POSTGRESQL_ADMIN_PASSWORD` | Password for the `postgres` admin account (optional)     |
 
+Alternatively, the following options are related to migration scenario:
+
+|    Variable name                       |    Description                         |
+| :------------------------------------- | -------------------------------------- |
+|  `POSTGRESQL_MIGRATION_REMOTE_HOST`    | Hostname/IP to migrate from            |
+|  `POSTGRESQL_MIGRATION_ADMIN_PASSWORD` | Password for the remote 'postgres' admin user |
+|  `POSTGRESQL_MIGRATION_IGNORE_ERRORS`  | Set to 'yes' to ignore sql import errors (optional, default 'no') |
+
 The following environment variables influence the PostgreSQL configuration file. They are all optional.
 
 |    Variable name              |    Description                                                          |    Default
@@ -60,6 +68,56 @@ and setup necessary database users and passwords. After the database is initiali
 or if it was already present, [`postgres`](http://www.postgresql.org/docs/9.5/static/app-postgres.html)
 is executed and will run as PID 1. You can stop the detached container by running
 `docker stop postgresql_database`.
+
+Data migration
+----------------------
+
+PostgreSQL container supports migration of data from remote PostgreSQL server.
+You can run it like:
+
+```
+$ docker run -d --name postgresql_database \
+    -e POSTGRESQL_MIGRATION_REMOTE_HOST=172.17.0.2 \
+    -e POSTGRESQL_MIGRATION_ADMIN_PASSWORD=remoteAdminP@ssword \
+    [ OPTIONAL_CONFIGURATION_VARIABLES ]
+    openshift/postgresql-92-centos7
+```
+
+The migration is done the **dump and restore** way (running `pg_dumpall` against
+remote cluster and importing the dump locally by `psql`).  Because the process
+is streamed (unix pipeline), there are no intermediate dump files created during
+this process to not waste additional storage space.
+
+If some SQL commands fail during applying, the default behavior
+of the migration script is to fail as well to ensure the **all** or **nothing**
+result of scripted, unattended migration. In most common cases, successful
+migration is expected (but not guaranteed!), given you migrate from
+a previous version of PostgreSQL server container, that is created using
+the same principles as this one (e.g. migration from
+`openshift/postgresql-92-centos7` to `centos/postgresql-95-centos7`).
+Migration from a different kind of PostgreSQL container can likely fail.
+
+If this **all** or **nothing** principle is inadequate for you, and you know
+what you are doing, there's optional `POSTGRESQL_MIGRATION_IGNORE_ERRORS` option
+which does **best effort** migration (some data might be lost, it is up to user
+to review the standard error output and fix the issues manually in
+post-migration time).
+
+Please keep in mind that the container image provides help for users'
+convenience, but fully automatic migration is not guaranteed.  Thus, before you
+start proceeding with the database migration, get prepared to perform manual
+steps in order to get all your data migrated.
+
+Note that you might not use variables like `POSTGRESQL_USER` in migration
+scenario, all the data (including info about databases, roles or passwords are
+copied from old cluster).  Ensure that you use the same
+`OPTIONAL_CONFIGURATION_VARIABLES` as you used for initialization of the old
+PostgreSQL container.  If some non-default configuration is done on remote
+cluster, you might need to copy the configuration files manually, too.
+
+Security warning:  Note that the IP communication between old and new PostgreSQL
+clusters is not encrypted by default, it is up to user to configure SSL on
+remote cluster or ensure security via different means.
 
 PostgreSQL auto-tuning
 --------------------

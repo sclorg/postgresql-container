@@ -9,8 +9,11 @@
 set -exo nounset
 shopt -s nullglob
 
+. ../hack/test_lib
+
 TEST_LIST="\
 run_upgrade_test
+run_migration_test
 run_container_creation_tests
 run_general_tests
 run_change_password_test
@@ -514,6 +517,18 @@ run_upgrade_test ()
 
     # TODO: We run this script from $VERSION directory, through test/run symlink.
     (cd .. ; hack/run_upgrade_test "$prev:remote" "$VERSION:local")
+}
+
+run_migration_test ()
+{
+    local from_version
+    local upgrade_path="9.2 9.4 9.5 9.6"
+
+    for from_version in $upgrade_path; do
+        test $(version2number $from_version) -le $(version2number "$VERSION") \
+            || break
+        (cd .. ; hack/run_migration_test $from_version:remote $VERSION:local)
+    done
 }
 
 run_doc_test() {

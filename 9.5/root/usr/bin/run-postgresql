@@ -24,6 +24,7 @@ fi
 
 pg_ctl -w start -o "-h ''"
 if $PG_INITIALIZED ; then
+    migrate_db
     create_users
 fi
 set_passwords
