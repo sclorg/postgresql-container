@@ -23,7 +23,7 @@ LABEL io.k8s.description="PostgreSQL is an advanced Object-Relational database m
 
 EXPOSE 5432
 
-ADD root /
+ADD root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
@@ -42,6 +42,8 @@ RUN yum install -y centos-release-scl && \
 # Get prefix path and path to scripts rather than hard-code them in scripts
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
     ENABLED_COLLECTIONS=rh-postgresql94
+
+ADD root /
 
 # When bash is started non-interactively, to run a shell script, for example it
 # looks for this variable and source the content of this file. This will enable
