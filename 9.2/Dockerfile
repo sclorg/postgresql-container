@@ -21,6 +21,18 @@ LABEL io.k8s.description="PostgreSQL is an advanced Object-Relational database m
       io.openshift.expose-services="5432:postgresql" \
       io.openshift.tags="database,postgresql,postgresql92"
 
+# Support for atomic run/install/uninstall
+LABEL INSTALL="docker run -t -i --rm --privileged -u 0:0 -v /:/host --net=host \
+      --ipc=host --pid=host -e HOST=/host -e LOGDIR=\${LOGDIR} -e CONFDIR=\${CONFDIR} \
+      -e DATADIR=\${DATADIR} -e IMAGE=\${IMAGE} -e NAME=\${NAME} -e OPT1 -e OPT2 -e OPT3 \
+      \${OPT1} \${IMAGE} /usr/share/container-layer/postgresql/atomic/install.sh" \
+      UNINSTALL="docker run -t -i --rm --privileged -u 0:0 -v /:/host --net=host \
+      --ipc=host --pid=host -e HOST=/host -e LOGDIR=\${LOGDIR} -e CONFDIR=\${CONFDIR} \
+      -e DATADIR=\${DATADIR} -e IMAGE=\${IMAGE} -e NAME=\${NAME} -e OPT1 -e OPT2 -e OPT3 \
+      \${OPT1} \${IMAGE} /usr/share/container-layer/postgresql/atomic/uninstall.sh" \
+      RUN="docker run -t -i --rm --name=\${NAME} -e OPT1 -e OPT2 -e OPT3 \${OPT2} \
+      \${IMAGE}"
+
 EXPOSE 5432
 
 ADD README.md /help.md
