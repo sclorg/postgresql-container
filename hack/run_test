@@ -17,7 +17,7 @@ run_replication_test
 run_master_restart_test
 run_doc_test"
 
-test $# -eq 1 -a ${1-} == --list && echo "$TEST_LIST" && exit 0
+test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
 test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
 test -n "${VERSION-}" || false 'make sure $VERSION is defined'
 
