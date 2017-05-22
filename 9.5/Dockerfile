@@ -10,16 +10,29 @@ FROM centos:centos7
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-MAINTAINER SoftwareCollections.org <sclorg@redhat.com>
+LABEL MAINTAINER SoftwareCollections.org <sclorg@redhat.com>
 
 ENV POSTGRESQL_VERSION=9.5 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres
 
-LABEL io.k8s.description="PostgreSQL is an advanced Object-Relational database management system" \
-      io.k8s.display-name="PostgreSQL 9.5" \
+ENV SUMMARY="The programs needed to create and run a PostgreSQL server $POSTGRESQL_VERSION" \
+    DESCRIPTION="PostgreSQL is an advanced Object-Relational database management \
+system (DBMS). This image contains the programs needed to create \
+and run a PostgreSQL server, the client \
+programs that you'll need to access a PostgreSQL DBMS server, as \
+well as HTML documentation for the whole system." 
+
+LABEL summary=$SUMMARY \
+      description="$DESCRIPTION" \
+      io.k8s.description="$SUMMARY" \
+      io.k8s.display-name="PostgreSQL 9.4" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql95,rh-postgresql95"
+      io.openshift.tags="database,postgresql,postgresql94,rh-postgresql94" \
+      name="centos/postgresql-94-centos7" \
+      com.redhat.component="rh-postgresql94-docker" \
+      version="9.4" \
+      release="1"
 
 EXPOSE 5432
 

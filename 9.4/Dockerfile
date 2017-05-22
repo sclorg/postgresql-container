@@ -16,10 +16,23 @@ ENV POSTGRESQL_VERSION=9.4 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres
 
-LABEL io.k8s.description="PostgreSQL is an advanced Object-Relational database management system" \
+ENV SUMMARY="The programs needed to create and run a PostgreSQL server $POSTGRESQL_VERSION" \
+    DESCRIPTION="PostgreSQL is an advanced Object-Relational database management \
+system (DBMS). This image contains the programs needed to create \
+and run a PostgreSQL server, the client \
+programs that you'll need to access a PostgreSQL DBMS server, as \
+well as HTML documentation for the whole system."
+
+LABEL summary=$SUMMARY \
+      description="$DESCRIPTION" \
+      io.k8s.description="$SUMMARY" \
       io.k8s.display-name="PostgreSQL 9.4" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql94,rh-postgresql94"
+      io.openshift.tags="database,postgresql,postgresql94,rh-postgresql94" \
+      name="centos/postgresql-94-centos7" \
+      com.redhat.component="rh-postgresql94-docker" \
+      version="9.4" \
+      release="1"
 
 EXPOSE 5432
 
