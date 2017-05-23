@@ -14,12 +14,10 @@ ENV POSTGRESQL_VERSION=9.5 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres
 
-ENV SUMMARY="The programs needed to create and run a PostgreSQL server $POSTGRESQL_VERSION" \
-    DESCRIPTION="PostgreSQL is an advanced Object-Relational database management \
-system (DBMS). This image contains the programs needed to create \
-and run a PostgreSQL server, the client \
-programs that you'll need to access a PostgreSQL DBMS server, as \
-well as HTML documentation for the whole system." 
+ENV SUMMARY="Advanced Object-Relational database management system" \
+    DESCRIPTION="PostgreSQL is an advanced Object-Relational database management system (DBMS). \
+The image contains the client and server programs that you'll need to \
+create, run, maintain and access a PostgreSQL DBMS server."
 
 LABEL summary=$SUMMARY \
       description="$DESCRIPTION" \
