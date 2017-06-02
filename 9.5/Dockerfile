@@ -10,8 +10,6 @@ FROM centos:centos7
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-LABEL MAINTAINER SoftwareCollections.org <sclorg@redhat.com>
-
 ENV POSTGRESQL_VERSION=9.5 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres
@@ -30,7 +28,8 @@ LABEL summary=$SUMMARY \
       name="centos/postgresql-94-centos7" \
       com.redhat.component="rh-postgresql94-docker" \
       version="9.4" \
-      release="1"
+      release="1" \
+      maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
 
