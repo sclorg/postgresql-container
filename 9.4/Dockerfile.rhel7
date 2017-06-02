@@ -14,7 +14,7 @@ ENV POSTGRESQL_VERSION=9.4 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres
 
-ENV SUMMARY="Advanced Object-Relational database management system" \
+ENV SUMMARY="PostgreSQL is an advanced Object-Relational database management system" \
     DESCRIPTION="PostgreSQL is an advanced Object-Relational database management system (DBMS). \
 The image contains the client and server programs that you'll need to \
 create, run, maintain and access a PostgreSQL DBMS server."
