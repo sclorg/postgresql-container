@@ -122,13 +122,18 @@ function generate_postgresql_recovery_config() {
 
 # Generate passwd file based on current uid
 function generate_passwd_file() {
-  export USER_ID=$(id -u)
-  export GROUP_ID=$(id -g)
-  grep -v ^postgres /etc/passwd > "$HOME/passwd"
-  echo "postgres:x:${USER_ID}:${GROUP_ID}:PostgreSQL Server:${HOME}:/bin/bash" >> "$HOME/passwd"
+  USER_ID=$(id -u)
+  GROUP_ID=$(id -g)
+
+  NSS_WRAPPER_PASSWD=/opt/openshift/passwd
+  NSS_WRAPPER_GROUP=/etc/group
+
+  grep -v ^postgres /etc/passwd > $NSS_WRAPPER_PASSWD
+  echo "postgres:x:${USER_ID}:${GROUP_ID}:PostgreSQL Server:${HOME}:/bin/bash" >> $NSS_WRAPPER_PASSWD
+
+  export NSS_WRAPPER_PASSWD
+  export NSS_WRAPPER_GROUP
   export LD_PRELOAD=libnss_wrapper.so
-  export NSS_WRAPPER_PASSWD=${HOME}/passwd
-  export NSS_WRAPPER_GROUP=/etc/group
 }
 
 function initialize_database() {
