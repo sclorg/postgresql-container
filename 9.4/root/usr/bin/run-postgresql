@@ -10,7 +10,11 @@ source "${CONTAINER_SCRIPTS_PATH}/common.sh"
 set_pgdata
 check_env_vars
 generate_passwd_file
-generate_postgresql_config
+if [ -v POSTGRESQL_CONFIG_URL ]; then
+  get_postgresql_config
+else
+  generate_postgresql_config
+fi
 
 if [ ! -f "$PGDATA/postgresql.conf" ]; then
   initialize_database
