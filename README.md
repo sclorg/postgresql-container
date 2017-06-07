@@ -1,6 +1,8 @@
 PostgreSQL Docker images
 ========================
 
+[![Build Status](https://ci.openshift.redhat.com/jenkins/buildStatus/icon?job=postgresql)](https://ci.openshift.redhat.com/jenkins/job/postgresql/)
+
 This repository contains Dockerfiles for PostgreSQL images for OpenShift.
 Users can choose between RHEL and CentOS based images.
 
