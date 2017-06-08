@@ -22,12 +22,12 @@ create, run, maintain and access a PostgreSQL DBMS server."
 LABEL summary=$SUMMARY \
       description="$DESCRIPTION" \
       io.k8s.description="$SUMMARY" \
-      io.k8s.display-name="PostgreSQL 9.4" \
+      io.k8s.display-name="PostgreSQL 9.5" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql94,rh-postgresql94" \
-      name="centos/postgresql-94-centos7" \
-      com.redhat.component="rh-postgresql94-docker" \
-      version="9.4" \
+      io.openshift.tags="database,postgresql,postgresql95,rh-postgresql95" \
+      name="centos/postgresql-95-centos7" \
+      com.redhat.component="rh-postgresql95-docker" \
+      version="9.5" \
       release="1" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
