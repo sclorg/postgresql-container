@@ -61,6 +61,29 @@ or if it was already present, [`postgres`](http://www.postgresql.org/docs/9.2/st
 is executed and will run as PID 1. You can stop the detached container by running
 `docker stop postgresql_database`.
 
+Supplying custom configuration file
+--------------------
+
+You are able to supply your custom configuration file. PostgreSQL container
+image is using templating to fill in configuration file in container startup
+script. You are able to override the default template. With this approach you
+can even define your own variables which you can pass as envinronment variables
+to the container.
+
+The template is located within container image on path:
+
+    /usr/share/container-scripts/postgresql/openshift-custom-postgresql.conf.template
+
+You can copy it like this:
+
+    $ docker create --name=pg registry.access.redhat.com/rhscl/postgresql-95-rhel7:latest
+    $ docker cp pg:/usr/share/container-scripts/postgresql/openshift-custom-postgresql.conf.template .
+
+And then file `openshift-custom-postgresql.conf.template` will be present in
+your current working directory.
+
+For more information on the configuration file, please see [the upstream documentation for runtime configuration](https://www.postgresql.org/docs/9.5/static/runtime-config.html).
+
 PostgreSQL auto-tuning
 --------------------
 
