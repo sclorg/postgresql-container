@@ -116,7 +116,7 @@ environment variables.
 
 Troubleshooting
 ---------------
-At first the postgres deamon in the container logs to the standard output, so the log is available in the container log. The log can be examined by running:
+At first the postgres daemon writes its logs to the standard output, so these are available in the container log. The log can be examined by running:
 
     docker logs <container>
 
