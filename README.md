@@ -32,7 +32,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
-    $ make build TARGET=rhel7 VERSION=9.5
+    $ make build TARGET=rhel7 VERSIONS=9.5
     ```
 
 *  **CentOS7 based image**
@@ -48,10 +48,10 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
-    $ make build TARGET=centos7 VERSION=9.5
+    $ make build TARGET=centos7 VERSIONS=9.5
     ```
 
-**Notice: By omitting the `VERSION` parameter, the build/test action will be performed
+**Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
 on all provided versions of PostgreSQL.**
 
 
@@ -79,20 +79,20 @@ Users can choose between testing PostgreSQL based on a RHEL or CentOS image.
 
     ```
     $ cd postgresql
-    $ make test TARGET=rhel7 VERSION=9.5
+    $ make test TARGET=rhel7 VERSIONS=9.5
     ```
 
 *  **CentOS based image**
 
     ```
     $ cd postgresql
-    $ make test TARGET=centos7 VERSION=9.5
+    $ make test TARGET=centos7 VERSIONS=9.5
     ```
 +By using the `TEST_CASE` parameter you can choose a test case subset to be run against the image, eg:
 
     $ cd postgresql
-    $ make test VERSION=9.5 TEST_CASE="run_general_tests run_replication_test"
+    $ make test VERSIONS=9.5 TEST_CASE="run_general_tests run_replication_test"
 
 
-**Notice: By omitting the `VERSION` parameter, the build/test action will be performed
+**Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
 on all provided versions of PostgreSQL.**
