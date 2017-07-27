@@ -61,6 +61,47 @@ or if it was already present, [`postgres`](http://www.postgresql.org/docs/9.2/st
 is executed and will run as PID 1. You can stop the detached container by running
 `docker stop postgresql_database`.
 
+Supplying custom configuration file
+--------------------
+
+You are able to supply your custom configuration file. PostgreSQL container
+image is using templating to fill in configuration file in container startup
+script. You are able to override the default template. With this approach you
+can even define your own variables which you can pass as envinronment variables
+to the container.
+
+The template is located within container image on path:
+
+    /usr/share/container-scripts/postgresql/openshift-custom-postgresql.conf.template
+
+You can copy it like this:
+
+    $ docker create --name=pg registry.access.redhat.com/rhscl/postgresql-95-rhel7:latest
+    $ docker cp pg:/usr/share/container-scripts/postgresql/openshift-custom-postgresql.conf.template .
+
+And then file `openshift-custom-postgresql.conf.template` will be present in
+your current working directory. At this point, you can start editing the
+template. For more information on the configuration file, please see [the
+upstream documentation for runtime
+configuration](https://www.postgresql.org/docs/9.5/static/runtime-config.html).
+
+Once you are done, you can run the PostgreSQL container with the custom configuration template:
+
+    $ docker run -v ${PWD}/openshift-custom-postgresql.conf.template:/usr/share/container-scripts/postgresql/openshift-custom-postgresql.conf.template:Z ...
+
+If you want to check the current runtime configuration and be sure that all the
+values were picked up, you can run this command which will output it:
+
+    $ docker exec postgresql-container bash -c 'psql --command "show all;"'
+
+There is a shorter version where you can just see a single value, in this case `work_mem`:
+
+    $ docker exec postgresql-container bash -c 'psql --command "show work_mem;"'
+     work_mem
+    ----------
+     128MB
+    (1 row)
+
 PostgreSQL auto-tuning
 --------------------
 

@@ -15,7 +15,8 @@ run_general_tests
 run_change_password_test
 run_replication_test
 run_master_restart_test
-run_doc_test"
+run_doc_test
+run_config_change_test"
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
 test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
@@ -200,6 +201,14 @@ function test_config_option() {
   local value=$1 ; shift
 
   docker exec $(get_cid ${name}) grep -q "${setting} = ${value}" /var/lib/pgsql/openshift-custom-postgresql.conf
+}
+
+function test_runtime_config_value() {
+  local name=$1 ; shift
+  local setting=$1 ; shift
+  local value=$1 ; shift
+
+  docker exec $(get_cid ${name}) bash -c "psql --command \"show ${setting};\"" | grep "${value}"
 }
 
 function run_configuration_tests() {
@@ -519,6 +528,51 @@ run_doc_test() {
     echo "ERROR: /help.1 is not in troff or groff format"
     return 1
   fi
+  echo "  Success!"
+  echo
+}
+
+function run_config_change_test() {
+  local tmpdir=$(mktemp -d)
+  local template_basename=openshift-custom-postgresql.conf.template
+  local template_local_tmp_path=${tmpdir}/${template_basename}
+  local template_container_dir=/usr/share/container-scripts/postgresql/
+  local template_container_path=${template_container_dir}/${template_basename}
+  local work_mem="128MB"
+  echo "  Testing changing configuration file"
+
+  docker run --rm ${IMAGE_NAME} \
+    /bin/bash -c \
+    "cat ${template_container_path}" >${template_local_tmp_path}
+
+  printf "\nwork_mem = \${POSTGRESQL_WORK_MEM}\n" >>${template_local_tmp_path}
+  cat ${template_local_tmp_path}
+
+  local name="config_test"
+  local database='db'
+  local user='user'
+  local password='password'
+  local admin_password='adminPassword'
+  local volume_options="-v ${template_local_tmp_path}:${template_container_path}:Z"
+
+  DOCKER_ARGS="
+-e POSTGRESQL_DATABASE=${database}
+-e POSTGRESQL_USER=${user}
+-e POSTGRESQL_PASSWORD=${password}
+-e POSTGRESQL_WORK_MEM=${work_mem}
+$volume_options
+" create_container ${name}
+
+  # need to set these because `postgresql_cmd` relies on global variables
+  PGUSER=${user}
+  PASS=${password}
+
+  # need this to wait for the container to start up
+  CONTAINER_IP=$(get_container_ip ${name})
+  test_connection ${name}
+
+  test_runtime_config_value ${name} work_mem ${work_mem}
+
   echo "  Success!"
   echo
 }
