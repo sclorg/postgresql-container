@@ -10,7 +10,7 @@ FROM centos:centos7
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-ENV POSTGRESQL_VERSION=9.5 \
+ENV POSTGRESQL_VERSION=9.6 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres
 
@@ -22,12 +22,12 @@ create, run, maintain and access a PostgreSQL DBMS server."
 LABEL summary=$SUMMARY \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="PostgreSQL 9.5" \
+      io.k8s.display-name="PostgreSQL 9.6" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql95,rh-postgresql95" \
-      name="centos/postgresql-95-centos7" \
-      com.redhat.component="rh-postgresql95-docker" \
-      version="9.5" \
+      io.openshift.tags="database,postgresql,postgresql96,rh-postgresql96" \
+      name="centos/postgresql-96-centos7" \
+      com.redhat.component="rh-postgresql96-docker" \
+      version="9.6" \
       release="1" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
@@ -39,7 +39,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN yum install -y centos-release-scl-rh && \
-    INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql95 rh-postgresql95-postgresql-contrib nss_wrapper" && \
+    INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql96 rh-postgresql96-postgresql-contrib nss_wrapper" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \
@@ -51,7 +51,7 @@ RUN yum install -y centos-release-scl-rh && \
 
 # Get prefix path and path to scripts rather than hard-code them in scripts
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
-    ENABLED_COLLECTIONS=rh-postgresql95
+    ENABLED_COLLECTIONS=rh-postgresql96
 
 COPY root /
 

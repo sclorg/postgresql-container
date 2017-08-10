@@ -1,6 +1,6 @@
 # Variables are documented in common/build.sh.
 BASE_IMAGE_NAME = postgresql
-VERSIONS = 9.4 9.5
+VERSIONS = 9.4 9.5 9.6
 OPENSHIFT_NAMESPACES = 9.2
 
 # HACK:  Ensure that 'git pull' for old clones doesn't cause confusion.
