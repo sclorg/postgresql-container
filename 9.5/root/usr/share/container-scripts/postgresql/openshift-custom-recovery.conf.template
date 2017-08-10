@@ -1,0 +1,9 @@
+#
+# Custom OpenShift configuration.
+#
+# NOTE: This file is rewritten every time the container is started!
+#       Changes to this file will be overwritten.
+#
+
+standby_mode = on
+primary_conninfo = 'host=${MASTER_FQDN} port=5432 user=${POSTGRESQL_MASTER_USER} password=${POSTGRESQL_MASTER_PASSWORD}'

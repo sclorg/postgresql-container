@@ -134,7 +134,7 @@ function generate_passwd_file() {
 function initialize_database() {
   # Initialize the database cluster with utf8 support enabled by default.
   # This might affect performance, see:
-  # http://www.postgresql.org/docs/9.6/static/locale.html
+  # http://www.postgresql.org/docs/9.5/static/locale.html
   LANG=${LANG:-en_US.utf8} initdb
 
   # PostgreSQL configuration.
