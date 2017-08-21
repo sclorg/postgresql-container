@@ -39,6 +39,8 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN yum install -y centos-release-scl-rh && \
+    yum-config-manager --add-repo https://cbs.centos.org/repos/sclo7-rh-postgresql96-rh-candidate/x86_64/os/ && \
+    echo gpgcheck=0 >> /etc/yum.repos.d/cbs.centos.org_repos_sclo7-rh-postgresql96-rh-candidate_x86_64_os_.repo && \
     INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql96 rh-postgresql96-postgresql-contrib nss_wrapper" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
