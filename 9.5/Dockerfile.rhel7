@@ -11,6 +11,7 @@ FROM rhel7
 #                           PostgreSQL administrative account
 
 ENV POSTGRESQL_VERSION=9.5 \
+    POSTGRESQL_PREV_VERSION=9.4 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres
 
@@ -48,8 +49,8 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-server-rhscl-7-rpms && \
     yum-config-manager --enable rhel-7-server-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
-    INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql95 rh-postgresql95-postgresql-contrib nss_wrapper" && \
-    yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
+    INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql95 rh-postgresql95-postgresql-contrib nss_wrapper rh-postgresql94-postgresql-server" && \
+    yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \

@@ -11,6 +11,7 @@ FROM centos:centos7
 #                           PostgreSQL administrative account
 
 ENV POSTGRESQL_VERSION=9.6 \
+    POSTGRESQL_PREV_VERSION=9.5 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres
 
@@ -41,7 +42,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 RUN yum install -y centos-release-scl-rh && \
     yum-config-manager --add-repo https://cbs.centos.org/repos/sclo7-rh-postgresql96-rh-candidate/x86_64/os/ && \
     echo gpgcheck=0 >> /etc/yum.repos.d/cbs.centos.org_repos_sclo7-rh-postgresql96-rh-candidate_x86_64_os_.repo && \
-    INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql96 rh-postgresql96-postgresql-contrib nss_wrapper" && \
+    INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql96 rh-postgresql96-postgresql-contrib nss_wrapper rh-postgresql95-postgresql-server" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \

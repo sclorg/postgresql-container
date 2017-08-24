@@ -10,12 +10,14 @@ set -exo nounset
 shopt -s nullglob
 
 TEST_LIST="\
+run_upgrade_test
 run_container_creation_tests
 run_general_tests
 run_change_password_test
 run_replication_test
 run_master_restart_test
-run_doc_test"
+run_doc_test
+"
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
 test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
@@ -497,6 +499,21 @@ $volume_options
   cleanup_volume $volume_dir $(get_cid ${name})
 
   echo "  Success!"
+}
+
+run_upgrade_test ()
+{
+    local upgrade_path="none 9.2 9.4 9.5 9.6 none" prev= act=
+    for act in $upgrade_path; do
+        if test "$act" = $VERSION; then
+            break
+        fi
+        prev=$act
+    done
+    test "$prev" != none
+
+    # TODO: We run this script from $VERSION directory, through test/run symlink.
+    (cd .. ; hack/run_upgrade_test "$prev:remote" "$VERSION:local")
 }
 
 run_doc_test() {

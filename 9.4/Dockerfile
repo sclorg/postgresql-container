@@ -11,6 +11,7 @@ FROM centos:centos7
 #                           PostgreSQL administrative account
 
 ENV POSTGRESQL_VERSION=9.4 \
+    POSTGRESQL_PREV_VERSION=9.2 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres
 
@@ -39,7 +40,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN yum install -y centos-release-scl && \
-    INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql94 rh-postgresql94-postgresql-contrib nss_wrapper" && \
+    INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql94 rh-postgresql94-postgresql-contrib nss_wrapper postgresql92-postgresql-server rh-postgresql94-postgresql-upgrade" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \

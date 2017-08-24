@@ -12,14 +12,19 @@ check_env_vars
 generate_passwd_file
 generate_postgresql_config
 
+# Is this brand new data volume?
+PG_INITIALIZED=false
+
 if [ ! -f "$PGDATA/postgresql.conf" ]; then
   initialize_database
-  NEED_TO_CREATE_USERS=yes
+  PG_INITIALIZED=:
+else
+  try_pgupgrade
 fi
 
 pg_ctl -w start -o "-h ''"
-if [ "${NEED_TO_CREATE_USERS:-}" == "yes" ]; then
-  create_users
+if $PG_INITIALIZED ; then
+    create_users
 fi
 set_passwords
 pg_ctl stop
