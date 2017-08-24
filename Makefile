@@ -8,3 +8,7 @@ OPENSHIFT_NAMESPACES = 9.2
 .PHONY: $(shell test -f common/common.mk || echo >&2 'Please do "git submodule update --init" first.')
 
 include common/common.mk
+
+# Additional upgrade tests.  Not hooked into CI ATM.
+upgrade-tests: $(VERSIONS)
+	hack/run_upgrade_test 9.2:remote 9.4:local 9.5:local 9.6:local
