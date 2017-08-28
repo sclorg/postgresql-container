@@ -46,7 +46,6 @@ RUN yum repolist > /dev/null && \
     yum install -y yum-utils gettext && \
     yum-config-manager --enable rhel-server-rhscl-7-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
-    yum-config-manager --enable rhel-7-server-ose-3.2-rpms && \
     INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql96 rh-postgresql96-postgresql-contrib nss_wrapper" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
