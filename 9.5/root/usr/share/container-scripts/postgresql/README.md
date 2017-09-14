@@ -40,12 +40,12 @@ matches the user UID or name which is running inside the container.**
 Usage
 ----------------------
 
-For this, we will assume that you are using the `openshift/postgresql-92-centos7` image.
+For this, we will assume that you are using the `rhscl/postgresql-95-rhel7` image.
 If you want to set only the mandatory environment variables and not store the database
 in a host directory, execute the following command:
 
 ```
-$ docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 openshift/postgresql-92-centos7
+$ docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhscl/postgresql-95-rhel7
 ```
 
 This will create a container named `postgresql_database` running PostgreSQL with
@@ -55,9 +55,9 @@ executions, also add a `-v /host/db/path:/var/lib/pgsql/data` argument. This wil
 the PostgreSQL database cluster directory.
 
 If the database cluster directory is not initialized, the entrypoint script will
-first run [`initdb`](http://www.postgresql.org/docs/9.2/static/app-initdb.html)
+first run [`initdb`](http://www.postgresql.org/docs/9.5/static/app-initdb.html)
 and setup necessary database users and passwords. After the database is initialized,
-or if it was already present, [`postgres`](http://www.postgresql.org/docs/9.2/static/app-postgres.html)
+or if it was already present, [`postgres`](http://www.postgresql.org/docs/9.5/static/app-postgres.html)
 is executed and will run as PID 1. You can stop the detached container by running
 `docker stop postgresql_database`.
 

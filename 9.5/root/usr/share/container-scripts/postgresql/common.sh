@@ -50,7 +50,7 @@ Optional settings:
   POSTGRESQL_SHARED_BUFFERS (default: 32MB)
 
 For more information see /usr/share/container-scripts/postgresql/README.md
-within the container or visit https://github.com/openshift/postgresql.
+within the container or visit https://github.com/sclorg/postgresql-container.
 EOF
   exit 1
 }

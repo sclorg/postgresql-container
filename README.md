@@ -7,11 +7,17 @@ Users can choose between RHEL and CentOS based images.
 For more information about using these images with OpenShift, please see the
 official [OpenShift Documentation](https://docs.openshift.org/latest/using_images/db_images/postgresql.html).
 
+For more information about contributing, see
+[the Contribution Guidelines](https://github.com/sclorg/welcome/blob/master/contribution.md).
+For more information about concepts used in these docker images, see the
+[Landing page](https://github.com/sclorg/welcome).
+
+
 Versions
 ---------------
 PostgreSQL versions currently provided are:
-* postgresql-9.4
-* postgresql-9.5
+* [postgresql-9.4](9.4)
+* [postgresql-9.5](9.5)
 
 RHEL versions currently supported are:
 * RHEL7
