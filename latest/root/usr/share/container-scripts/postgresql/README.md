@@ -187,6 +187,7 @@ values stored in the variables and the actual passwords. Whenever a database
 container starts it will reset the passwords to the values stored in the
 environment variables.
 
+
 Upgrading database (by switching to newer PostgreSQL image version)
 -------------------------------------------------------------------
 
