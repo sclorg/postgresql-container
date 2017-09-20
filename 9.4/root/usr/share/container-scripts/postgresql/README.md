@@ -214,10 +214,12 @@ approach -- it starts both old and new PostgreSQL servers (within container) and
 datadir.  This operation requires a lot of data files copying, so you can decide
 what type of upgrade you'll do by setting `$POSTGRESQL_UPGRADE` appropriately:
 
-|    Variable value  |    Description                                 |
-| :----------------- | ---------------------------------------------- |
-|  `copy`            | The data files are copied from old datadir to new datadir.  This option has low risk of data loss in case of some upgrade failure. |
-|  `hardlink`        | Data files are hard-linked from old to the new data directory, which brings performance optimization - but the old directory becomes unusable, even in case of failure. |
+**`copy`**  
+       The data files are copied from old datadir to new datadir.  This option has low risk of data loss in case of some upgrade failure.
+
+**`hardlink`**  
+       Data files are hard-linked from old to the new data directory, which brings performance optimization - but the old directory becomes unusable, even in case of failure.
+
 
 Note that because we copy data directory, you need to make sure that you have
 enough space for the copy;  upgrade failure because of not enough space might
