@@ -43,7 +43,7 @@ get_image_id ()
 data_pagila_create ()
 {
     debug "initializing pagila database"
-    CID="$CID" ./hack/pagila.sh
+    CID="$CID" ./test/pagila.sh
 }
 
 data_pagila_check ()
