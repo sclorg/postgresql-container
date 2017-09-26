@@ -5,7 +5,7 @@ set -e
 die() { echo "$*" >&2 ; exit 1; }
 
 test -z "$CID" && die "Please specify \$CID variable"
-test -d common || die "Please run me from git root directory"
+# test -d common || die "Please run me from git root directory"
 
 pagila_mirror=https://dl.fedoraproject.org/pub/epel/7/x86_64/p/
 pagila_base="pagila-0.10.1-3.el7.noarch.rpm"
