@@ -2,7 +2,7 @@
 
 set -e
 
-. hack/test_lib
+. test/test_lib
 
 ADMIN_PASSWORD=redhat
 
