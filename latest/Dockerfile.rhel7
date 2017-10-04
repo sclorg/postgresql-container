@@ -28,8 +28,7 @@ LABEL summary=$SUMMARY \
       io.openshift.tags="database,postgresql,postgresql96,rh-postgresql96" \
       name="rhscl/postgresql-96-rhel7" \
       com.redhat.component="rh-postgresql96-docker" \
-      version="9.6" \
-      release="1"
+      version="1"
 
 EXPOSE 5432
 
@@ -47,6 +46,7 @@ RUN yum repolist > /dev/null && \
     yum install -y yum-utils gettext && \
     yum-config-manager --disable \* &> /dev/null && \
     yum-config-manager --enable rhel-server-rhscl-7-rpms && \
+    yum-config-manager --enable rhel-server-rhscl-7-beta-rpms && \
     yum-config-manager --enable rhel-7-server-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql96 rh-postgresql96-postgresql-contrib nss_wrapper rh-postgresql95-postgresql-server" && \
