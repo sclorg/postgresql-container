@@ -25,6 +25,7 @@ run_doc_test
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
 test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
 test -n "${VERSION-}" || false 'make sure $VERSION is defined'
+test -n "${OS-}" || false 'make sure $OS is defined'
 
 CIDFILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
 
@@ -525,7 +526,8 @@ run_migration_test ()
     local upgrade_path="9.2 9.4 9.5 9.6"
 
     for from_version in $upgrade_path; do
-        test $(version2number $from_version) -le $(version2number "$VERSION") \
+        # Do not test migration from $VERSION:remote to $VERSION:local
+        test $(version2number $from_version) -lt $(version2number "$VERSION") \
             || break
         test/run_migration_test $from_version:remote $VERSION:local
     done
