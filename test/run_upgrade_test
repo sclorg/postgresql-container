@@ -59,6 +59,7 @@ init_datadir ()
     docker rm -f "$CID" >/dev/null
 }
 
+set -x
 
 # check_upgrade_path {hardlink|copy} dataspec
 assert_upgrade_succeeds ()
