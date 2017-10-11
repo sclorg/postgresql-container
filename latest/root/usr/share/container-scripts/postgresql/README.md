@@ -1,7 +1,3 @@
-% POSTGRESQL-96(1) Container Image Pages
-% SoftwareCollections.org
-% July 18, 2017
-
 PostgreSQL 9.6 SQL Database Server Docker image
 ===============================================
 
@@ -70,11 +66,15 @@ initialization by passing `-e VAR=VALUE` to the Docker run command.
 
 Alternatively, the following options are related to migration scenario:
 
-|    Variable name                       |    Description                         |
-| :------------------------------------- | -------------------------------------- |
-|  `POSTGRESQL_MIGRATION_REMOTE_HOST`    | Hostname/IP to migrate from            |
-|  `POSTGRESQL_MIGRATION_ADMIN_PASSWORD` | Password for the remote 'postgres' admin user |
-|  `POSTGRESQL_MIGRATION_IGNORE_ERRORS`  | Set to 'yes' to ignore sql import errors (optional, default 'no') |
+**`POSTGRESQL_MIGRATION_REMOTE_HOST`**  
+       Hostname/IP to migrate from
+
+**`POSTGRESQL_MIGRATION_ADMIN_PASSWORD`**  
+       Password for the remote 'postgres' admin user
+
+**`POSTGRESQL_MIGRATION_IGNORE_ERRORS (optional, default 'no')`**  
+       Set to 'yes' to ignore sql import errors
+
 
 The following environment variables influence the PostgreSQL configuration file. They are all optional.
 
