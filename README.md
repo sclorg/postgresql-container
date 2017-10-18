@@ -60,6 +60,10 @@ Choose either the CentOS7 or RHEL7 based image:
 **Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
 on all provided versions of PostgreSQL.**
 
+Contributing
+--------------------------------
+
+In this repository [distgen](https://github.com/devexp-db/distgen/) is used for generating Dockerfiles. If you'd like update a Dockerfile, please make changes in specs/multispec.yml and/or Dockerfile.template (or other distgen file) and run `make generate_dockerfiles`.
 
 Usage
 ---------------------------------
