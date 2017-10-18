@@ -1,0 +1,65 @@
+version: 1
+
+specs:
+  distroinfo:
+    centos:
+      distros:
+        - centos-7-x86_64
+      org: "centos"
+      prod: "centos7"
+      repo_enable_reason: ""
+      environment_setup: yum install -y centos-release-scl-rh && \
+      maintainer: "SoftwareCollections.org <sclorg@redhat.com>"
+      staging_repo_setup: >-4
+              yum-config-manager --add-repo https://cbs.centos.org/repos/sclo7-rh-postgresql96-rh-candidate/x86_64/os/ && \
+              echo gpgcheck=0 >> /etc/yum.repos.d/cbs.centos.org_repos_sclo7-rh-postgresql96-rh-candidate_x86_64_os_.repo && \
+
+    rhel7:
+       distros:
+         - rhel-7-x86_64
+       org: "rhscl"
+       prod: "rhel7"
+       repo_enable_reason: |-
+         # rhel-7-server-ose-3.2-rpms is enabled for nss_wrapper until this pkg is
+         # in base RHEL
+       environment_setup: >-4
+           yum install -y yum-utils gettext && \
+               yum-config-manager --disable \* &> /dev/null && \
+               yum-config-manager --enable rhel-server-rhscl-7-rpms && \
+               yum-config-manager --enable rhel-7-server-rpms && \
+               yum-config-manager --enable rhel-7-server-optional-rpms && \
+       maintainer: ""
+       staging_repo_setup: ""
+       rhscl3_introduced:
+         - "9.6"
+
+  version:
+    "9.4":
+      version: "9.4"
+      prev_version: "9.2"
+      short: "94"
+      pkgs: "rh-postgresql94 rh-postgresql94-postgresql-contrib postgresql92-postgresql-server rh-postgresql94-postgresql-upgrade"
+      enabled_collection: "rh-postgresql94"
+      openshift_tags: "database,postgresql,postgresql94,rh-postgresql94"
+      redhat_component: "rh-postgresql94-docker"
+      stable: True
+
+    "9.5":
+      version: "9.5"
+      prev_version: "9.4"
+      short: "95"
+      pkgs: "rh-postgresql95 rh-postgresql95-postgresql-contrib rh-postgresql94-postgresql-server"
+      enabled_collection: "rh-postgresql95"
+      openshift_tags: "database,postgresql,postgresql95,rh-postgresql95"
+      redhat_component: "rh-postgresql95-docker"
+      stable: True
+
+    "9.6":
+      version: "9.6"
+      prev_version: "9.5"
+      short: "96"
+      pkgs: "rh-postgresql96 rh-postgresql96-postgresql-contrib rh-postgresql95-postgresql-server"
+      enabled_collection: "rh-postgresql96"
+      openshift_tags: "database,postgresql,postgresql96,rh-postgresql96"
+      redhat_component: "rh-postgresql96-docker"
+      stable: False
