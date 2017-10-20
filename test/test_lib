@@ -9,12 +9,15 @@ get_image_id ()
 {
     local old_IFS=$IFS
     local result
+
+    # split "$1" into "$1 $2 .." on colons
     IFS=:
     set -- $1
+    IFS=$old_IFS
     case $2 in
         local)
             # Default to $IMAGE_NAME if it is set since .image-id might not exist
-            echo ${IMAGE_NAME-$(cat "$1"/.image-id)}
+            echo "${IMAGE_NAME-$(cat "$1"/.image-id)}"
             ;;
         remote)
             local version=${1//\./}
@@ -38,7 +41,6 @@ get_image_id ()
             echo "$image"
             ;;
     esac
-    IFS=$old_IFS
 }
 
 data_pagila_create ()
