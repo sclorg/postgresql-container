@@ -33,8 +33,8 @@ $ docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL
 This will create a container named `postgresql_database` running PostgreSQL with
 database `db` and user with credentials `user:pass`. Port 5432 will be exposed
 and mapped to the host. If you want your database to be persistent across container
-executions, also add a `-v /host/db/path:/var/lib/pgsql/data` argument. This will be
-the PostgreSQL database cluster directory.
+executions, also add a `-v /host/db/path:/var/lib/pgsql/data` argument (see
+below). This will be the PostgreSQL database cluster directory.
 
 If the database cluster directory is not initialized, the entrypoint script will
 first run [`initdb`](http://www.postgresql.org/docs/9.4/static/app-initdb.html)
@@ -91,7 +91,7 @@ The following environment variables influence the PostgreSQL configuration file.
        Set to an estimate of how much memory is available for disk caching by the operating system and within the database itself
 
 
-You can also set the following mount points by passing the `-v /host:/container` flag to Docker.
+You can also set the following mount points by passing the `-v /host/dir:/container/dir:Z` flag to Docker.
 
 **`/var/lib/pgsql/data`**  
        PostgreSQL database cluster directory
@@ -100,6 +100,15 @@ You can also set the following mount points by passing the `-v /host:/container`
 **Notice: When mouting a directory from the host into the container, ensure that the mounted
 directory has the appropriate permissions and that the owner and group of the directory
 matches the user UID or name which is running inside the container.**
+
+Typically (unless you use `docker run -u` option) processes in docker container
+run under UID 26, so -- on GNU/Linux -- you can fix the datadir permissions
+for example by:
+
+```
+$ setfacl -m u:26:-wx /your/data/dir
+$ docker run <...> -v /your/data/dir:/var/lib/pgsql/data:Z <...>
+```
 
 
 Data migration
