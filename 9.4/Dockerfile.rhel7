@@ -40,11 +40,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # to make sure of that.
 # rhel-7-server-ose-3.2-rpms is enabled for nss_wrapper until this pkg is
 # in base RHEL
-
-# We need to call 2 (!) yum commands before being able to enable repositories properly
-# This is a workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1479388
-RUN yum repolist > /dev/null && \
-    yum install -y yum-utils gettext && \
+RUN yum install -y yum-utils gettext && \
     yum-config-manager --disable \* &> /dev/null && \
     yum-config-manager --enable rhel-server-rhscl-7-rpms && \
     yum-config-manager --enable rhel-7-server-rpms && \
