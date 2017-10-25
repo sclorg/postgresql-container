@@ -55,7 +55,7 @@ function cleanup_volume() {
   local volume_args="-v ${volume_dir}:/var/lib/pgsql/data:Z"
 
   docker stop $cid
-  local rm_cmd='/bin/rm -rf /var/lib/pgsql/data/*'
+  local rm_cmd='/bin/rm -rf /var/lib/pgsql/data/userdata'
   docker run $volume_args --rm $IMAGE_NAME /bin/sh -c "$rm_cmd"
   rmdir ${volume_dir}
 }
@@ -130,8 +130,8 @@ function create_container() {
 function create_volume() {
   local volume_dir
   volume_dir=`mktemp -d --tmpdir pg-testdata.XXXXX`
-  chmod a+rwx ${volume_dir}
-  echo $volume_dir
+  setfacl -m u:26:-wx "$volume_dir"
+  echo "$volume_dir"
 }
 
 function assert_login_access() {
