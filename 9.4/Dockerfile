@@ -39,8 +39,8 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN yum install -y centos-release-scl && \
-    INSTALL_PKGS="rsync tar gettext bind-utils rh-postgresql94 rh-postgresql94-postgresql-contrib nss_wrapper postgresql92-postgresql-server rh-postgresql94-postgresql-upgrade" && \
+RUN yum install -y centos-release-scl-rh && \
+    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper rh-postgresql94 rh-postgresql94-postgresql-contrib postgresql92-postgresql-server rh-postgresql94-postgresql-upgrade" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \
