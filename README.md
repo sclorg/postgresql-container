@@ -65,6 +65,13 @@ Contributing
 
 In this repository [distgen](https://github.com/devexp-db/distgen/) is used for generating Dockerfiles. If you'd like update a Dockerfile, please make changes in specs/multispec.yml and/or Dockerfile.template (or other distgen file) and run `make generate_dockerfiles`.
 
+Given that your mounted directory is `/data` run the following to set the right access rights:
+
+```
+# chmod a+rwx /data
+# chcon -t svirt_sandbox_file_t /data
+```
+
 Usage
 ---------------------------------
 
