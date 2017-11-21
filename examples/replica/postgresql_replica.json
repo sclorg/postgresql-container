@@ -71,7 +71,7 @@
       "name": "IMAGESTREAMTAG",
       "displayName": "ImageStreamTag",
       "description": "The OpenShift ImageStreamTag to use for PostgreSQL.",
-      "value": "postgresql:9.5"
+      "value": "postgresql:9.6"
     },
     {
       "name": "NAMESPACE",
