@@ -8,24 +8,23 @@
 
 THISDIR=$(dirname ${BASH_SOURCE[0]})
 
-source ${THISDIR}/test-lib-openshift.sh
+source "$THISDIR"/test-lib-openshift.sh
 
 set -exo nounset
 
 function check_postgresql_os_service_connection() {
-  local util_image_name="${1}" ; shift
-  local service_name="${1}" ; shift
-  local user="${1}" ; shift
-  local pass="${1}" ; shift
-  local database="${1}" ; shift
-  local timeout="${1:-60}" ; shift || :
+  local util_image_name=$1 ; shift
+  local service_name=$1 ; shift
+  local user=$1 ; shift
+  local pass=$1 ; shift
+  local database=$1 ; shift
+  local timeout=${1:-60} ; shift || :
   local pod_ip=$(ct_os_get_service_ip ${service_name})
 
   : "  Service ${service_name} check ..."
 
-  local cmd="echo 'SELECT 42 as testval' | PGPASSWORD=${pass} PGCONNECT_TIMEOUT=15 \
-             psql -t -h ${pod_ip} -U ${user} -d ${database}"
-  local expected_value='42'
+  local cmd="PGPASSWORD=${pass} pg_isready -t 15 -h ${pod_ip} -U ${user} -d ${database}"
+  local expected_value='accepting connections'
   local output
   local ret
   SECONDS=0
@@ -47,7 +46,7 @@ function check_postgresql_os_service_connection() {
 }
 
 function test_postgresql_pure_image() {
-  local image_name=${1:-centos/postgresql-96-centos7}
+  local image_name=$1
   local image_name_no_namespace=${image_name##*/}
   local service_name=${image_name_no_namespace}
 
