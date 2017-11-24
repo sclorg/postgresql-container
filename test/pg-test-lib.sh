@@ -1,4 +1,3 @@
-: ${OS=centos7}
 DEBUG=false
 
 info  () { echo >&2 " * $*" ; }
