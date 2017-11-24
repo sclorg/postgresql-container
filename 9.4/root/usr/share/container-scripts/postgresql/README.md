@@ -235,6 +235,45 @@ enough space for the copy;  upgrade failure because of not enough space might
 lead to data loss.
 
 
+Extending image
+----------------
+
+This image can be extended using
+[source-to-image](https://github.com/openshift/source-to-image).
+
+For example to build customized image `new-postgresql`
+with configuration in `~/image-configuration/` run:
+
+
+```
+$ s2i build ~/image-configuration/ postgresql new-postgresql
+```
+
+The directory passed to `s2i build` should contain one or more of the
+following directories:
+
+##### `postgresql-config/`
+
+contained configuration files (`*.conf`) will be included at the end of image postgresql.conf file during database initialization
+
+
+##### `postgresql-init/`
+
+contained shell scripts (`*.sh`) are sourced once, when database is initialized
+
+##### `postgresql-start-hook/`
+
+contained shell scripts (`*.sh`) are sourced before every start
+
+----------------------------------------------
+
+During `s2i build` all provided files are copied into `/opt/app-root/src`
+directory in the new image. Only one
+file with the same name can be used for customization and user provided files
+are preferred over default files in `/usr/share/container-scripts/`-
+so it is possible to overwrite them.
+
+
 Troubleshooting
 ---------------
 At first the postgres daemon writes its logs to the standard output, so these are available in the container log. The log can be examined by running:

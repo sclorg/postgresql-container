@@ -1,4 +1,4 @@
-FROM centos:centos7
+FROM centos/s2i-core-centos7
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -13,7 +13,8 @@ FROM centos:centos7
 ENV POSTGRESQL_VERSION=9.6 \
     POSTGRESQL_PREV_VERSION=9.5 \
     HOME=/var/lib/pgsql \
-    PGUSER=postgres
+    PGUSER=postgres \
+    APP_DATA=/opt/app-root
 
 ENV SUMMARY="PostgreSQL is an advanced Object-Relational database management system" \
     DESCRIPTION="PostgreSQL is an advanced Object-Relational database management system (DBMS). \
@@ -57,6 +58,7 @@ ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
     ENABLED_COLLECTIONS=rh-postgresql96
 
 COPY root /
+COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 
 # When bash is started non-interactively, to run a shell script, for example it
 # looks for this variable and source the content of this file. This will enable
@@ -66,6 +68,11 @@ ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     PROMPT_COMMAND=". ${CONTAINER_SCRIPTS_PATH}/scl_enable"
 
 VOLUME ["/var/lib/pgsql/data"]
+
+# {APP_DATA} needs to be accessed by postgres user while s2i assembling
+# postgres user changes permissions of files in APP_DATA during assembling
+RUN /usr/libexec/fix-permissions ${APP_DATA} && \
+    usermod -a -G root postgres
 
 USER 26
 

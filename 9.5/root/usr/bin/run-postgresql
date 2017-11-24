@@ -24,10 +24,13 @@ fi
 
 pg_ctl -w start -o "-h ''"
 if $PG_INITIALIZED ; then
+    process_extending_files ${APP_DATA}/src/postgresql-init ${CONTAINER_SCRIPTS_PATH}/postgresql-init
     migrate_db
     create_users
 fi
-set_passwords
+
+process_extending_files ${APP_DATA}/src/postgresql-start-hook ${CONTAINER_SCRIPTS_PATH}/postgresql-start-hook
+
 pg_ctl stop
 
 unset_env_vars

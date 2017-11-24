@@ -24,6 +24,7 @@ run_change_password_test
 run_replication_test
 run_master_restart_test
 run_doc_test
+run_s2i_test
 "
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
@@ -34,6 +35,8 @@ test -n "${OS-}" || false 'make sure $OS is defined'
 CIDFILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
 
 volumes_to_clean=
+s2i_test_app_dir="$(mktemp -d)"
+test_dir="$(readlink -f "$(dirname "$0")")"
 
 function cleanup() {
   for cidfile in $CIDFILE_DIR/* ; do
@@ -53,6 +56,8 @@ function cleanup() {
   rmdir $CIDFILE_DIR
 
   ct_path_foreach "$volumes_to_clean" cleanup_volume_dir
+
+  test -d "$s2i_test_app_dir" && rm -rf "$s2i_test_app_dir"
 }
 trap cleanup EXIT
 
@@ -556,6 +561,56 @@ run_doc_test() {
   fi
   echo "  Success!"
   echo
+}
+
+_s2i_test_image() {
+  local container_name="$1"
+  local mount_opts="$2"
+  echo "    Testing s2i app image with invalid configuration"
+  assert_container_creation_fails -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db
+  echo "    Testing s2i app image with correct configuration"
+
+    DOCKER_ARGS="
+-e POSTGRESQL_DATABASE=db
+-e POSTGRESQL_USER=user
+-e POSTGRESQL_PASSWORD=password
+-e POSTGRESQL_ADMIN_PASSWORD=password
+-e POSTGRESQL_BACKUP_USER=backuser
+-e POSTGRESQL_BACKUP_PASSWORD=pass
+${mount_opts}
+" create_container "$container_name"
+
+
+  # need to set these because `postgresql_cmd` relies on global variables
+  PGUSER=user
+  PASS=password
+
+  # need this to wait for the container to start up
+  CONTAINER_IP=$(get_container_ip "${container_name}")
+  test_connection "$container_name"
+
+  docker stop "$(get_cid $container_name)" >/dev/null
+}
+
+run_s2i_test() {
+  echo "  Testing s2i usage"
+  s2i usage --pull-policy=never "${IMAGE_NAME}" &>/dev/null
+
+  echo "  Testing s2i build"
+  s2i build "file://${test_dir}/test-app" "${IMAGE_NAME}" "${IMAGE_NAME}-testapp"
+  local image_name_backup="${IMAGE_NAME}"
+  export IMAGE_NAME="${IMAGE_NAME}-testapp"
+
+  local container_name=s2i_config_build
+  _s2i_test_image "s2i_config_build" ""
+
+  # return back original value for IMAGE_NAME
+  export IMAGE_NAME="${image_name_backup}"
+
+  echo "  Testing s2i mount"
+  cp -Lr "${test_dir}/test-app" "${s2i_test_app_dir}/"
+  _s2i_test_image "_s2i_test_mount" "-v ${s2i_test_app_dir}/test-app:/opt/app-root/src/:z"
+  echo "  Success!"
 }
 
 function run_general_tests() {
