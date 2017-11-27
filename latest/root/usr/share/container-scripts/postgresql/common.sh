@@ -224,19 +224,17 @@ migrate_db ()
 
 function set_pgdata ()
 {
+  export PGDATA=$HOME/data/userdata
+  # create a subdirectory that the user owns
+  mkdir -p "$PGDATA"
   # backwards compatibility case, we used to put the data here,
   # move it into our new expected location (userdata)
   if [ -e ${HOME}/data/PG_VERSION ]; then
-    mkdir -p "${HOME}/data/userdata"
     pushd "${HOME}/data"
     # move everything except the userdata directory itself, into the userdata directory.
     mv !(userdata) "userdata"
     popd
-  else 
-    # create a subdirectory that the user owns
-    mkdir -p "${HOME}/data/userdata"
   fi
-  export PGDATA=$HOME/data/userdata
   # ensure sane perms for postgresql startup
   chmod 700 "$PGDATA"
 }
