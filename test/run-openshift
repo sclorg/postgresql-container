@@ -31,7 +31,7 @@ function check_postgresql_os_service_connection() {
 
   echo -n "Waiting for ${service_name} service becoming ready ..."
   while true ; do
-    output=$(docker run -ti --rm ${util_image_name} bash -c "${cmd}" || :)
+    output=$(docker run --rm ${util_image_name} bash -c "${cmd}" || :)
     echo "${output}" | grep -qe "${expected_value}" && ret=0 || ret=1
     if [ ${ret} -eq 0 ] ; then
       echo " PASS"
