@@ -83,7 +83,6 @@ function test_postgresql_template() {
   ct_os_delete_project
 }
 
-ct_os_install_in_centos
 ct_os_cluster_up
 test_postgresql_pure_image ${IMAGE_NAME}
 test_postgresql_template ${IMAGE_NAME}
