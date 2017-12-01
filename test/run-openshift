@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# Test the Postgresql image in OpenShift.
+#
+# IMAGE_NAME specifies a name of the candidate image used for testing.
+# The image has to be available before this script is executed.
+#
+
+THISDIR=$(dirname ${BASH_SOURCE[0]})
+
+source "$THISDIR"/test-lib-openshift.sh
+
+set -exo nounset
+
+function check_postgresql_os_service_connection() {
+  local util_image_name=$1 ; shift
+  local service_name=$1 ; shift
+  local user=$1 ; shift
+  local pass=$1 ; shift
+  local database=$1 ; shift
+  local timeout=${1:-60} ; shift || :
+  local pod_ip=$(ct_os_get_service_ip ${service_name})
+
+  : "  Service ${service_name} check ..."
+
+  local cmd="PGPASSWORD=${pass} pg_isready -t 15 -h ${pod_ip} -U ${user} -d ${database}"
+  local expected_value='accepting connections'
+  local output
+  local ret
+  SECONDS=0
+
+  echo -n "Waiting for ${service_name} service becoming ready ..."
+  while true ; do
+    output=$(docker run --rm ${util_image_name} bash -c "${cmd}" || :)
+    echo "${output}" | grep -qe "${expected_value}" && ret=0 || ret=1
+    if [ ${ret} -eq 0 ] ; then
+      echo " PASS"
+      return 0
+    fi
+    echo -n "."
+    [ ${SECONDS} -gt ${timeout} ] && break
+    sleep 3
+  done
+  echo " FAIL"
+  return 1
+}
+
+function test_postgresql_pure_image() {
+  local image_name=$1
+  local image_name_no_namespace=${image_name##*/}
+  local service_name=${image_name_no_namespace}
+
+  ct_os_new_project
+  ct_os_upload_image "${image_name}"
+
+  ct_os_deploy_pure_image "${image_name}" \
+                          --name "${service_name}" \
+                          --env POSTGRESQL_ADMIN_PASSWORD=test
+
+  ct_os_wait_pod_ready "${service_name}" 60
+  check_postgresql_os_service_connection "${image_name}" "${service_name}" postgres test postgres
+
+  ct_os_delete_project
+}
+
+function test_postgresql_template() {
+  local image_name=${1:-centos/postgresql-96-centos7}
+  local image_name_no_namespace=${image_name##*/}
+  local service_name=${image_name_no_namespace}
+
+  ct_os_new_project
+  ct_os_upload_image "${image_name}"
+
+  ct_os_deploy_template_image ${THISDIR}/postgresql-ephemeral-template.json \
+                              DATABASE_SERVICE_NAME="${service_name}" \
+                              POSTGRESQL_USER=testu \
+                              POSTGRESQL_PASSWORD=testp \
+                              POSTGRESQL_DATABASE=testdb
+
+  ct_os_wait_pod_ready "${service_name}" 60
+  check_postgresql_os_service_connection "${image_name}" "${service_name}" testu testp testdb
+
+  ct_os_delete_project
+}
+
+ct_os_cluster_up
+test_postgresql_pure_image ${IMAGE_NAME}
+test_postgresql_template ${IMAGE_NAME}
