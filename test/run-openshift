@@ -76,6 +76,7 @@ function test_postgresql_template() {
 
   ct_os_deploy_template_image "$THISDIR/postgresql-ephemeral-template.json" \
                               NAMESPACE="$(oc project -q)" \
+                              POSTGRESQL_VERSION="$VERSION" \
                               DATABASE_SERVICE_NAME="${service_name}" \
                               POSTGRESQL_USER=testu \
                               POSTGRESQL_PASSWORD=testp \
