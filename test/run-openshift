@@ -55,8 +55,10 @@ function test_postgresql_pure_image() {
 
   ct_os_new_project
   ct_os_upload_image "${image_name}"
+  # Create a specific imagestream tag for the image so that oc cannot use anything else
+  ct_os_upload_image "${image_name}" "$image_name_no_namespace:testing"
 
-  ct_os_deploy_pure_image "${image_name}" \
+  ct_os_deploy_pure_image "$image_name_no_namespace:testing" \
                           --name "${service_name}" \
                           --env POSTGRESQL_ADMIN_PASSWORD=test
 
