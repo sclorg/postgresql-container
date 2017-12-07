@@ -71,7 +71,7 @@
       "name": "IMAGESTREAMTAG",
       "displayName": "ImageStreamTag",
       "description": "The OpenShift ImageStreamTag to use for PostgreSQL.",
-      "value": "postgresql:9.5"
+      "value": "postgresql:9.6"
     },
     {
       "name": "NAMESPACE",
@@ -211,11 +211,11 @@
                   }
                 },
                 "livenessProbe": {
+                  "exec": {
+                    "command": [ "/bin/sh", "-i", "-c", "pg_isready -h 127.0.0.1 -p 5432" ]
+                  },
                   "timeoutSeconds": 1,
-                  "initialDelaySeconds": 30,
-                  "tcpSocket": {
-                    "port": 5432
-                  }
+                  "initialDelaySeconds": 30
                 },
                 "env": [
                   {
@@ -322,11 +322,11 @@
                   }
                 },
                 "livenessProbe": {
+                  "exec": {
+                    "command": [ "/bin/sh", "-i", "-c", "pg_isready -h 127.0.0.1 -p 5432" ]
+                  },
                   "timeoutSeconds": 1,
-                  "initialDelaySeconds": 30,
-                  "tcpSocket": {
-                    "port": 5432
-                  }
+                  "initialDelaySeconds": 30
                 },
                 "env": [
                   {
