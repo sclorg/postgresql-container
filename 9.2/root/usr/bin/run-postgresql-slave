@@ -33,4 +33,5 @@ export MASTER_FQDN=$(postgresql_master_addr)
 initialize_replica
 
 unset_env_vars
+echo "Starting server..."
 exec postgres "$@"
