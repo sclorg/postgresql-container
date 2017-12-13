@@ -31,4 +31,5 @@ set_passwords
 pg_ctl stop
 
 unset_env_vars
+echo "Starting server..."
 exec postgres "$@"
