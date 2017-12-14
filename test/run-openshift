@@ -37,16 +37,25 @@ function check_postgresql_data() {
   local pass=$1 ; shift
   local database=$1 ; shift
   local pod_ip=$1; shift
+  local timeout=${1:-60}
+  SECONDS=0
 
   pod_ip=$(ct_os_get_service_ip "$service_name")
-  : "Checking whether the data can still be accessed"
+  : "Checking whether the data can be accessed"
   local cmd="PGPASSWORD=$pass psql -c \"select * from testing;\""
   local cmd_args="-h $pod_ip -U $user -d $database"
-  result=$(docker run --rm "$image_name" bash -c "$cmd -At $cmd_args")
-  if [ ! "$result" = "42" ]; then
-    echo " FAIL"
-    return 1
-  fi
+  while true ; do
+    result=$(docker run --rm "$image_name" bash -c "$cmd -At $cmd_args")
+    if [ "$result" = "42" ]; then
+      echo " PASS"
+      return 0
+    fi
+    echo -n "."
+    [ $SECONDS -gt $timeout ] && break
+    sleep 3
+  done
+  echo " FAIL"
+  return 1
 }
 
 function check_postgresql_os_service_connection() {
