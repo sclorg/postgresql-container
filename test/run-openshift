@@ -7,6 +7,7 @@
 #
 
 THISDIR=$(dirname ${BASH_SOURCE[0]})
+TEMPLATES="$THISDIR/examples"
 
 source "$THISDIR"/test-lib-openshift.sh
 
@@ -116,7 +117,7 @@ function test_postgresql_template() {
   ct_os_new_project
   ct_os_upload_image "${image_name}" "postgresql:$VERSION"
 
-  ct_os_deploy_template_image "$THISDIR/postgresql-ephemeral-template.json" \
+  ct_os_deploy_template_image "$TEMPLATES/postgresql-ephemeral-template.json" \
                               NAMESPACE="$(oc project -q)" \
                               POSTGRESQL_VERSION="$VERSION" \
                               DATABASE_SERVICE_NAME="${service_name}" \
@@ -152,7 +153,7 @@ function test_postgresql_update() {
   ct_os_new_project
   ct_os_upload_image "$old_image" "postgresql:$VERSION"
 
-  ct_os_deploy_template_image "$THISDIR/postgresql-persistent-template.json" \
+  ct_os_deploy_template_image "$TEMPLATES/postgresql-persistent-template.json" \
                               NAMESPACE="$(oc project -q)" \
                               POSTGRESQL_VERSION="$VERSION" \
                               DATABASE_SERVICE_NAME="$service_name" \
