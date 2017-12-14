@@ -56,6 +56,7 @@ function check_postgresql_data() {
   return 1
 }
 
+
 function check_postgresql_os_service_connection() {
   local util_image_name=$1 ; shift
   local service_name=$1 ; shift
@@ -178,7 +179,76 @@ function test_postgresql_update() {
   ct_os_delete_project
 }
 
+function test_postgresql_replication() {
+  local image_name=$1
+  local image_name_no_namespace=${image_name##*/}
+  local master_service_name=${image_name_no_namespace}-master
+  local slave_service_name=${image_name_no_namespace}-slave
+  local istag="postgresql:$VERSION"
+  local user="testu" pass="testp" db="testdb"
+  local master_name="" master_ip="" slave_name="" slave_ip=""
+
+  ct_os_new_project
+  ct_os_upload_image "${image_name}" "$istag"
+
+  ct_os_deploy_template_image "$TEMPLATES/replica/postgresql_replica.json" \
+                              NAMESPACE="$(oc project -q)" \
+                              IMAGESTREAMTAG="$istag" \
+                              POSTGRESQL_MASTER_SERVICE_NAME="$master_service_name" \
+                              POSTGRESQL_SLAVE_SERVICE_NAME="$slave_service_name" \
+                              POSTGRESQL_USER=testu \
+                              POSTGRESQL_PASSWORD=testp \
+                              POSTGRESQL_DATABASE=testdb
+
+  ct_os_wait_pod_ready "$master_service_name" 60
+  ct_os_wait_pod_ready "$slave_service_name" 60
+
+  # Force unused rc removal as we do not need rollbacks during testing
+  oc patch "dc/$master_service_name" -p '{"spec":{"revisionHistoryLimit":0}}'
+  oc patch "dc/$slave_service_name" -p '{"spec":{"revisionHistoryLimit":0}}'
+
+  master_name=$(ct_os_get_pod_name "$master_service_name")
+  slave_name=$(ct_os_get_pod_name "$slave_service_name")
+  master_ip=$(ct_os_get_pod_ip "$master_name")
+  slave_ip=$(ct_os_get_pod_ip "$slave_name")
+  insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$master_ip"
+  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$slave_ip"
+
+  : "Changing POSTGRESQL_PASSWORD for master and slave"
+  pass=redhat
+  oc set env "dc/$master_service_name" -e POSTGRESQL_PASSWORD="$pass"
+  oc set env "dc/$slave_service_name" -e POSTGRESQL_PASSWORD="$pass"
+  ct_os_wait_pod_ready "$master_service_name-2" 60
+  ct_os_wait_pod_ready "$slave_service_name-2" 60
+  # We need to get new pod names and IPs
+  master_name=$(ct_os_get_pod_name "$master_service_name")
+  slave_name=$(ct_os_get_pod_name "$slave_service_name")
+  master_ip=$(ct_os_get_pod_ip "$master_name")
+  slave_ip=$(ct_os_get_pod_ip "$slave_name")
+  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$master_ip"
+  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$slave_ip"
+
+  : "Redeploying slave node"
+  oc deploy "$slave_service_name" --latest
+  ct_os_wait_pod_ready "$slave_service_name-3" 60
+  slave_name=$(ct_os_get_pod_name "$slave_service_name")
+  slave_ip=$(ct_os_get_pod_ip "$slave_name")
+  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$slave_ip"
+
+  : "Scaling slaves to 2"
+  oc scale --replicas 2 "dc/$slave_service_name"
+  ct_os_wait_rc_ready "$slave_service_name" 60
+  slave_name=$(ct_os_get_pod_name "$slave_service_name")
+  for slave in $slave_name; do
+    slave_ip=$(ct_os_get_pod_ip "$slave")
+    check_postgresql_data "$image_name" "$user" "$pass" "$db" "$slave_ip"
+  done
+
+  ct_os_delete_project
+}
+
 ct_os_cluster_up
 test_postgresql_pure_image "${IMAGE_NAME}"
 test_postgresql_template "${IMAGE_NAME}"
 test_postgresql_update "${IMAGE_NAME}"
+test_postgresql_replication "${IMAGE_NAME}"
