@@ -18,7 +18,7 @@ Versions
 PostgreSQL versions currently provided are:
 * [postgresql-9.4](9.4)
 * [postgresql-9.5](9.5)
-* [postgresql-9.6](9.6)
+* [postgresql-9.6](latest)
 
 RHEL versions currently supported are:
 * RHEL7
@@ -82,7 +82,7 @@ For information about usage of Dockerfile for PostgreSQL 9.5,
 see [usage documentation](9.5).
 
 For information about usage of Dockerfile for PostgreSQL 9.6,
-see [usage documentation](9.6).
+see [usage documentation](latest).
 
 Test
 ---------------------------------
