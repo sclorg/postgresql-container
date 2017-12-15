@@ -29,7 +29,7 @@ LABEL summary=$SUMMARY \
       name="centos/postgresql-96-centos7" \
       com.redhat.component="rh-postgresql96-docker" \
       version="9.6" \
-      release="1" \
+      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 centos/postgresql-96-centos7" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432

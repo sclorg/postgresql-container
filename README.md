@@ -2,7 +2,7 @@ PostgreSQL Docker images
 ========================
 
 This repository contains Dockerfiles for PostgreSQL images for OpenShift.
-Users can choose between RHEL and CentOS based images.
+Users can choose between RHEL, Fedora and CentOS based images.
 
 For more information about using these images with OpenShift, please see the
 official [OpenShift Documentation](https://docs.openshift.org/latest/using_images/db_images/postgresql.html).
@@ -18,6 +18,7 @@ Versions
 PostgreSQL versions currently provided are:
 * [postgresql-9.4](9.4)
 * [postgresql-9.5](9.5)
+* [postgresql-9.6](9.6)
 
 RHEL versions currently supported are:
 * RHEL7
@@ -32,21 +33,27 @@ Choose either the CentOS7 or RHEL7 based image:
 
 *  **RHEL7 based image**
 
+    These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/postgresql-96-rhel7).
+    To download it run:
+    ```
+    docker pull registry.access.redhat.com/rhscl/postgresql-96-rhel7
+    ```
+
     To build a RHEL7 based image, you need to run Docker build on a properly
     subscribed RHEL machine.
 
     ```
     $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
-    $ make build TARGET=rhel7 VERSIONS=9.5
+    $ make build TARGET=rhel7 VERSIONiS=9.6
     ```
 
 *  **CentOS7 based image**
 
-    This image is available on DockerHub. To download it run:
+    These images are available on DockerHub. To download it run:
 
     ```
-    $ docker pull centos/postgresql-95-centos7
+    $ docker pull centos/postgresql-96-centos7
     ```
 
     To build a PostgreSQL image from scratch run:
@@ -54,7 +61,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
-    $ make build TARGET=centos7 VERSIONS=9.5
+    $ make build TARGET=centos7 VERSIONS=9.6
     ```
 
 **Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
@@ -69,10 +76,13 @@ Usage
 ---------------------------------
 
 For information about usage of Dockerfile for PostgreSQL 9.4,
-see [usage documentation](9.4/README.md).
+see [usage documentation](9.4).
 
 For information about usage of Dockerfile for PostgreSQL 9.5,
-see [usage documentation](9.5/README.md).
+see [usage documentation](9.5).
+
+For information about usage of Dockerfile for PostgreSQL 9.6,
+see [usage documentation](9.6).
 
 Test
 ---------------------------------
@@ -89,19 +99,19 @@ Users can choose between testing PostgreSQL based on a RHEL or CentOS image.
 
     ```
     $ cd postgresql
-    $ make test TARGET=rhel7 VERSIONS=9.5
+    $ make test TARGET=rhel7 VERSIONS=9.6
     ```
 
 *  **CentOS based image**
 
     ```
     $ cd postgresql
-    $ make test TARGET=centos7 VERSIONS=9.5
+    $ make test TARGET=centos7 VERSIONS=9.6
     ```
 +By using the `TEST_CASE` parameter you can choose a test case subset to be run against the image, eg:
 
     $ cd postgresql
-    $ make test VERSIONS=9.5 TEST_CASE="run_general_tests run_replication_test"
+    $ make test VERSIONS=9.6 TEST_CASE="run_general_tests run_replication_test"
 
 
 **Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
