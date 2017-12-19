@@ -45,7 +45,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
-    $ make build TARGET=rhel7 VERSIONiS=9.6
+    $ make build TARGET=rhel7 VERSIONS=9.6
     ```
 
 *  **CentOS7 based image**
