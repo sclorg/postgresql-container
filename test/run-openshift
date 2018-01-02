@@ -18,15 +18,12 @@ test -n "${VERSION-}" || false 'make sure $VERSION is defined'
 test -n "${OS-}" || false 'make sure $OS is defined'
 
 function assert_cmd_fails() {
-  local result=""
-
-  eval "$@" &>/dev/null || result=1
-  if [ "$result" = "1" ]; then
-    echo " PASS"
-    return 0
+  if eval "$@" &>/dev/null; then
+    echo " FAIL"
+    return 1
   fi
-  echo " FAIL"
-  return 1
+  echo " PASS"
+  return 0
 }
 
 function insert_postgresql_data() {
