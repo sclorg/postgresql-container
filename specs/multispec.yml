@@ -10,11 +10,9 @@ specs:
       prod: "centos7"
       repo_enable_reason: ""
       environment_setup: yum install -y centos-release-scl-rh && \
-      maintainer: "SoftwareCollections.org <sclorg@redhat.com>"
       staging_repo_setup: >-4
               yum-config-manager --add-repo https://cbs.centos.org/repos/sclo7-rh-postgresql96-rh-candidate/x86_64/os/ && \
               echo gpgcheck=0 >> /etc/yum.repos.d/cbs.centos.org_repos_sclo7-rh-postgresql96-rh-candidate_x86_64_os_.repo && \
-
     rhel7:
        distros:
          - rhel-7-x86_64
@@ -30,7 +28,6 @@ specs:
                yum-config-manager --enable rhel-server-rhscl-7-rpms && \
                yum-config-manager --enable rhel-7-server-rpms && \
                yum-config-manager --enable rhel-7-server-optional-rpms && \
-       maintainer: ""
        staging_repo_setup: ""
        rhscl3_introduced:
          - "9.6"
