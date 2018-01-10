@@ -50,7 +50,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 {{ spec.repo_enable_reason }}
 {%- endif %}
 RUN {{ spec.environment_setup }}
-{%- if not spec.stable %}
+{%- if not spec.stable and spec.staging_repo_setup %}
 {{ spec.staging_repo_setup }}
 {%- endif %}
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper {{ spec.pkgs }}" && \
