@@ -30,14 +30,12 @@ LABEL summary=$SUMMARY \
       name="{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}" \
       com.redhat.component="{{ spec.redhat_component }}" \
 {%- if spec.version in spec.rhscl3_introduced %}
-      version="1"
+      version="1" \
 {%- else %}
       version="{{ spec.version }}" \
-      release="1"
 {%- endif %}
-{%- if spec.maintainer %} \
-      maintainer="{{ spec.maintainer }}"
-{%- endif %}
+      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 {{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}" \
+      maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
 
