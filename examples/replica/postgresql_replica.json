@@ -214,8 +214,8 @@
                   "exec": {
                     "command": [ "/bin/sh", "-i", "-c", "pg_isready -h 127.0.0.1 -p 5432" ]
                   },
-                  "timeoutSeconds": 1,
-                  "initialDelaySeconds": 30
+                  "timeoutSeconds": 5,
+                  "initialDelaySeconds": 120
                 },
                 "env": [
                   {
@@ -325,8 +325,8 @@
                   "exec": {
                     "command": [ "/bin/sh", "-i", "-c", "pg_isready -h 127.0.0.1 -p 5432" ]
                   },
-                  "timeoutSeconds": 1,
-                  "initialDelaySeconds": 30
+                  "timeoutSeconds": 5,
+                  "initialDelaySeconds": 120
                 },
                 "env": [
                   {
