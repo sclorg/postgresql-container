@@ -207,15 +207,15 @@
                   "timeoutSeconds": 1,
                   "initialDelaySeconds": 5,
                   "exec": {
-                    "command": [ "/bin/sh", "-i", "-c", "psql -h 127.0.0.1 -U $POSTGRESQL_USER -q -d $POSTGRESQL_DATABASE -c 'SELECT 1'"]
+                    "command": [ "/usr/libexec/check-container" ]
                   }
                 },
                 "livenessProbe": {
+                  "timeoutSeconds": 10,
+                  "initialDelaySeconds": 120,
                   "exec": {
-                    "command": [ "/bin/sh", "-i", "-c", "pg_isready -h 127.0.0.1 -p 5432" ]
-                  },
-                  "timeoutSeconds": 1,
-                  "initialDelaySeconds": 30
+                    "command": [ "/usr/libexec/check-container", "--live" ]
+                  }
                 },
                 "env": [
                   {
@@ -318,15 +318,15 @@
                   "timeoutSeconds": 1,
                   "initialDelaySeconds": 5,
                   "exec": {
-                    "command": [ "/bin/sh", "-i", "-c", "psql -h 127.0.0.1 -U $POSTGRESQL_USER -q -d $POSTGRESQL_DATABASE -c 'SELECT 1'"]
+                    "command": [ "/usr/libexec/check-container" ]
                   }
                 },
                 "livenessProbe": {
+                  "timeoutSeconds": 10,
+                  "initialDelaySeconds": 120,
                   "exec": {
-                    "command": [ "/bin/sh", "-i", "-c", "pg_isready -h 127.0.0.1 -p 5432" ]
-                  },
-                  "timeoutSeconds": 1,
-                  "initialDelaySeconds": 30
+                    "command": [ "/usr/libexec/check-container", "--live" ]
+                  }
                 },
                 "env": [
                   {
