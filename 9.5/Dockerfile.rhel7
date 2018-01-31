@@ -43,10 +43,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # rhel-7-server-ose-3.2-rpms is enabled for nss_wrapper until this pkg is
 # in base RHEL
 RUN yum install -y yum-utils gettext && \
-    yum-config-manager --disable \* &> /dev/null && \
-    yum-config-manager --enable rhel-server-rhscl-7-rpms && \
-    yum-config-manager --enable rhel-7-server-rpms && \
-    yum-config-manager --enable rhel-7-server-optional-rpms && \
+    prepare-yum-repositories rhel-server-rhscl-7-rpms && \
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper rh-postgresql95 rh-postgresql95-postgresql-contrib rh-postgresql94-postgresql-server" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
