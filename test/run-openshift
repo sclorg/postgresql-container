@@ -146,6 +146,7 @@ function test_postgresql_update() {
   local image_name_no_namespace=${image_name##*/}
   local service_name=$image_name_no_namespace
   local user="testu" pass="testp" db="testdb"
+  local template="https://raw.githubusercontent.com/openshift/origin/master/examples/db-templates/postgresql-persistent-template.json"
   local registry="" old_image="" pod_ip=""
 
   case $OS in
@@ -163,7 +164,8 @@ function test_postgresql_update() {
   ct_os_new_project
   ct_os_upload_image "$old_image" "postgresql:$VERSION"
 
-  ct_os_deploy_template_image "$TEMPLATES/postgresql-persistent-template.json" \
+  # Use remote template to make sure the new image works regardless of template changes
+  ct_os_deploy_template_image "$template" \
                               NAMESPACE="$(oc project -q)" \
                               POSTGRESQL_VERSION="$VERSION" \
                               DATABASE_SERVICE_NAME="$service_name" \
