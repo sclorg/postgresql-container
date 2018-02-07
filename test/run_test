@@ -35,7 +35,8 @@ test -n "${OS-}" || false 'make sure $OS is defined'
 CIDFILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
 
 volumes_to_clean=
-s2i_test_app_dir="$(mktemp -d)"
+images_to_clean=
+files_to_clean=
 test_dir="$(readlink -f "$(dirname "$0")")"
 
 function cleanup() {
@@ -56,8 +57,8 @@ function cleanup() {
   rmdir $CIDFILE_DIR
 
   ct_path_foreach "$volumes_to_clean" cleanup_volume_dir
-
-  test -d "$s2i_test_app_dir" && rm -rf "$s2i_test_app_dir"
+  ct_path_foreach "$images_to_clean" cleanup_image
+  ct_path_foreach "$files_to_clean" rm
 }
 trap cleanup EXIT
 
@@ -72,6 +73,11 @@ cleanup_volume_dir ()
   local datadir=/var/lib/pgsql/data
   docker run -v "$1:$datadir:Z" --rm "$IMAGE_NAME" /bin/sh -c "/bin/rm -rf $datadir/userdata"
   rmdir "$1"
+}
+
+cleanup_image ()
+{
+    docker rmi -f "$1"
 }
 
 function get_cid() {
@@ -147,6 +153,14 @@ create_volume_dir ()
   volume_dir=`mktemp -d --tmpdir pg-testdata.XXXXX`
   setfacl -m u:26:-wx "$volume_dir"
   ct_path_append volumes_to_clean "$volume_dir"
+}
+
+
+create_temp_file ()
+{
+  temp_file=`mktemp --tmpdir pg-testfile.XXXXX`
+  setfacl -m u:26:rw- "$temp_file"
+  ct_path_append files_to_clean "$temp_file"
 }
 
 
@@ -563,9 +577,9 @@ run_doc_test() {
   echo
 }
 
-_s2i_test_image() {
-  local container_name="$1"
-  local mount_opts="$2"
+test_the_app_image () {
+  local container_name=$1
+  local mount_opts=$2
   echo "    Testing s2i app image with invalid configuration"
   assert_container_creation_fails -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db
   echo "    Testing s2i app image with correct configuration"
@@ -580,36 +594,34 @@ _s2i_test_image() {
 ${mount_opts}
 " create_container "$container_name"
 
-
-  # need to set these because `postgresql_cmd` relies on global variables
-  PGUSER=user
-  PASS=password
-
   # need this to wait for the container to start up
-  CONTAINER_IP=$(get_container_ip "${container_name}")
-  test_connection "$container_name"
+  PGUSER=user     PASS=password           test_connection "$container_name"
+  PGUSER=backuser PASS=pass     DB=backup test_connection "$container_name"
 
   docker stop "$(get_cid $container_name)" >/dev/null
 }
 
 run_s2i_test() {
+  local temp_file
   echo "  Testing s2i usage"
   s2i usage --pull-policy=never "${IMAGE_NAME}" &>/dev/null
 
   echo "  Testing s2i build"
-  s2i build "file://${test_dir}/test-app" "${IMAGE_NAME}" "${IMAGE_NAME}-testapp"
-  local image_name_backup="${IMAGE_NAME}"
-  export IMAGE_NAME="${IMAGE_NAME}-testapp"
 
-  local container_name=s2i_config_build
-  _s2i_test_image "s2i_config_build" ""
+  local s2i_image_name=$IMAGE_NAME-testapp_$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 10 | head -n 1)
+  ct_path_append images_to_clean "$s2i_image_name"
 
-  # return back original value for IMAGE_NAME
-  export IMAGE_NAME="${image_name_backup}"
+  s2i build "file://${test_dir}/test-app" "${IMAGE_NAME}" "$s2i_image_name"
+  IMAGE_NAME=$s2i_image_name test_the_app_image s2i_config_build ""
 
   echo "  Testing s2i mount"
-  cp -Lr "${test_dir}/test-app" "${s2i_test_app_dir}/"
-  _s2i_test_image "_s2i_test_mount" "-v ${s2i_test_app_dir}/test-app:/opt/app-root/src/:z"
+  create_temp_file
+  cat "$test_dir"/test-app/postgresql-init/backup_user.sh >> "$temp_file"
+
+  # Test against original image, not the s2i one.  But even if so, we expect
+  # user mouns the directory under "s2i" direcetory $APP_DATA/src.
+  local mount_point=/opt/app-root/src/postgresql-init/add_backup_user.sh
+  test_the_app_image _s2i_test_mount "-v ${temp_file}:$mount_point:z,ro"
   echo "  Success!"
 }
 
