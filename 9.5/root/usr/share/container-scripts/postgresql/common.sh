@@ -125,6 +125,13 @@ function generate_postgresql_config() {
         < "${CONTAINER_SCRIPTS_PATH}/openshift-custom-postgresql-replication.conf.template" \
         >> "${POSTGRESQL_CONFIG_FILE}"
   fi
+
+  (
+  shopt -s nullglob
+  for conf in "${APP_DATA}"/src/postgresql-cfg/*.conf; do
+    echo include \'${conf}\' >> "${POSTGRESQL_CONFIG_FILE}"
+  done
+  )
 }
 
 function generate_postgresql_recovery_config() {

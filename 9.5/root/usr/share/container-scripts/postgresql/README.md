@@ -252,18 +252,26 @@ $ s2i build ~/image-configuration/ postgresql new-postgresql
 The directory passed to `s2i build` should contain one or more of the
 following directories:
 
-##### `postgresql-config/`
+##### `postgresql-cfg/`
 
-contained configuration files (`*.conf`) will be included at the end of image postgresql.conf file during database initialization
+Contained configuration files (`*.conf`) will be included at the end of image
+postgresql.conf file.
 
 
 ##### `postgresql-init/`
 
-contained shell scripts (`*.sh`) are sourced once, when database is initialized
+Contained shell scripts (`*.sh`) are sourced when the database is freshly
+initialized (after successful initdb run which made the data directory
+non-empty).  At the time of sourcing these scripts, the local PostgreSQL
+server is running.  For re-deployments scenarios with persistent data
+directory, the scripts are not sourced (no-op).
 
-##### `postgresql-start-hook/`
 
-contained shell scripts (`*.sh`) are sourced before every start
+##### `postgresql-start/`
+
+Same sematics as `postgresql-init/`, except that these scripts are
+always sourced (after `postgresql-init/` scripts, if they exist).
+
 
 ----------------------------------------------
 
