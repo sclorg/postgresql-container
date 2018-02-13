@@ -24,10 +24,7 @@ specs:
          # in base RHEL
        environment_setup: >-4
            yum install -y yum-utils gettext && \
-               yum-config-manager --disable \* &> /dev/null && \
-               yum-config-manager --enable rhel-server-rhscl-7-rpms && \
-               yum-config-manager --enable rhel-7-server-rpms && \
-               yum-config-manager --enable rhel-7-server-optional-rpms && \
+               prepare-yum-repositories rhel-server-rhscl-7-rpms && \
        staging_repo_setup: ""
        rhscl3_introduced:
          - "9.6"
@@ -61,4 +58,4 @@ specs:
       enabled_collection: "rh-postgresql96"
       openshift_tags: "database,postgresql,postgresql96,rh-postgresql96"
       redhat_component: "rh-postgresql96-docker"
-      stable: False
+      stable: True
