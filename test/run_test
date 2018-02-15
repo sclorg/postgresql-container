@@ -25,6 +25,7 @@ run_replication_test
 run_master_restart_test
 run_doc_test
 run_s2i_test
+run_test_cfg_hook
 "
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
@@ -39,6 +40,20 @@ images_to_clean=
 files_to_clean=
 test_dir="$(readlink -f "$(dirname "$0")")"
 
+_cleanup_commands_space=
+_cleanup_commands=
+
+add_cleanup_command ()
+{
+    local cmd= space=
+    for arg; do
+        cmd+="$space$(printf "%q" "$arg")"
+        space=' '
+    done
+    _cleanup_commands+="$_cleanup_commands_space$cmd"
+    _cleanup_commands_space='
+'
+}
 function cleanup() {
   for cidfile in $CIDFILE_DIR/* ; do
     CONTAINER=$(cat $cidfile)
@@ -59,6 +74,9 @@ function cleanup() {
   ct_path_foreach "$volumes_to_clean" cleanup_volume_dir
   ct_path_foreach "$images_to_clean" cleanup_image
   ct_path_foreach "$files_to_clean" rm
+  echo "$_cleanup_commands" | while read -r line; do
+    eval "$line"
+  done
 }
 trap cleanup EXIT
 
@@ -237,6 +255,29 @@ function test_config_option() {
 
   docker exec $(get_cid ${name}) grep -q "${setting} = ${value}" /var/lib/pgsql/openshift-custom-postgresql.conf
 }
+
+
+# wait_ready
+# ----------
+# Wait until the PG container becomes ready
+wait_ready ()
+{
+  while ! docker exec "$(get_cid "$1")" /usr/libexec/check-container ; do
+    sleep 1
+  done
+}
+
+
+# assert_runtime_option option value
+# ----------------------------------
+assert_runtime_option ()
+{
+  local name=$1 option=$2 value=$3
+  wait_ready "$name"
+  set -- $(docker exec "$(get_cid "$name")" bash -c "psql -tA -c 'SHOW $option;'")
+  test "$value" = "$1"
+}
+
 
 function run_configuration_tests() {
   local name=$1 ; shift
@@ -633,6 +674,37 @@ function run_general_tests() {
   DOCKER_ARGS="-u 12345" PGUSER=user2 PASS=pass run_tests no_admin_altuid
   DOCKER_ARGS="-u 12345" PGUSER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid
   DB=postgres DOCKER_ARGS="-u 12345" ADMIN_PASS=rOOt run_tests only_admin_altuid
+}
+
+run_test_cfg_hook()
+{
+  local volume_dir name=pg-test-cfg-dir
+  volume_dir=$(mktemp -d --tmpdir pg-hook-volume.XXXXX)
+  add_cleanup_command /bin/rm -rf "$volume_dir"
+  setfacl -R -m u:26:rwx "$volume_dir"
+  cp -r "$test_dir"/../examples/custom-config/* "$volume_dir"
+  setfacl -R -m u:26:rwx "$volume_dir"
+
+  DOCKER_ARGS="
+-e POSTGRESQL_ADMIN_PASSWORD=password
+-v $volume_dir:/opt/app-root/src:Z
+  " create_container "$name"
+  assert_runtime_option "$name" shared_buffers 111MB
+
+  # Check that POSTGRESQL_SHARED_BUFFERS has effect.
+  DOCKER_ARGS="
+-e POSTGRESQL_ADMIN_PASSWORD=password
+-e POSTGRESQL_SHARED_BUFFERS=113MB
+  " create_container "$name-2"
+  assert_runtime_option "$name-2" shared_buffers 113MB
+
+  # Check that volume has priority over POSTGRESQL_SHARED_BUFFERS.
+  DOCKER_ARGS="
+-e POSTGRESQL_ADMIN_PASSWORD=password
+-e POSTGRESQL_SHARED_BUFFERS=113MB
+-v $volume_dir:/opt/app-root/src:Z
+  " create_container "$name-3"
+  assert_runtime_option "$name-3" shared_buffers 111MB
 }
 
 function run_all_tests() {
