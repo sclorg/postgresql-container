@@ -251,6 +251,7 @@ function test_postgresql_replication() {
   ct_os_wait_rc_ready "$slave_service_name" 60
   slave_name=$(ct_os_get_pod_name "$slave_service_name")
   for slave in $slave_name; do
+    ct_os_wait_pod_ready "$slave" 60
     slave_ip=$(ct_os_get_pod_ip "$slave")
     check_postgresql_data "$image_name" "$user" "$pass" "$db" "$slave_ip"
   done
