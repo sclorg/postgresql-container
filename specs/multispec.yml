@@ -38,6 +38,9 @@ specs:
       enabled_collection: "rh-postgresql94"
       openshift_tags: "database,postgresql,postgresql94,rh-postgresql94"
       redhat_component: "rh-postgresql94-docker"
+      common_image_name: "{{ spec.org }}/postgresql-94-{{ spec.prod }}"
+      rhel_image_name: "rhscl/postgresql-94-rhel7"
+      centos_image_name: "centos/postgresql-94-centos7"
       stable: True
 
     "9.5":
@@ -48,6 +51,9 @@ specs:
       enabled_collection: "rh-postgresql95"
       openshift_tags: "database,postgresql,postgresql95,rh-postgresql95"
       redhat_component: "rh-postgresql95-docker"
+      common_image_name: "{{ spec.org }}/postgresql-95-{{ spec.prod }}"
+      rhel_image_name: "rhscl/postgresql-95-rhel7"
+      centos_image_name: "centos/postgresql-95-centos7"
       stable: True
 
     "9.6":
@@ -58,4 +64,7 @@ specs:
       enabled_collection: "rh-postgresql96"
       openshift_tags: "database,postgresql,postgresql96,rh-postgresql96"
       redhat_component: "rh-postgresql96-docker"
+      common_image_name: "{{ spec.org }}/postgresql-96-{{ spec.prod }}"
+      rhel_image_name: "rhscl/postgresql-96-rhel7"
+      centos_image_name: "centos/postgresql-96-centos7"
       stable: True

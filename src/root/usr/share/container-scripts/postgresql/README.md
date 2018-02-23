@@ -1,12 +1,12 @@
-PostgreSQL 9.6 SQL Database Server container image
+PostgreSQL {{ spec.version }} SQL Database Server container image
 ===============================================
 
-This container image includes PostgreSQL 9.6 SQL database server for OpenShift and general usage.
+This container image includes PostgreSQL {{ spec.version }} SQL database server for OpenShift and general usage.
 Users can choose between RHEL and CentOS based images.
-The RHEL image is available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/postgresql-96-rhel7)
-as registry.access.redhat.com/rhscl/postgresql-96-rhel7.
-The CentOS image is then available on [Docker Hub](https://hub.docker.com/r/centos/postgresql-96-centos7/)
-as centos/postgresql-96-centos7.
+The RHEL image is available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/{{ spec.rhel_image_name }})
+as registry.access.redhat.com/{{ spec.rhel_image_name }}.
+The CentOS image is then available on [Docker Hub](https://hub.docker.com/r/{{ spec.centos_image_name }}/)
+as {{ spec.centos_image_name }}.
 
 
 Description
@@ -22,12 +22,12 @@ You can find more information on the PostgreSQL project from the project Web sit
 Usage
 -----
 
-For this, we will assume that you are using the `rhscl/postgresql-96-rhel7` image.
+For this, we will assume that you are using the `{{ spec.rhel_image_name }}` image.
 If you want to set only the mandatory environment variables and not store the database
 in a host directory, execute the following command:
 
 ```
-$ docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhscl/postgresql-96-rhel7
+$ docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 {{ spec.rhel_image_name }}
 ```
 
 This will create a container named `postgresql_database` running PostgreSQL with
@@ -37,9 +37,9 @@ executions, also add a `-v /host/db/path:/var/lib/pgsql/data` argument (see
 below). This will be the PostgreSQL database cluster directory.
 
 If the database cluster directory is not initialized, the entrypoint script will
-first run [`initdb`](http://www.postgresql.org/docs/9.6/static/app-initdb.html)
+first run [`initdb`](http://www.postgresql.org/docs/{{ spec.version }}/static/app-initdb.html)
 and setup necessary database users and passwords. After the database is initialized,
-or if it was already present, [`postgres`](http://www.postgresql.org/docs/9.6/static/app-postgres.html)
+or if it was already present, [`postgres`](http://www.postgresql.org/docs/{{ spec.version }}/static/app-postgres.html)
 is executed and will run as PID 1. You can stop the detached container by running
 `docker stop postgresql_database`.
 
@@ -205,7 +205,7 @@ ensure that you've carefully backed up all your data and that you are OK with
 potential manual rollback! **
 
 This image supports automatic upgrade of data directory created by
-the PostgreSQL server version 9.5 (and _only_ this version) - provided by sclorg
+the PostgreSQL server version {{ spec.prev_version }} (and _only_ this version) - provided by sclorg
 image.  The upgrade process is designed so that you should be able to just
 switch from *image A* to *image B*, and set the `$POSTGRESQL_UPGRADE` variable
 appropriately to explicitly request the database data transformation.
