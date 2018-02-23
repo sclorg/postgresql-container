@@ -70,8 +70,10 @@ function check_env_vars() {
     [[ "$POSTGRESQL_USER"     =~ $psql_identifier_regex ]] || usage
     [[ "$POSTGRESQL_PASSWORD" =~ $psql_password_regex   ]] || usage
     [[ "$POSTGRESQL_DATABASE" =~ $psql_identifier_regex ]] || usage
+{%- raw %}
     [ ${#POSTGRESQL_USER}     -le 63 ] || usage "PostgreSQL username too long (maximum 63 characters)"
     [ ${#POSTGRESQL_DATABASE} -le 63 ] || usage "Database name too long (maximum 63 characters)"
+{%- endraw %}
     postinitdb_actions+=",simple_db"
   fi
 
@@ -155,7 +157,7 @@ initdb_wrapper ()
 {
   # Initialize the database cluster with utf8 support enabled by default.
   # This might affect performance, see:
-  # http://www.postgresql.org/docs/9.6/static/locale.html
+  # http://www.postgresql.org/docs/{{ spec.version }}/static/locale.html
   LANG=${LANG:-en_US.utf8} "$@"
 }
 
