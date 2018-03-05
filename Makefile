@@ -11,7 +11,7 @@ include common/common.mk
 
 # Additional upgrade tests.  Not hooked into CI ATM.
 upgrade-tests: $(VERSIONS)
-	test/run_upgrade_test 9.2:remote 9.4:local 9.5:local 9.6:local
+	OS=$(OS) test/run_upgrade_test 9.2:remote 9.4:local 9.5:local 9.6:local
 
 DG = /usr/bin/dg
 DG_EXEC = ${DG} --max-passes 25 --template Dockerfile.template --multispec specs/multispec.yml
