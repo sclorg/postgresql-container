@@ -649,7 +649,7 @@ run_s2i_test() {
 
   echo "  Testing s2i build"
 
-  local s2i_image_name=$IMAGE_NAME-testapp_$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 10 | head -n 1)
+  local s2i_image_name=$IMAGE_NAME-testapp_$(ct_random_string)
   ct_path_append images_to_clean "$s2i_image_name"
 
   s2i build "file://${test_dir}/test-app" "${IMAGE_NAME}" "$s2i_image_name"
