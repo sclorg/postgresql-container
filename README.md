@@ -1,4 +1,4 @@
-PostgreSQL Docker images
+PostgreSQL container images
 ========================
 
 This repository contains Dockerfiles for PostgreSQL images for OpenShift.

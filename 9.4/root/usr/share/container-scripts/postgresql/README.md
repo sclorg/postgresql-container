@@ -1,4 +1,4 @@
-PostgreSQL 9.4 SQL Database Server Docker image
+PostgreSQL 9.4 SQL Database Server container image
 ===============================================
 
 This container image includes PostgreSQL 9.4 SQL database server for OpenShift and general usage.
