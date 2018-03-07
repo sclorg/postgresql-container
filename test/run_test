@@ -37,7 +37,7 @@ test -n "${OS-}" || false 'make sure $OS is defined'
 CIDFILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
 
 volumes_to_clean=
-images_to_clean=
+images_to_clean=()
 files_to_clean=
 test_dir="$(readlink -f "$(dirname "$0")")"
 
@@ -73,8 +73,13 @@ function cleanup() {
   rmdir $CIDFILE_DIR
 
   ct_path_foreach "$volumes_to_clean" cleanup_volume_dir
-  ct_path_foreach "$images_to_clean" cleanup_image
+
+  for image in "${images_to_clean[@]}"; do
+    docker rmi -f "$image"
+  done
+
   ct_path_foreach "$files_to_clean" rm
+
   echo "$_cleanup_commands" | while read -r line; do
     eval "$line"
   done
@@ -92,11 +97,6 @@ cleanup_volume_dir ()
   local datadir=/var/lib/pgsql/data
   docker run -v "$1:$datadir:Z" --rm "$IMAGE_NAME" /bin/sh -c "/bin/rm -rf $datadir/userdata"
   rmdir "$1"
-}
-
-cleanup_image ()
-{
-    docker rmi -f "$1"
 }
 
 function get_cid() {
@@ -651,7 +651,7 @@ run_s2i_test() {
   echo "  Testing s2i build"
 
   local s2i_image_name=$IMAGE_NAME-testapp_$(ct_random_string)
-  ct_path_append images_to_clean "$s2i_image_name"
+  images_to_clean+=( "$s2i_image_name" )
 
   s2i build "file://${test_dir}/test-app" "${IMAGE_NAME}" "$s2i_image_name"
   IMAGE_NAME=$s2i_image_name test_the_app_image s2i_config_build ""
