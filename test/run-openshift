@@ -146,7 +146,6 @@ function test_postgresql_update() {
   local image_name_no_namespace=${image_name##*/}
   local service_name=$image_name_no_namespace
   local user="testu" pass="testp" db="testdb"
-  local template="https://raw.githubusercontent.com/openshift/origin/master/examples/db-templates/postgresql-persistent-template.json"
   local registry="" old_image="" pod_ip=""
 
   case $OS in
@@ -161,33 +160,38 @@ function test_postgresql_update() {
   old_image="$registry/$image_name"
   docker pull "$old_image" 2>/dev/null
 
-  ct_os_new_project
-  ct_os_upload_image "$old_image" "postgresql:$VERSION"
+  # Use also remote template to make sure the new image works regardless of
+  # template changes
+  for template in \
+        "https://raw.githubusercontent.com/openshift/origin/master/examples/db-templates/postgresql-persistent-template.json" \
+        "$TEMPLATES/postgresql-persistent-template.json"
+  do
+    ct_os_new_project
+    ct_os_upload_image "$old_image" "postgresql:$VERSION"
+    ct_os_deploy_template_image "$template" \
+                                NAMESPACE="$(oc project -q)" \
+                                POSTGRESQL_VERSION="$VERSION" \
+                                DATABASE_SERVICE_NAME="$service_name" \
+                                POSTGRESQL_USER="$user" \
+                                POSTGRESQL_PASSWORD="$pass" \
+                                POSTGRESQL_DATABASE="$db"
 
-  # Use remote template to make sure the new image works regardless of template changes
-  ct_os_deploy_template_image "$template" \
-                              NAMESPACE="$(oc project -q)" \
-                              POSTGRESQL_VERSION="$VERSION" \
-                              DATABASE_SERVICE_NAME="$service_name" \
-                              POSTGRESQL_USER="$user" \
-                              POSTGRESQL_PASSWORD="$pass" \
-                              POSTGRESQL_DATABASE="$db"
+    ct_os_wait_pod_ready "${service_name}" 60
+    check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
 
-  ct_os_wait_pod_ready "${service_name}" 60
-  check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
+    pod_ip=$(ct_os_get_service_ip "$service_name")
+    insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
 
-  pod_ip=$(ct_os_get_service_ip "$service_name")
-  insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
+    ct_os_upload_image "$image_name" "postgresql:$VERSION"
+    : "Waiting for a few seconds while the pods get restarted"
+    sleep 5
 
-  ct_os_upload_image "$image_name" "postgresql:$VERSION"
-  : "Waiting for a few seconds while the pods get restarted"
-  sleep 5
+    ct_os_wait_pod_ready "$service_name" 60
+    check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
 
-  ct_os_wait_pod_ready "$service_name" 60
-  check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
-
-  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
-  ct_os_delete_project
+    check_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
+    ct_os_delete_project
+  done
 }
 
 function test_postgresql_replication() {
