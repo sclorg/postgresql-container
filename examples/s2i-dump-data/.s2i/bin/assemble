@@ -1,0 +1,36 @@
+#! /usr/bin/bash -x
+
+# fail early
+set -e
+
+# source the convenience tooling
+source "${CONTAINER_SCRIPTS_PATH}/common.sh"
+
+# set $PGDATA variable
+set_pgdata
+
+# assert uninitialized data
+test ! -f "$PGDATA/postgresql.conf"
+
+# empty config file is needed after 'initialize_database' call
+touch "$POSTGRESQL_CONFIG_FILE"
+
+initialize_database
+
+# start local PostgreSQL server (wait with '-w')
+pg_ctl -w start -o "-h ''"
+
+# load all sql files
+shopt -s nullglob
+for file in /tmp/src/init/*.sql; do
+    psql -f "$file"
+done
+
+pg_ctl stop
+
+# dump the data into $PWD (in-image storage)
+tar caf data.tar.xz -C "$PGDATA" .
+rm -rf "$PGDATA"
+
+# install pre-start hook
+cp -r /tmp/src/postgresql-pre-start .

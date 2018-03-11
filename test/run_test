@@ -26,6 +26,7 @@ run_master_restart_test
 run_doc_test
 run_s2i_test
 run_test_cfg_hook
+run_s2i_bake_data_test
 "
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
@@ -705,6 +706,25 @@ run_test_cfg_hook()
 -v $volume_dir:/opt/app-root/src:Z
   " create_container "$name-3"
   assert_runtime_option "$name-3" shared_buffers 111MB
+}
+
+run_s2i_bake_data_test ()
+{
+  local s2i_image_name="$IMAGE_NAME-bake_$(ct_random_string)"
+  s2i build "file://$test_dir/../examples/s2i-dump-data" "${IMAGE_NAME}" "$s2i_image_name"
+  ct_path_append images_to_clean "$s2i_image_name"
+
+  local container_name=bake-data-test
+
+  DOCKER_ARGS="-e POSTGRESQL_ADMIN_PASSWORD=password" \
+    IMAGE_NAME="$s2i_image_name" create_container "$container_name"
+
+  wait_ready "$container_name"
+
+  test "hello world" == "$(docker exec "$(get_cid "$container_name")" \
+                           bash -c "psql -tA -c 'SELECT * FROM test;'")"
+
+  docker stop "$(get_cid "$container_name")"
 }
 
 function run_all_tests() {
