@@ -13,20 +13,21 @@ pagila=$pagila_mirror$pagila_base
 pagila_file="$PWD/postgresql-container-pagila.sql"
 pagila_sha256sum=b968d9498d866bff8f47d9e50edf49feeff108d4164bff2aa167dc3eae802701
 
-if test ! -f "$pagila_file"; then
-    # TODO: better avoid race-conditions
-    touch "$pagila_file"
+(
+  flock --timeout 180 9
 
-    ( set -o pipefail
-      curl -s "$pagila" > "$pagila_base"
-      for file in ./usr/share/pagila/pagila-schema.sql \
-          ./usr/share/pagila/pagila-data.sql \
-          ./usr/share/pagila/pagila-insert-data.sql ; \
-      do
-        rpm2cpio "$pagila_base" | cpio --extract --to-stdout "$file"
-      done >"$pagila_file"
-    )
-fi
+  # Already downloaded?
+  test ! -f "$pagila_file" || exit 0
+
+  set -o pipefail
+  curl -s "$pagila" > "$pagila_base"
+  for file in ./usr/share/pagila/pagila-schema.sql \
+      ./usr/share/pagila/pagila-data.sql \
+      ./usr/share/pagila/pagila-insert-data.sql ; \
+  do
+    rpm2cpio "$pagila_base" | cpio --extract --to-stdout "$file"
+  done >"$pagila_file"
+) 9<"$0"
 
 case $(sha256sum "$pagila_file") in
 "$pagila_sha256sum"*) ;;
