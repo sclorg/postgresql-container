@@ -1,0 +1,6 @@
+#!/bin/bash -ex
+yum install epel-release -y
+# our deps
+yum install distgen make -y
+
+make TARGET=centos7 generate
