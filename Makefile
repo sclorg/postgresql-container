@@ -1,7 +1,8 @@
 # Variables are documented in common/build.sh.
 BASE_IMAGE_NAME = postgresql
-VERSIONS = 9.4 9.5 9.6
+VERSIONS = 9.4 9.5 9.6 10
 OPENSHIFT_NAMESPACES = 9.2
+NOT_RELEASED_VERSIONS = 10
 
 # HACK:  Ensure that 'git pull' for old clones doesn't cause confusion.
 # New clones should use '--recursive'.
@@ -9,8 +10,10 @@ OPENSHIFT_NAMESPACES = 9.2
 
 include common/common.mk
 
+script_env += NOT_RELEASED_VERSIONS="$(NOT_RELEASED_VERSIONS)"
+
 # Additional upgrade tests.  Not hooked into CI ATM.
 upgrade-tests: $(VERSIONS)
-	OS=$(OS) test/run_upgrade_test 9.2:remote 9.4:local 9.5:local 9.6:local
+	OS=$(OS) test/run_upgrade_test 9.2:remote 9.4:local 9.5:local 9.6:local 10:local
 
 build-serial: generate

@@ -29,7 +29,9 @@ LABEL summary=$SUMMARY \
       io.openshift.tags="{{ spec.openshift_tags }}" \
       name="{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}" \
       com.redhat.component="{{ spec.redhat_component }}" \
-{%- if spec.version in spec.rhscl3_introduced %}
+{%- if spec.version not in ["9.4", "9.5", "9.6"] %}
+      version="1" \
+{%- elif spec.version == "9.6" and config.os.id == "rhel" %}
       version="1" \
 {%- else %}
       version="{{ spec.version }}" \
@@ -48,8 +50,18 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 {{ spec.repo_enable_reason }}
 {%- endif %}
 RUN {{ spec.environment_setup }}
-{%- if not spec.stable and spec.staging_repo_setup %}
-{{ spec.staging_repo_setup }}
+{%- if not spec.stable and spec.has_devel_repo %}
+  {%- if config.os.id == 'centos' and spec.has_devel_repo.centos %}
+    yum-config-manager --add-repo https://cbs.centos.org/repos/sclo7-rh-postgresql{{ spec.version }}-rh-candidate/x86_64/os/ && \
+    echo gpgcheck=0 >> /etc/yum.repos.d/cbs.centos.org_repos_sclo7-rh-postgresql{{ spec.version }}-rh-candidate_x86_64_os_.repo && \
+  {%- elif config.os.id == 'rhel' %}
+    {%- if spec.has_devel_repo.rhel == 'brew' %}
+    yum-config-manager --add-repo http://download.devel.redhat.com/brewroot/repos/rhscl-{{ spec.rhscl_version.development }}-rh-postgresql{{ spec.version }}-rhel-7-build/latest/x86_64 && \
+    echo gpgcheck=0 >> /etc/yum.repos.d/download.devel.redhat.com_brewroot_repos_rhscl-{{ spec.rhscl_version.development }}-rh-postgresql{{ spec.version }}-rhel-7-build_latest_x86_64.repo && \
+    {%- elif spec.has_devel_repo.rhel == 'beta' %}
+    yum-config-manager --enable rhel-server-rhscl-7-beta-rpms && \
+    {%- endif %}
+  {%- endif %}
 {%- endif %}
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper {{ spec.pkgs }}" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \

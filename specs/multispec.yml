@@ -25,9 +25,8 @@ specs:
        environment_setup: >-4
            yum install -y yum-utils gettext && \
                prepare-yum-repositories rhel-server-rhscl-7-rpms && \
-       staging_repo_setup: ""
-       rhscl3_introduced:
-         - "9.6"
+       rhscl_version:
+         development: 3.1
 
   version:
     "9.4":
@@ -68,3 +67,16 @@ specs:
       rhel_image_name: "rhscl/postgresql-96-rhel7"
       centos_image_name: "centos/postgresql-96-centos7"
       stable: True
+
+    "10":
+      version: "10"
+      prev_version: "9.6"
+      short: "10"
+      pkgs: "rh-postgresql10 rh-postgresql10-postgresql-contrib rh-postgresql96-postgresql-server"
+      enabled_collection: "rh-postgresql10"
+      openshift_tags: "database,postgresql,postgresql10,rh-postgresql10"
+      redhat_component: "rh-postgresql10-docker"
+      stable: False
+      has_devel_repo:
+        centos: True
+        rhel: brew
