@@ -21,6 +21,9 @@
         "from": {
           "kind": "ImageStreamTag",
           "name": "9.6"
+        },
+        "referencePolicy": {
+          "type": "Local"
         }
       },
       {
@@ -36,6 +39,9 @@
         "from": {
           "kind": "DockerImage",
           "name": "registry.access.redhat.com/openshift3/postgresql-92-rhel7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
         }
       },
       {
@@ -45,12 +51,15 @@
           "openshift.io/provider-display-name": "Red Hat, Inc.",
           "description": "Provides a PostgreSQL 9.4 database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/tree/master/9.4/README.md.",
           "iconClass": "icon-postgresql",
-          "tags": "database,postgresql",
+          "tags": "hidden,database,postgresql",
           "version": "9.4"
         },
         "from": {
           "kind": "DockerImage",
           "name": "registry.access.redhat.com/rhscl/postgresql-94-rhel7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
         }
       },
       {
@@ -66,6 +75,9 @@
         "from": {
           "kind": "DockerImage",
           "name": "registry.access.redhat.com/rhscl/postgresql-95-rhel7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
         }
       },
       {
@@ -81,6 +93,9 @@
         "from": {
           "kind": "DockerImage",
           "name": "registry.access.redhat.com/rhscl/postgresql-96-rhel7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
         }
       }
     ]
