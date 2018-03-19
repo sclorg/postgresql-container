@@ -147,6 +147,7 @@ function test_postgresql_update() {
   local service_name=$image_name_no_namespace
   local user="testu" pass="testp" db="testdb"
   local registry="" old_image="" pod_ip=""
+  local version released=:
 
   case $OS in
   rhel7)
@@ -158,7 +159,24 @@ function test_postgresql_update() {
   esac
 
   old_image="$registry/$image_name"
-  docker pull "$old_image" 2>/dev/null
+
+  for version in $NOT_RELEASED_VERSIONS; do
+    case $image_name in
+      *$version*)
+        released=false
+        break
+        ;;
+    esac
+  done
+
+  if docker pull "$old_image" 2>/dev/null; then
+    $released
+  else
+    # We can not test against released image.
+    ! $released
+    return
+  fi
+
 
   # Use also remote template to make sure the new image works regardless of
   # template changes
