@@ -157,7 +157,7 @@ function test_postgresql_update() {
       ;;
   esac
 
-  old_image="$registry/$image_name"
+  old_image="$registry/$image_name:latest"
   docker pull "$old_image" 2>/dev/null
 
   # Use also remote template to make sure the new image works regardless of
