@@ -39,6 +39,9 @@ COPY_RULES="
     dest=root/usr/libexec/fix-permissions
     mode=0755;
 
+    src=src/content_sets.yml
+    dest=content_sets.yml;
+
     src=src/root/usr/share/container-scripts/postgresql/openshift-custom-postgresql-replication.conf.template
     dest=root/usr/share/container-scripts/postgresql/openshift-custom-postgresql-replication.conf.template;
 
