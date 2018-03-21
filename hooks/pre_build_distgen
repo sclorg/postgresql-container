@@ -3,4 +3,6 @@ yum install epel-release -y
 # our deps
 yum install distgen make -y
 
+# common.mk lives in submodule, init first
+git submodule update --init
 make TARGET=centos7 generate
