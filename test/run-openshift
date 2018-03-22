@@ -338,6 +338,9 @@ function test_postgresql_ephemeral_redeploy() {
 }
 
 ct_os_cluster_up
+# Print oc logs on failure
+ct_os_enable_print_logs
+
 test_postgresql_pure_image "${IMAGE_NAME}"
 test_postgresql_template "${IMAGE_NAME}"
 test_postgresql_ephemeral_redeploy "${IMAGE_NAME}"
