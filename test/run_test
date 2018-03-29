@@ -712,7 +712,7 @@ run_s2i_bake_data_test ()
 {
   local s2i_image_name="$IMAGE_NAME-bake_$(ct_random_string)"
   s2i build "file://$test_dir/../examples/s2i-dump-data" "${IMAGE_NAME}" "$s2i_image_name"
-  ct_path_append images_to_clean "$s2i_image_name"
+  images_to_clean+=( "$s2i_image_name" )
 
   local container_name=bake-data-test
 
