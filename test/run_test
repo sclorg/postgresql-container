@@ -115,7 +115,7 @@ function get_ip_from_cid() {
 }
 
 function postgresql_cmd() {
-  docker run --rm -e PGPASSWORD="${PASS}" $IMAGE_NAME psql postgresql://$PGUSER@$CONTAINER_IP:5432/"${DB-db}" "$@"
+  docker run --rm -e PGPASSWORD="$PASS" "$IMAGE_NAME" psql "postgresql://$PGUSER@$CONTAINER_IP:5432/${DB-db}" "$@"
 }
 
 function test_connection() {
@@ -160,9 +160,12 @@ function test_postgresql() {
 function create_container() {
   local name=$1 ; shift
   local cargs=${DOCKER_ARGS:-}
+  # TODO: fix all create_container() invocations so that we don't need this,
+  # e.g. multiline DOCKER_ARGS var should end by trailing backslashes
+  cargs=$(echo "$cargs" | tr  '\n' ' ')
   cidfile="$CIDFILE_DIR/$name"
   # create container with a cidfile in a directory for cleanup
-  docker run $cargs --cidfile $cidfile -d $IMAGE_NAME "$@"
+  eval "docker run $cargs --cidfile \$cidfile -d \$IMAGE_NAME \"\$@\""
   echo "Created container $(cat $cidfile)"
 }
 
@@ -228,6 +231,49 @@ function assert_container_creation_fails() {
   fi
 }
 
+
+# assert_container_creation_succeeds NAME [ARGS]
+# ----------------------------------------------
+# Chcek that 'docker run' with IMAGE_NAME succeeds with docker arguments
+# specified as ARGS.
+assert_container_creation_succeeds ()
+{
+  local check_env=false
+  local name=pg-success-"$(ct_random_string)"
+  local PGUSER='' PGPASS=''  DB=''  ADMIN_PASS=
+  local docker_args=
+
+  for arg; do
+    docker_args+=" $(printf "%q" "$arg")"
+    if $check_env; then
+      local env=${arg//=*/}
+      local val=${arg//$env=/}
+      case $env in
+        POSTGRESQL_ADMIN_PASSWORD)  ADMIN_PASS=$val ;;
+        POSTGRESQL_USER)            PGUSER=$val ;;
+        POSTGRESQL_PASSWORD)        PGPASS=$val ;;
+        POSTGRESQL_DATABASE)        DB=$val ;;
+      esac
+      check_env=false
+    elif test "$arg" = -e; then
+      check_env=:
+    fi
+  done
+
+  DOCKER_ARGS=$docker_args create_container "$name"
+
+  if test -n "$PGUSER" && test -n "$PGPASS"; then
+    PGUSER=$PGUSER PASS=$PGPASS DB=$DB test_connection "$name"
+  fi
+
+  if test -n "$ADMIN_PASS"; then
+    PGUSER=postgres PASS=$ADMIN_PASS DB=$DB test_connection "$name"
+  fi
+
+  docker stop "$(get_cid "$name")"
+}
+
+
 function try_image_invalid_combinations() {
   assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass "$@"
   assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_DATABASE=db "$@"
@@ -240,13 +286,16 @@ function run_container_creation_tests() {
   try_image_invalid_combinations  -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
 
   VERY_LONG_IDENTIFIER="very_long_identifier_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  assert_container_creation_fails -e POSTGRESQL_USER=0invalid -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
+  assert_container_creation_fails -e POSTGRESQL_USER= -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
   assert_container_creation_fails -e POSTGRESQL_USER=$VERY_LONG_IDENTIFIER -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
-  assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD="\"" -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
-  assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=9invalid -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
+  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD="\"" -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
+  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=9invalid -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
   assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=$VERY_LONG_IDENTIFIER -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
-  assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD="\""
+  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD="\""
   echo "  Success!"
+
+  assert_container_creation_succeeds -e POSTGRESQL_ADMIN_PASSWORD="the @password"
+  assert_container_creation_succeeds -e POSTGRESQL_PASSWORD="the pass" -e POSTGRESQL_USER="the user" -e POSTGRESQL_DATABASE="the db"
 }
 
 function test_config_option() {
