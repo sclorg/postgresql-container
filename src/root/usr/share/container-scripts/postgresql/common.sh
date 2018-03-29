@@ -23,9 +23,6 @@ export POSTGRESQL_CONFIG_FILE=$HOME/openshift-custom-postgresql.conf
 
 postinitdb_actions=
 
-psql_identifier_regex='^[a-zA-Z_][a-zA-Z0-9_]*$'
-psql_password_regex='^[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]+$'
-
 # match . files when moving userdata below
 shopt -s dotglob
 # extglob enables the !(userdata) glob pattern below.
@@ -39,11 +36,9 @@ function usage() {
   cat >&2 <<EOF
 For general container run, you must either specify the following environment
 variables:
-  POSTGRESQL_USER (regex: '$psql_identifier_regex')
-  POSTGRESQL_PASSWORD (regex: '$psql_password_regex')
-  POSTGRESQL_DATABASE (regex: '$psql_identifier_regex')
+  POSTGRESQL_USER  POSTGRESQL_PASSWORD  POSTGRESQL_DATABASE
 Or the following environment variable:
-  POSTGRESQL_ADMIN_PASSWORD (regex: '$psql_password_regex')
+  POSTGRESQL_ADMIN_PASSWORD
 Or both.
 
 To migrate data from different PostgreSQL container:
@@ -67,9 +62,6 @@ function check_env_vars() {
   if [[ -v POSTGRESQL_USER || -v POSTGRESQL_PASSWORD || -v POSTGRESQL_DATABASE ]]; then
     # one var means all three must be specified
     [[ -v POSTGRESQL_USER && -v POSTGRESQL_PASSWORD && -v POSTGRESQL_DATABASE ]] || usage
-    [[ "$POSTGRESQL_USER"     =~ $psql_identifier_regex ]] || usage
-    [[ "$POSTGRESQL_PASSWORD" =~ $psql_password_regex   ]] || usage
-    [[ "$POSTGRESQL_DATABASE" =~ $psql_identifier_regex ]] || usage
 {% raw %}
     [ ${#POSTGRESQL_USER}     -le 63 ] || usage "PostgreSQL username too long (maximum 63 characters)"
     [ ${#POSTGRESQL_DATABASE} -le 63 ] || usage "Database name too long (maximum 63 characters)"
@@ -78,7 +70,6 @@ function check_env_vars() {
   fi
 
   if [ -v POSTGRESQL_ADMIN_PASSWORD ]; then
-    [[ "$POSTGRESQL_ADMIN_PASSWORD" =~ $psql_password_regex ]] || usage
     postinitdb_actions+=",admin_pass"
   fi
 
