@@ -5,12 +5,6 @@ DESTDIR='' # optional, defaults to $PWD
 
 # Files containing distgen directives
 DISTGEN_RULES="
-    src=src/Dockerfile
-    dest=Dockerfile;
-
-    src=src/Dockerfile
-    dest=Dockerfile.rhel7;
-
     src=src/cccp.yml
     dest=cccp.yml;
 
@@ -19,6 +13,16 @@ DISTGEN_RULES="
 
     src=src/root/usr/share/container-scripts/postgresql/common.sh
     dest=root/usr/share/container-scripts/postgresql/common.sh
+"
+
+# Files containing distgen directives, which are used for each
+# (distro, version) combination not excluded in multispec
+DISTGEN_MULTI_RULES="
+    src=src/Dockerfile
+    dest=Dockerfile;
+
+    src=src/Dockerfile
+    dest=Dockerfile.rhel7
 "
 
 # Symbolic links
