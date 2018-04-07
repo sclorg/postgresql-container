@@ -683,7 +683,7 @@ run_test_cfg_hook()
   volume_dir=$(mktemp -d --tmpdir pg-hook-volume.XXXXX)
   add_cleanup_command /bin/rm -rf "$volume_dir"
   setfacl -R -m u:26:rwx "$volume_dir"
-  cp -r "$test_dir"/../examples/custom-config/* "$volume_dir"
+  cp -r "$test_dir"/examples/custom-config/* "$volume_dir"
   setfacl -R -m u:26:rwx "$volume_dir"
 
   DOCKER_ARGS="
@@ -711,7 +711,7 @@ run_test_cfg_hook()
 run_s2i_bake_data_test ()
 {
   local s2i_image_name="$IMAGE_NAME-bake_$(ct_random_string)"
-  s2i build "file://$test_dir/../examples/s2i-dump-data" "${IMAGE_NAME}" "$s2i_image_name"
+  s2i build "file://$test_dir/examples/s2i-dump-data" "${IMAGE_NAME}" "$s2i_image_name"
   images_to_clean+=( "$s2i_image_name" )
 
   local container_name=bake-data-test
