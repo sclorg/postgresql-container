@@ -16,9 +16,9 @@ For more information about concepts used in these container images, see the
 Versions
 ---------------
 PostgreSQL versions currently provided are:
-* [postgresql-9.4](9.4)
-* [postgresql-9.5](9.5)
-* [postgresql-9.6](latest)
+* [postgresql-9.4](https://github.com/sclorg/postgresql-container/tree/generated/9.4)
+* [postgresql-9.5](https://github.com/sclorg/postgresql-container/tree/generated/9.5)
+* [postgresql-9.6](https://github.com/sclorg/postgresql-container/tree/generated/9.6)
 
 RHEL versions currently supported are:
 * RHEL7
@@ -76,13 +76,13 @@ Usage
 ---------------------------------
 
 For information about usage of Dockerfile for PostgreSQL 9.4,
-see [usage documentation](9.4).
+see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/9.4).
 
 For information about usage of Dockerfile for PostgreSQL 9.5,
-see [usage documentation](9.5).
+see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/9.5).
 
 For information about usage of Dockerfile for PostgreSQL 9.6,
-see [usage documentation](latest).
+see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/9.6).
 
 Test
 ---------------------------------
