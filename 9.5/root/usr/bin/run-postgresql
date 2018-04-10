@@ -8,6 +8,11 @@ export_vars=$(cgroup-limits) ; export $export_vars
 source "${CONTAINER_SCRIPTS_PATH}/common.sh"
 
 set_pgdata
+
+process_extending_files \
+        "${APP_DATA}/src/postgresql-pre-start" \
+        "${CONTAINER_SCRIPTS_PATH}/pre-start"
+
 check_env_vars
 generate_passwd_file
 generate_postgresql_config
@@ -24,12 +29,16 @@ fi
 
 pg_ctl -w start -o "-h ''"
 if $PG_INITIALIZED ; then
-    process_extending_files ${APP_DATA}/src/postgresql-init ${CONTAINER_SCRIPTS_PATH}/init
+    process_extending_files \
+        "${APP_DATA}/src/postgresql-init" \
+        "${CONTAINER_SCRIPTS_PATH}/init"
     migrate_db
     create_users
 fi
 
-process_extending_files ${APP_DATA}/src/postgresql-start ${CONTAINER_SCRIPTS_PATH}/start
+process_extending_files \
+    "${APP_DATA}/src/postgresql-start" \
+    "${CONTAINER_SCRIPTS_PATH}/start"
 
 pg_ctl stop
 
