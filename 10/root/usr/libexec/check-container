@@ -1,0 +1,39 @@
+#! /bin/sh
+
+# Try whether the PostgreSQL in container accepts connections.
+#
+# With --live, be tolerant to starting PG server.  If the /bin/postgres binary
+# has not been executed yet (the shell script is initializing the container),
+# wait for it (this script might run forever, we expect that the timeout is
+# maintained externally).
+
+test -z "$ENABLED_COLLECTIONS" || . scl_source enable $ENABLED_COLLECTIONS
+
+check=ready
+case $1 in
+    --live) check=live ;;
+esac
+
+while true; do
+    # Wait until the /bin/postgres is executed.
+    case $(readlink -f /proc/1/exe) in
+        *bash) sleep 0.2; continue ;;
+        *) break ;;
+    esac
+done
+
+# Timeout is infinite (openshift template has the timeout pre-set)
+pg_isready -q \
+    -h 127.0.0.1 \
+    ${POSTGRESQL_USER+-U "$POSTGRESQL_USER"} \
+    ${POSTGRESQL_DATABASE+-d "$POSTGRESQL_DATABASE"} \
+    --timeout 0
+rc=$?
+
+# we are ready only if the db accepts connections
+test $rc -eq 0 && exit 0
+
+# container is live also during pg cluster start-up
+test $rc -eq 1 && test $check = live && exit 0
+
+exit 1

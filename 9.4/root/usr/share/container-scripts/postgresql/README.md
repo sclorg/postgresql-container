@@ -252,6 +252,13 @@ $ s2i build ~/image-configuration/ postgresql new-postgresql
 The directory passed to `s2i build` should contain one or more of the
 following directories:
 
+
+##### `postgresql-pre-start/`
+
+Source all `*.sh` files from this directory during early start of the
+container.  There's no PostgreSQL daemon running on background.
+
+
 ##### `postgresql-cfg/`
 
 Contained configuration files (`*.conf`) will be included at the end of image
