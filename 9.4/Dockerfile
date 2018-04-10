@@ -21,7 +21,7 @@ ENV SUMMARY="PostgreSQL is an advanced Object-Relational database management sys
 The image contains the client and server programs that you'll need to \
 create, run, maintain and access a PostgreSQL DBMS server."
 
-LABEL summary=$SUMMARY \
+LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
       io.k8s.display-name="PostgreSQL 9.4" \

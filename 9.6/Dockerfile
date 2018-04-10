@@ -1,4 +1,4 @@
-FROM rhscl/s2i-core-rhel7
+FROM centos/s2i-core-centos7
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -21,16 +21,16 @@ ENV SUMMARY="PostgreSQL is an advanced Object-Relational database management sys
 The image contains the client and server programs that you'll need to \
 create, run, maintain and access a PostgreSQL DBMS server."
 
-LABEL summary=$SUMMARY \
+LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
       io.k8s.display-name="PostgreSQL 9.6" \
       io.openshift.expose-services="5432:postgresql" \
       io.openshift.tags="database,postgresql,postgresql96,rh-postgresql96" \
-      name="rhscl/postgresql-96-rhel7" \
+      name="centos/postgresql-96-centos7" \
       com.redhat.component="rh-postgresql96-docker" \
-      version="1" \
-      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhscl/postgresql-96-rhel7" \
+      version="9.6" \
+      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 centos/postgresql-96-centos7" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
@@ -40,10 +40,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-# rhel-7-server-ose-3.2-rpms is enabled for nss_wrapper until this pkg is
-# in base RHEL
-RUN yum install -y yum-utils gettext && \
-    prepare-yum-repositories rhel-server-rhscl-7-rpms && \
+RUN yum install -y centos-release-scl-rh && \
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper rh-postgresql96 rh-postgresql96-postgresql-contrib rh-postgresql95-postgresql-server" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \

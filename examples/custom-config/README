@@ -1,2 +1,0 @@
-Bind-mount this directory under /opt/app-root/src in container, and all the
-*.conf files from postgresql-cfg/ files will be included to postgresql.conf.
