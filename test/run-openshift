@@ -8,6 +8,7 @@
 
 THISDIR=$(dirname ${BASH_SOURCE[0]})
 TEMPLATES="$THISDIR/examples"
+REMOTE_TEMPLATES="https://raw.githubusercontent.com/openshift/origin/master/examples/db-templates"
 
 source "$THISDIR"/test-lib-openshift.sh
 
@@ -16,6 +17,19 @@ set -exo nounset
 test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
 test -n "${VERSION-}" || false 'make sure $VERSION is defined'
 test -n "${OS-}" || false 'make sure $OS is defined'
+
+# Populate template variables if not set already
+if [ -z "${EPHEMERAL_TEMPLATES:-}" ]; then
+  EPHEMERAL_TEMPLATES="
+$REMOTE_TEMPLATES/postgresql-ephemeral-template.json
+$TEMPLATES/postgresql-ephemeral-template.json"
+fi
+
+if [ -z "${PERSISTENT_TEMPLATES:-}" ]; then
+  PERSISTENT_TEMPLATES="
+$REMOTE_TEMPLATES/postgresql-persistent-template.json
+$TEMPLATES/postgresql-persistent-template.json"
+fi
 
 function assert_cmd_fails() {
   if eval "$@" &>/dev/null; then
@@ -120,14 +134,15 @@ function test_postgresql_pure_image() {
 }
 
 function test_postgresql_template() {
-  local image_name=${1:-centos/postgresql-96-centos7}
+  local image_name=$1; shift
+  local template=$1
   local image_name_no_namespace=${image_name##*/}
   local service_name=${image_name_no_namespace}
 
   ct_os_new_project
   ct_os_upload_image "${image_name}" "postgresql:$VERSION"
 
-  ct_os_deploy_template_image "$TEMPLATES/postgresql-ephemeral-template.json" \
+  ct_os_deploy_template_image "$template" \
                               NAMESPACE="$(oc project -q)" \
                               POSTGRESQL_VERSION="$VERSION" \
                               DATABASE_SERVICE_NAME="${service_name}" \
@@ -142,7 +157,8 @@ function test_postgresql_template() {
 }
 
 function test_postgresql_update() {
-  local image_name=$1
+  local image_name=$1; shift
+  local template=$1
   local image_name_no_namespace=${image_name##*/}
   local service_name=$image_name_no_namespace
   local user="testu" pass="testp" db="testdb"
@@ -180,38 +196,31 @@ function test_postgresql_update() {
   fi
 
 
-  # Use also remote template to make sure the new image works regardless of
-  # template changes
-  for template in \
-        "https://raw.githubusercontent.com/openshift/origin/master/examples/db-templates/postgresql-persistent-template.json" \
-        "$TEMPLATES/postgresql-persistent-template.json"
-  do
-    ct_os_new_project
-    ct_os_upload_image "$old_image" "postgresql:$VERSION"
-    ct_os_deploy_template_image "$template" \
-                                NAMESPACE="$(oc project -q)" \
-                                POSTGRESQL_VERSION="$VERSION" \
-                                DATABASE_SERVICE_NAME="$service_name" \
-                                POSTGRESQL_USER="$user" \
-                                POSTGRESQL_PASSWORD="$pass" \
-                                POSTGRESQL_DATABASE="$db"
+  ct_os_new_project
+  ct_os_upload_image "$old_image" "postgresql:$VERSION"
+  ct_os_deploy_template_image "$template" \
+                              NAMESPACE="$(oc project -q)" \
+                              POSTGRESQL_VERSION="$VERSION" \
+                              DATABASE_SERVICE_NAME="$service_name" \
+                              POSTGRESQL_USER="$user" \
+                              POSTGRESQL_PASSWORD="$pass" \
+                              POSTGRESQL_DATABASE="$db"
 
-    ct_os_wait_pod_ready "${service_name}" 60
-    check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
+  ct_os_wait_pod_ready "${service_name}" 60
+  check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
 
-    pod_ip=$(ct_os_get_service_ip "$service_name")
-    insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
+  pod_ip=$(ct_os_get_service_ip "$service_name")
+  insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
 
-    ct_os_upload_image "$image_name" "postgresql:$VERSION"
-    : "Waiting for a few seconds while the pods get restarted"
-    sleep 5
+  ct_os_upload_image "$image_name" "postgresql:$VERSION"
+  : "Waiting for a few seconds while the pods get restarted"
+  sleep 5
 
-    ct_os_wait_pod_ready "$service_name" 60
-    check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
+  ct_os_wait_pod_ready "$service_name" 60
+  check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
 
-    check_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
-    ct_os_delete_project
-  done
+  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
+  ct_os_delete_project
 }
 
 function test_postgresql_replication() {
@@ -284,7 +293,8 @@ function test_postgresql_replication() {
 }
 
 function test_postgresql_persistent_redeploy() {
-  local image_name=$1
+  local image_name=$1; shift
+  local template=$1
   local image_name_no_namespace=${image_name##*/}
   local service_name=$image_name_no_namespace
   local user="testu" pass="testp" db="testdb"
@@ -293,7 +303,7 @@ function test_postgresql_persistent_redeploy() {
   ct_os_new_project
   ct_os_upload_image "$image_name" "postgresql:$VERSION"
 
-  ct_os_deploy_template_image "$TEMPLATES/postgresql-persistent-template.json" \
+  ct_os_deploy_template_image "$template" \
                               NAMESPACE="$(oc project -q)" \
                               POSTGRESQL_VERSION="$VERSION" \
                               DATABASE_SERVICE_NAME="$service_name" \
@@ -321,7 +331,8 @@ function test_postgresql_persistent_redeploy() {
 }
 
 function test_postgresql_ephemeral_redeploy() {
-  local image_name=$1
+  local image_name=$1; shift
+  local template=$1
   local image_name_no_namespace=${image_name##*/}
   local service_name=$image_name_no_namespace
   local user="testu" pass="testp" db="testdb"
@@ -330,7 +341,7 @@ function test_postgresql_ephemeral_redeploy() {
   ct_os_new_project
   ct_os_upload_image "$image_name" "postgresql:$VERSION"
 
-  ct_os_deploy_template_image "$TEMPLATES/postgresql-ephemeral-template.json" \
+  ct_os_deploy_template_image "$template" \
                               NAMESPACE="$(oc project -q)" \
                               POSTGRESQL_VERSION="$VERSION" \
                               DATABASE_SERVICE_NAME="$service_name" \
@@ -357,13 +368,27 @@ function test_postgresql_ephemeral_redeploy() {
   ct_os_delete_project
 }
 
+function run_ephemeral_tests() {
+  local image_name=$1
+  for template in $EPHEMERAL_TEMPLATES; do
+    test_postgresql_ephemeral_redeploy "$image_name" "$template"
+    test_postgresql_template "$image_name" "$template"
+  done
+}
+
+function run_persistent_tests() {
+  local image_name=$1
+  for template in $PERSISTENT_TEMPLATES; do
+    test_postgresql_persistent_redeploy "$image_name" "$template"
+    test_postgresql_update "$image_name" "$template"
+  done
+}
+
 ct_os_cluster_up
 # Print oc logs on failure
 ct_os_enable_print_logs
 
-test_postgresql_pure_image "${IMAGE_NAME}"
-test_postgresql_template "${IMAGE_NAME}"
-test_postgresql_ephemeral_redeploy "${IMAGE_NAME}"
-test_postgresql_persistent_redeploy "${IMAGE_NAME}"
-test_postgresql_update "${IMAGE_NAME}"
-test_postgresql_replication "${IMAGE_NAME}"
+test_postgresql_pure_image "$IMAGE_NAME"
+test_postgresql_replication "$IMAGE_NAME"
+run_ephemeral_tests "$IMAGE_NAME"
+run_persistent_tests "$IMAGE_NAME"
