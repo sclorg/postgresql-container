@@ -170,7 +170,9 @@ function test_postgresql_update() {
   done
 
   if docker pull "$old_image" 2>/dev/null; then
-    $released
+    # Check if we do not have a stale unreleased versions list
+    # Fail only on rhel, on centos the image is likely already released
+    $released || [ "$OS" = "centos7" ]
   else
     # We can not test against released image.
     ! $released
