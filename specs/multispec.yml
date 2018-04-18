@@ -76,6 +76,9 @@ specs:
       enabled_collection: "rh-postgresql10"
       openshift_tags: "database,postgresql,postgresql10,rh-postgresql10"
       redhat_component: "rh-postgresql10-docker"
+      common_image_name: "{{ spec.org }}/postgresql-10-{{ spec.prod }}"
+      rhel_image_name: "rhscl/postgresql-10-rhel7"
+      centos_image_name: "centos/postgresql-10-centos7"
       stable: False
       has_devel_repo:
         centos: True
