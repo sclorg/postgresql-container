@@ -3,10 +3,10 @@ PostgreSQL 10 SQL Database Server container image
 
 This container image includes PostgreSQL 10 SQL database server for OpenShift and general usage.
 Users can choose between RHEL and CentOS based images.
-The RHEL image is available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/)
-as registry.access.redhat.com/.
-The CentOS image is then available on [Docker Hub](https://hub.docker.com/r//)
-as .
+The RHEL image is available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/postgresql-10-rhel7)
+as registry.access.redhat.com/rhscl/postgresql-10-rhel7.
+The CentOS image is then available on [Docker Hub](https://hub.docker.com/r/centos/postgresql-10-centos7/)
+as centos/postgresql-10-centos7.
 
 
 Description
@@ -22,12 +22,12 @@ You can find more information on the PostgreSQL project from the project Web sit
 Usage
 -----
 
-For this, we will assume that you are using the `` image.
+For this, we will assume that you are using the `rhscl/postgresql-10-rhel7` image.
 If you want to set only the mandatory environment variables and not store the database
 in a host directory, execute the following command:
 
 ```
-$ docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 
+$ docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhscl/postgresql-10-rhel7
 ```
 
 This will create a container named `postgresql_database` running PostgreSQL with
