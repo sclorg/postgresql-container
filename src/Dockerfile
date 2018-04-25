@@ -29,13 +29,13 @@ LABEL summary="$SUMMARY" \
       io.openshift.tags="{{ spec.openshift_tags }}" \
       name="{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}" \
       com.redhat.component="{{ spec.redhat_component }}" \
-{%- if spec.version not in ["9.4", "9.5", "9.6"] %}
+{% if spec.version not in ["9.4", "9.5", "9.6"] %}
       version="1" \
-{%- elif spec.version == "9.6" and config.os.id == "rhel" %}
+{% elif spec.version == "9.6" and config.os.id == "rhel" %}
       version="1" \
-{%- else %}
+{% else %}
       version="{{ spec.version }}" \
-{%- endif %}
+{% endif %}
       usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 {{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
@@ -46,23 +46,23 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-{%- if spec.repo_enable_reason %}
+{% if spec.repo_enable_reason %}
 {{ spec.repo_enable_reason }}
-{%- endif %}
+{% endif %}
 RUN {{ spec.environment_setup }}
-{%- if not spec.stable and spec.has_devel_repo %}
-  {%- if config.os.id == 'centos' and spec.has_devel_repo.centos %}
+{% if not spec.stable and spec.has_devel_repo %}
+  {% if config.os.id == 'centos' and spec.has_devel_repo.centos %}
     yum-config-manager --add-repo https://cbs.centos.org/repos/sclo7-rh-postgresql{{ spec.version }}-rh-candidate/x86_64/os/ && \
     echo gpgcheck=0 >> /etc/yum.repos.d/cbs.centos.org_repos_sclo7-rh-postgresql{{ spec.version }}-rh-candidate_x86_64_os_.repo && \
-  {%- elif config.os.id == 'rhel' %}
-    {%- if spec.has_devel_repo.rhel == 'brew' %}
+  {% elif config.os.id == 'rhel' %}
+    {% if spec.has_devel_repo.rhel == 'brew' %}
     yum-config-manager --add-repo http://download.devel.redhat.com/brewroot/repos/rhscl-{{ spec.rhscl_version.development }}-rh-postgresql{{ spec.version }}-rhel-7-build/latest/x86_64 && \
     echo gpgcheck=0 >> /etc/yum.repos.d/download.devel.redhat.com_brewroot_repos_rhscl-{{ spec.rhscl_version.development }}-rh-postgresql{{ spec.version }}-rhel-7-build_latest_x86_64.repo && \
-    {%- elif spec.has_devel_repo.rhel == 'beta' %}
+    {% elif spec.has_devel_repo.rhel == 'beta' %}
     yum-config-manager --enable rhel-server-rhscl-7-beta-rpms && \
-    {%- endif %}
-  {%- endif %}
-{%- endif %}
+    {% endif %}
+  {% endif %}
+{% endif %}
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper {{ spec.pkgs }}" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \

@@ -70,10 +70,10 @@ function check_env_vars() {
     [[ "$POSTGRESQL_USER"     =~ $psql_identifier_regex ]] || usage
     [[ "$POSTGRESQL_PASSWORD" =~ $psql_password_regex   ]] || usage
     [[ "$POSTGRESQL_DATABASE" =~ $psql_identifier_regex ]] || usage
-{%- raw %}
+{% raw %}
     [ ${#POSTGRESQL_USER}     -le 63 ] || usage "PostgreSQL username too long (maximum 63 characters)"
     [ ${#POSTGRESQL_DATABASE} -le 63 ] || usage "Database name too long (maximum 63 characters)"
-{%- endraw %}
+{% endraw %}
     postinitdb_actions+=",simple_db"
   fi
 
