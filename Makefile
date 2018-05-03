@@ -3,6 +3,8 @@ BASE_IMAGE_NAME = postgresql
 VERSIONS = 9.4 9.5 9.6 10
 OPENSHIFT_NAMESPACES = 9.2
 NOT_RELEASED_VERSIONS = 10
+# use clean-versions provided by common.mk
+clean-hook = clean-versions
 
 # HACK:  Ensure that 'git pull' for old clones doesn't cause confusion.
 # New clones should use '--recursive'.
