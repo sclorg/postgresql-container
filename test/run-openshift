@@ -189,10 +189,10 @@ function test_postgresql_update() {
     # Check if we do not have a stale unreleased versions list
     # Fail only on rhel, on centos the image is likely already released
     $released || [ "$OS" = "centos7" ]
+  elif $released; then
+    false "image '$old_image' should already be available"
   else
-    # We can not test against released image.
-    ! $released
-    return
+    return # not yet released image, skip
   fi
 
 
