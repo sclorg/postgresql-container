@@ -40,7 +40,6 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-94-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-94-rhel7"
       centos_image_name: "centos/postgresql-94-centos7"
-      stable: True
 
     "9.5":
       version: "9.5"
@@ -53,7 +52,6 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-95-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-95-rhel7"
       centos_image_name: "centos/postgresql-95-centos7"
-      stable: True
 
     "9.6":
       version: "9.6"
@@ -66,7 +64,6 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-96-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-96-rhel7"
       centos_image_name: "centos/postgresql-96-centos7"
-      stable: True
 
     "10":
       version: "10"
@@ -79,6 +76,5 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-10-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-10-rhel7"
       centos_image_name: "centos/postgresql-10-centos7"
-      stable: False
       has_devel_repo:
         centos: True
