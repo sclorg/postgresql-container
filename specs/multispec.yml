@@ -82,4 +82,3 @@ specs:
       stable: False
       has_devel_repo:
         centos: True
-        rhel: brew
