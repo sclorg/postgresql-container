@@ -50,7 +50,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 {{ spec.repo_enable_reason }}
 {% endif %}
 RUN {{ spec.environment_setup }}
-{% if not spec.stable and spec.has_devel_repo %}
+{% if spec.has_devel_repo %}
   {% if config.os.id == 'centos' and spec.has_devel_repo.centos %}
     yum-config-manager --add-repo https://cbs.centos.org/repos/sclo7-rh-postgresql{{ spec.version }}-rh-candidate/x86_64/os/ && \
     echo gpgcheck=0 >> /etc/yum.repos.d/cbs.centos.org_repos_sclo7-rh-postgresql{{ spec.version }}-rh-candidate_x86_64_os_.repo && \
