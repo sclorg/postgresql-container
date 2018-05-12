@@ -44,8 +44,6 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # in base RHEL
 RUN yum install -y yum-utils gettext && \
     prepare-yum-repositories rhel-server-rhscl-7-rpms && \
-    yum-config-manager --add-repo http://download.devel.redhat.com/brewroot/repos/rhscl-3.1-rh-postgresql10-rhel-7-build/latest/x86_64 && \
-    echo gpgcheck=0 >> /etc/yum.repos.d/download.devel.redhat.com_brewroot_repos_rhscl-3.1-rh-postgresql10-rhel-7-build_latest_x86_64.repo && \
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper rh-postgresql10 rh-postgresql10-postgresql-contrib rh-postgresql96-postgresql-server" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
