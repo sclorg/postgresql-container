@@ -16,9 +16,9 @@ For more information about concepts used in these container images, see the
 Versions
 ---------------
 PostgreSQL versions currently provided are:
-* [postgresql-9.4](https://github.com/sclorg/postgresql-container/tree/generated/9.4)
 * [postgresql-9.5](https://github.com/sclorg/postgresql-container/tree/generated/9.5)
 * [postgresql-9.6](https://github.com/sclorg/postgresql-container/tree/generated/9.6)
+* [postgresql-10](https://github.com/sclorg/postgresql-container/tree/generated/10)
 
 RHEL versions currently supported are:
 * RHEL7
@@ -33,10 +33,10 @@ Choose either the CentOS7 or RHEL7 based image:
 
 *  **RHEL7 based image**
 
-    These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/postgresql-96-rhel7).
+    These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/postgresql-10-rhel7).
     To download it run:
     ```
-    docker pull registry.access.redhat.com/rhscl/postgresql-96-rhel7
+    docker pull registry.access.redhat.com/rhscl/postgresql-10-rhel7
     ```
 
     To build a RHEL7 based image, you need to run Docker build on a properly
@@ -45,7 +45,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
-    $ make build TARGET=rhel7 VERSIONS=9.6
+    $ make build TARGET=rhel7 VERSIONS=10
     ```
 
 *  **CentOS7 based image**
@@ -53,7 +53,7 @@ Choose either the CentOS7 or RHEL7 based image:
     These images are available on DockerHub. To download it run:
 
     ```
-    $ docker pull centos/postgresql-96-centos7
+    $ docker pull centos/postgresql-10-centos7
     ```
 
     To build a PostgreSQL image from scratch run:
@@ -61,7 +61,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
-    $ make build TARGET=centos7 VERSIONS=9.6
+    $ make build TARGET=centos7 VERSIONS=10
     ```
 
 **Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
@@ -75,14 +75,14 @@ In this repository [distgen](https://github.com/devexp-db/distgen/) is used for 
 Usage
 ---------------------------------
 
-For information about usage of Dockerfile for PostgreSQL 9.4,
-see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/9.4).
-
 For information about usage of Dockerfile for PostgreSQL 9.5,
 see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/9.5).
 
 For information about usage of Dockerfile for PostgreSQL 9.6,
 see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/9.6).
+
+For information about usage of Dockerfile for PostgreSQL 10,
+see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/10).
 
 Test
 ---------------------------------
@@ -99,19 +99,19 @@ Users can choose between testing PostgreSQL based on a RHEL or CentOS image.
 
     ```
     $ cd postgresql
-    $ make test TARGET=rhel7 VERSIONS=9.6
+    $ make test TARGET=rhel7 VERSIONS=10
     ```
 
 *  **CentOS based image**
 
     ```
     $ cd postgresql
-    $ make test TARGET=centos7 VERSIONS=9.6
+    $ make test TARGET=centos7 VERSIONS=10
     ```
 +By using the `TEST_CASE` parameter you can choose a test case subset to be run against the image, eg:
 
     $ cd postgresql
-    $ make test VERSIONS=9.6 TEST_CASE="run_general_tests run_replication_test"
+    $ make test VERSIONS=10 TEST_CASE="run_general_tests run_replication_test"
 
 
 **Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
