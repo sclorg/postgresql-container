@@ -29,18 +29,6 @@ specs:
          development: 3.1
 
   version:
-    "9.4":
-      version: "9.4"
-      prev_version: "9.2"
-      short: "94"
-      pkgs: "rh-postgresql94 rh-postgresql94-postgresql-contrib postgresql92-postgresql-server rh-postgresql94-postgresql-upgrade"
-      enabled_collection: "rh-postgresql94"
-      openshift_tags: "database,postgresql,postgresql94,rh-postgresql94"
-      redhat_component: "rh-postgresql94-docker"
-      common_image_name: "{{ spec.org }}/postgresql-94-{{ spec.prod }}"
-      rhel_image_name: "rhscl/postgresql-94-rhel7"
-      centos_image_name: "centos/postgresql-94-centos7"
-
     "9.5":
       version: "9.5"
       prev_version: "9.4"
