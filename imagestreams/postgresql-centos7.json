@@ -20,7 +20,7 @@
         },
         "from": {
           "kind": "ImageStreamTag",
-          "name": "9.6"
+          "name": "10"
         },
         "referencePolicy": {
           "type": "Local"
@@ -93,6 +93,24 @@
         "from": {
           "kind": "DockerImage",
           "name": "docker.io/centos/postgresql-96-centos7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      },
+      {
+        "name": "10",
+        "annotations": {
+          "openshift.io/display-name": "PostgreSQL 10",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a PostgreSQL 10 database on CentOS 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/tree/master/10/README.md.",
+          "iconClass": "icon-postgresql",
+          "tags": "database,postgresql",
+          "version": "10"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "docker.io/centos/postgresql-10-centos7:latest"
         },
         "referencePolicy": {
           "type": "Local"
