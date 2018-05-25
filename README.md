@@ -70,7 +70,7 @@ on all provided versions of PostgreSQL.**
 Contributing
 --------------------------------
 
-In this repository [distgen](https://github.com/devexp-db/distgen/) is used for generating Dockerfiles. If you'd like update a Dockerfile, please make changes in specs/multispec.yml and/or Dockerfile.template (or other distgen file) and run `make generate_dockerfiles`.
+In this repository [distgen](https://github.com/devexp-db/distgen/) is used for generating image source files. If you'd like update a Dockerfile, please make changes in specs/multispec.yml and/or Dockerfile.template (or other distgen file) and run `make generate`.
 
 Usage
 ---------------------------------
