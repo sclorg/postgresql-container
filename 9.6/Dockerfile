@@ -28,7 +28,7 @@ LABEL summary="$SUMMARY" \
       io.openshift.expose-services="5432:postgresql" \
       io.openshift.tags="database,postgresql,postgresql96,rh-postgresql96" \
       name="centos/postgresql-96-centos7" \
-      com.redhat.component="rh-postgresql96-docker" \
+      com.redhat.component="rh-postgresql96-container" \
       version="9.6" \
       usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 centos/postgresql-96-centos7" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
