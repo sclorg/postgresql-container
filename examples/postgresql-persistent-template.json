@@ -269,8 +269,8 @@
     {
       "name": "POSTGRESQL_VERSION",
       "displayName": "Version of PostgreSQL Image",
-      "description": "Version of PostgreSQL image to be used (9.4, 9.5, 9.6 or latest).",
-      "value": "9.6",
+      "description": "Version of PostgreSQL image to be used (10 or latest).",
+      "value": "10",
       "required": true
     }
   ]
