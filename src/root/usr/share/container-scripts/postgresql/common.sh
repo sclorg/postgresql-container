@@ -259,8 +259,8 @@ run_pgupgrade ()
     old_collection=rh-postgresql$old_raw_version
   fi
 
-  old_pgengine=/opt/rh/$old_collection/root/usr/bin
-  new_pgengine=/opt/rh/rh-postgresql${new_raw_version}/root/usr/bin
+  old_pgengine=${POSTGRESQL_PREV_BINDIR:-/opt/rh/$old_collection/root/usr/bin}
+  new_pgengine=${POSTGRESQL_BINDIR:-/opt/rh/rh-postgresql${new_raw_version}/root/usr/bin}
   PGDATA_new="${PGDATA}-new"
 
   printf >&2 "\n==========  \$PGDATA upgrade: %s -> %s  ==========\n\n" \

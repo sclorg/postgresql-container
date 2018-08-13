@@ -569,15 +569,8 @@ $volume_options
 
 run_upgrade_test ()
 {
-    local upgrade_path="none 9.2 9.4 9.5 9.6 10 none" prev= act=
-    for act in $upgrade_path; do
-        if test "$act" = $VERSION; then
-            break
-        fi
-        prev=$act
-    done
-    test "$prev" != none
-
+    local prev=
+    prev=$(docker inspect $IMAGE_NAME | grep -m 1 -oP "POSTGRESQL_PREV_VERSION=\\K[0-9.]+")
     # TODO: We run this script from $VERSION directory, through test/run symlink.
     test/run_upgrade_test "$prev:remote" "$VERSION:local"
 }
