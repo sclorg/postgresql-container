@@ -23,7 +23,7 @@ A standby server can also be used for read-only queries.
 
 ## Deployment
 
-This example uses a [PersistentVolumeClaim](https://docs.openshift.org/latest/architecture/additional_concepts/storage.html#persistent-volume-claims)
+This example uses a [PersistentVolumeClaim](https://docs.okd.io/latest/architecture/additional_concepts/storage.html#persistent-volume-claims)
 to request persistent storage for the primary PostgreSQL server.
 
 You need to have persistent volumes configured and available in your project in
@@ -53,7 +53,7 @@ $ oc create -f - <<EOF
 EOF
 ```
 
-It is recommended, however, that you use other [type of PersistentVolume](https://docs.openshift.org/latest/architecture/additional_concepts/storage.html#types-of-persistent-volumes)
+It is recommended, however, that you use other [type of PersistentVolume](https://docs.okd.io/latest/architecture/additional_concepts/storage.html#types-of-persistent-volumes)
 such as NFS.
 
 Now you can create a new database deployment:
@@ -81,7 +81,7 @@ $ dig postgresql-slave A +search +short
 
 ### DeploymentConfig 'postgresql-master'
 
-This resource defines a [deployment configuration](https://docs.openshift.org/latest/architecture/core_concepts/deployments.html#deployments-and-deployment-configurations)
+This resource defines a [deployment configuration](https://docs.okd.io/latest/architecture/core_concepts/deployments.html#deployments-and-deployment-configurations)
 to spawn the PostgreSQL primary database server, or master.
 
 Once the master is started, it works as a standalone database server, fully
@@ -89,7 +89,7 @@ independent  of the slaves.
 
 ### DeploymentConfig 'postgresql-slave'
 
-This resource defines a [deployment configuration](https://docs.openshift.org/latest/architecture/core_concepts/deployments.html#deployments-and-deployment-configurations)
+This resource defines a [deployment configuration](https://docs.okd.io/latest/architecture/core_concepts/deployments.html#deployments-and-deployment-configurations)
 to spawn PostgreSQL standby servers, the slaves.
 
 Upon startup, each slave waits for the master server to become available (via
@@ -224,7 +224,7 @@ deploymentconfigs/postgresql-slave
 This will trigger the redeployment of both primary and standby servers.
 
 Note that, as a current limitation in this example, the standby servers store
-replicated data in an an ephemeral [emptyDir](https://docs.openshift.org/latest/dev_guide/volumes.html).
+replicated data in an an ephemeral [emptyDir](https://docs.okd.io/latest/dev_guide/volumes.html).
 This means that redeploying a standby server will cause it to start replicating
 again from scratch.
 
