@@ -646,14 +646,14 @@ ${mount_opts}
 run_s2i_test() {
   local temp_file
   echo "  Testing s2i usage"
-  s2i usage --pull-policy=never "${IMAGE_NAME}" &>/dev/null
+  ct_s2i_usage "${IMAGE_NAME}" --pull-policy=never 1>/dev/null
 
   echo "  Testing s2i build"
 
   local s2i_image_name=$IMAGE_NAME-testapp_$(ct_random_string)
   images_to_clean+=( "$s2i_image_name" )
 
-  s2i build "file://${test_dir}/test-app" "${IMAGE_NAME}" "$s2i_image_name"
+  ct_s2i_build_as_df "file://${test_dir}/test-app" "${IMAGE_NAME}" "$s2i_image_name" 1>/dev/null
   IMAGE_NAME=$s2i_image_name test_the_app_image s2i_config_build ""
 
   echo "  Testing s2i mount"
@@ -711,7 +711,7 @@ run_test_cfg_hook()
 run_s2i_bake_data_test ()
 {
   local s2i_image_name="$IMAGE_NAME-bake_$(ct_random_string)"
-  s2i build "file://$test_dir/examples/s2i-dump-data" "${IMAGE_NAME}" "$s2i_image_name"
+  ct_s2i_build_as_df "file://$test_dir/examples/s2i-dump-data" "${IMAGE_NAME}" "$s2i_image_name" 1>/dev/null
   images_to_clean+=( "$s2i_image_name" )
 
   local container_name=bake-data-test
