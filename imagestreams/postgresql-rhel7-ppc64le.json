@@ -1,0 +1,49 @@
+{
+  "kind": "ImageStream",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "postgresql",
+    "annotations": {
+      "openshift.io/display-name": "PostgreSQL"
+    }
+  },
+  "spec": {
+    "tags": [
+      {
+        "name": "latest",
+        "annotations": {
+          "openshift.io/display-name": "PostgreSQL (Latest)",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a PostgreSQL database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.\n\nWARNING: By selecting this tag, your application will automatically update to use the latest version of PostgreSQL available on OpenShift, including major versions updates.",
+          "iconClass": "icon-postgresql",
+          "tags": "database,postgresql,ppc64le"
+        },
+        "from": {
+          "kind": "ImageStreamTag",
+          "name": "10"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      },
+      {
+        "name": "10",
+        "annotations": {
+          "openshift.io/display-name": "PostgreSQL (Ephemeral) 10",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a PostgreSQL 10 database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
+          "iconClass": "icon-postgresql",
+          "tags": "database,postgresql,ppc64le",
+          "version": "10"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "registry.redhat.io/rhscl/postgresql-10-rhel7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      }
+    ]
+  }
+}
