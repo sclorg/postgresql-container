@@ -370,7 +370,7 @@ function run_tests() {
 
 function run_slave() {
   local suffix="$1"; shift
-  docker run $cluster_args -e POSTGRESQL_MASTER_IP=${master_ip} \
+  docker run $cluster_args -e POSTGRESQL_MASTER_IP=${master_hostname} \
     -d --cidfile ${CIDFILE_DIR}/slave-${suffix}.cid $IMAGE_NAME run-postgresql-slave
 }
 
@@ -386,6 +386,12 @@ function test_slave_visibility() {
 
   for slave in $slave_cids; do
     slave_ip=$(get_ip_from_cid $slave)
+    if [ -z "$slave_ip" ]; then
+        echo "Failed to get IP for slave $slave."
+        echo "Dumping logs for $slave"
+        docker logs "$slave"
+        return 1
+    fi
     for i in $(seq $max_attempts); do
       result="$(postgresql_cmd -c "select client_addr from pg_stat_replication;" | grep "$slave_ip" || true)"
       if [[ -n "${result}" ]]; then
@@ -434,11 +440,13 @@ function test_value_replication() {
 
 function setup_replication_cluster() {
   # Run the PostgreSQL master
-  run_master $cid_suffix
-  master_ip=$(get_container_ip master-$cid_suffix.cid)
+  run_master "$cid_suffix"
 
   # Run the PostgreSQL slaves
   local i
+  master_ip=$(get_container_ip "master-$cid_suffix.cid")
+  local cluster_args="$cluster_args --add-host postgresql-master:$master_ip"
+  local master_hostname="postgresql-master"
   for i in $(seq ${slave_num:-1}); do
     slave_cids="$slave_cids $(run_slave $cid_suffix-$i)"
   done
@@ -476,6 +484,11 @@ function run_master_restart_test() {
   run_master $cid_suffix
   CONTAINER_IP=$(get_container_ip master-$cid_suffix.cid)
 
+  # Update master_ip in slaves
+  for slave in $slave_cids; do
+    docker exec -u 0 $slave bash -c "sed \"s/$master_ip/$CONTAINER_IP/g\" /etc/hosts >/tmp/hosts && cp /tmp/hosts /etc/hosts"
+  done
+  master_ip=$CONTAINER_IP
   # Check if the new master sees existing slaves
   test_slave_visibility
 
