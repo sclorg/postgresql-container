@@ -74,9 +74,13 @@ function cleanup() {
 
   ct_path_foreach "$volumes_to_clean" cleanup_volume_dir
 
-  for image in "${images_to_clean[@]}"; do
-    docker rmi -f "$image"
-  done
+  if test -n "${images_to_clean-}"; then
+    # Workaround for RHEL 7 bash bug:
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1636393
+    for image in "${images_to_clean[@]}"; do
+      docker rmi -f "$image"
+    done
+  fi
 
   ct_path_foreach "$files_to_clean" rm
 
