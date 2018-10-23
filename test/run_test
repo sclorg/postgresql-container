@@ -635,6 +635,8 @@ $volume_options
 
 run_upgrade_test ()
 {
+    [ "${OS}" == "fedora" ] && return 0
+
     local upgrade_path="none 9.2 9.4 9.5 9.6 10 none" prev= act=
     for act in $upgrade_path; do
         if test "$act" = $VERSION; then
@@ -650,6 +652,8 @@ run_upgrade_test ()
 
 run_migration_test ()
 {
+    [ "${OS}" == "fedora" ] && return 0
+
     local from_version
     local upgrade_path="9.2 9.4 9.5 9.6 10"
 
