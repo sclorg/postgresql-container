@@ -27,6 +27,9 @@ specs:
                prepare-yum-repositories rhel-server-rhscl-7-rpms && \
        rhscl_version:
          development: 3.1
+    fedora:
+      distros:
+        - fedora-29-x86_64
 
   version:
     "9.5":
@@ -69,3 +72,9 @@ specs:
       latest_fedora: "f29"
       has_devel_repo:
         centos: True
+
+matrix:
+  exclude:
+    - distros:
+        - fedora-29-x86_64
+      version: "9.5"
