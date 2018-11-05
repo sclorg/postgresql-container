@@ -12,7 +12,7 @@ DISTGEN_RULES="
     dest=root/usr/share/container-scripts/postgresql/README.md;
 
     src=src/root/usr/share/container-scripts/postgresql/common.sh
-    dest=root/usr/share/container-scripts/postgresql/common.sh
+    dest=root/usr/share/container-scripts/postgresql/common.sh;
 "
 
 # Files containing distgen directives, which are used for each
@@ -22,7 +22,10 @@ DISTGEN_MULTI_RULES="
     dest=Dockerfile;
 
     src=src/Dockerfile
-    dest=Dockerfile.rhel7
+    dest=Dockerfile.rhel7;
+
+    src=src/Dockerfile.fedora
+    dest=Dockerfile.fedora;
 "
 
 # Symbolic links

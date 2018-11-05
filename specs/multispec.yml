@@ -27,6 +27,9 @@ specs:
                prepare-yum-repositories rhel-server-rhscl-7-rpms && \
        rhscl_version:
          development: 3.1
+    fedora:
+      distros:
+        - fedora-29-x86_64
 
   version:
     "9.5":
@@ -40,6 +43,7 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-95-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-95-rhel7"
       centos_image_name: "centos/postgresql-95-centos7"
+      latest_fedora: "f25"
 
     "9.6":
       version: "9.6"
@@ -52,6 +56,7 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-96-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-96-rhel7"
       centos_image_name: "centos/postgresql-96-centos7"
+      latest_fedora: "f27"
 
     "10":
       version: "10"
@@ -64,5 +69,12 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-10-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-10-rhel7"
       centos_image_name: "centos/postgresql-10-centos7"
+      latest_fedora: "f29"
       has_devel_repo:
         centos: True
+
+matrix:
+  exclude:
+    - distros:
+        - fedora-29-x86_64
+      version: "9.5"
