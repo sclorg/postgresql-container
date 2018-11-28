@@ -87,8 +87,6 @@ ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     PROMPT_COMMAND=". ${CONTAINER_SCRIPTS_PATH}/scl_enable"
 
-VOLUME ["/var/lib/pgsql/data"]
-
 # {APP_DATA} needs to be accessed by postgres user while s2i assembling
 # postgres user changes permissions of files in APP_DATA during assembling
 RUN /usr/libexec/fix-permissions ${APP_DATA} && \
