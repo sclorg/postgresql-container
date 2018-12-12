@@ -1,1 +1,1 @@
-job-id: postgresql-{{ spec.short }}-{{ spec.prod }}
+job-id: {{ spec.cccp_job }}

@@ -24,6 +24,9 @@ DISTGEN_MULTI_RULES="
     src=src/Dockerfile
     dest=Dockerfile.rhel7;
 
+    src=src/Dockerfile
+    dest=Dockerfile.rhel8;
+
     src=src/Dockerfile.fedora
     dest=Dockerfile.fedora;
 "
@@ -57,10 +60,6 @@ COPY_RULES="
 
     src=src/root/usr/share/container-scripts/postgresql/openshift-custom-recovery.conf.template
     dest=root/usr/share/container-scripts/postgresql/openshift-custom-recovery.conf.template;
-
-    src=src/root/usr/bin/cgroup-limits
-    dest=root/usr/bin/cgroup-limits
-    mode=0755;
 
     src=src/root/usr/share/container-scripts/postgresql/scl_enable
     dest=root/usr/share/container-scripts/postgresql/scl_enable;

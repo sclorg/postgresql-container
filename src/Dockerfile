@@ -11,7 +11,9 @@ FROM {{ spec.s2i_base }}
 #                           PostgreSQL administrative account
 
 ENV POSTGRESQL_VERSION={{ spec.version }} \
+    {% if spec.version not in ["9.6", "10"] or spec.prod != "rhel8" %}
     POSTGRESQL_PREV_VERSION={{ spec.prev_version }} \
+    {% endif %}
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
@@ -27,7 +29,7 @@ LABEL summary="$SUMMARY" \
       io.k8s.display-name="PostgreSQL {{ spec.version }}" \
       io.openshift.expose-services="5432:postgresql" \
       io.openshift.tags="{{ spec.openshift_tags }}" \
-      name="{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}" \
+      name="{{ spec.img_name }}" \
       com.redhat.component="{{ spec.redhat_component }}" \
 {% if spec.version not in ["9.4", "9.5", "9.6"] %}
       version="1" \
@@ -36,7 +38,7 @@ LABEL summary="$SUMMARY" \
 {% else %}
       version="{{ spec.version }}" \
 {% endif %}
-      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 {{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}" \
+      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 {{ spec.img_name }}" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
@@ -66,6 +68,9 @@ RUN {{ spec.environment_setup }}
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper {{ spec.pkgs }}" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
+    {% if spec.post_install %}
+    {{ spec.post_install }}
+    {% endif %}
     yum clean all && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
@@ -80,13 +85,14 @@ ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
 COPY root /
 COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 
+{% if spec.prod != "rhel8" and config.os.id != "fedora" %}
 # When bash is started non-interactively, to run a shell script, for example it
 # looks for this variable and source the content of this file. This will enable
 # the SCL for all scripts without need to do 'scl enable'.
 ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     PROMPT_COMMAND=". ${CONTAINER_SCRIPTS_PATH}/scl_enable"
-
+{% endif %}
 VOLUME ["/var/lib/pgsql/data"]
 
 # {APP_DATA} needs to be accessed by postgres user while s2i assembling
