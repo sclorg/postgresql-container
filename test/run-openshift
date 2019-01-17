@@ -174,7 +174,7 @@ function test_postgresql_update() {
       ;;
   esac
 
-  old_image="$registry/$image_name_no_registry"
+  old_image="$registry/$image_name"
 
   for version in $NOT_RELEASED_VERSIONS; do
     case $image_name in
