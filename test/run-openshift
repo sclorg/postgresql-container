@@ -273,7 +273,7 @@ function test_postgresql_replication() {
   check_postgresql_data "$image_name" "$user" "$pass" "$db" "$slave_ip"
 
   : "Redeploying slave node"
-  oc deploy "$slave_service_name" --latest
+  oc rollout latest "$slave_service_name"
   ct_os_wait_pod_ready "$slave_service_name-3" 60
   slave_name=$(ct_os_get_pod_name "$slave_service_name")
   slave_ip=$(ct_os_get_pod_ip "$slave_name")
@@ -318,7 +318,7 @@ function test_postgresql_persistent_redeploy() {
   insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
 
   : "Redeploying pod"
-  oc deploy "$service_name" --latest
+  oc rollout latest "$service_name"
   : "Waiting for a few seconds while the pod gets restarted"
   sleep 5
 
@@ -356,7 +356,7 @@ function test_postgresql_ephemeral_redeploy() {
   insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
 
   : "Redeploying pod"
-  oc deploy "$service_name" --latest
+  oc rollout latest "$service_name"
   : "Waiting for a few seconds while the pod gets restarted"
   sleep 5
 
