@@ -136,7 +136,7 @@ function generate_postgresql_recovery_config() {
 function generate_passwd_file() {
   export USER_ID=$(id -u)
   export GROUP_ID=$(id -g)
-  grep -v ^postgres /etc/passwd > "$HOME/passwd"
+  grep -v -e ^postgres -e ^$USER_ID /etc/passwd > "$HOME/passwd"
   echo "postgres:x:${USER_ID}:${GROUP_ID}:PostgreSQL Server:${HOME}:/bin/bash" >> "$HOME/passwd"
   export LD_PRELOAD=libnss_wrapper.so
   export NSS_WRAPPER_PASSWD=${HOME}/passwd
