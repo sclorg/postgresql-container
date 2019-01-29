@@ -48,7 +48,7 @@ specs:
        img_name: "{{ spec.org }}/postgresql-{{ spec.short }}"
        pkgs: "postgresql-server postgresql-contrib"
        environment_setup: >-4
-            yum -y module enable postgresql:{{ spec.version }} && \
+           yum -y module enable postgresql:{{ spec.version }} && \
        post_install: >-4
            yum -y reinstall tzdata && \
     fedora:

@@ -92,6 +92,7 @@ COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     PROMPT_COMMAND=". ${CONTAINER_SCRIPTS_PATH}/scl_enable"
+
 {% endif %}
 VOLUME ["/var/lib/pgsql/data"]
 
