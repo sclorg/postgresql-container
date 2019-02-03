@@ -8,6 +8,11 @@ specs:
       s2i_base: centos/s2i-core-centos7
       org: "centos"
       prod: "centos7"
+      openshift_tags: "database,postgresql,postgresql{{ spec.short }},rh-postgresql{{ spec.short }}"
+      redhat_component: "rh-postgresql{{ spec.short }}-container"
+      enabled_collection: "rh-postgresql{{ spec.short }}"
+      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      pkgs: "rh-postgresql{{ spec.short }} rh-postgresql{{ spec.short }}-postgresql-contrib rh-postgresql{{ spec.prev_short }}-postgresql-server"
       repo_enable_reason: ""
       environment_setup: yum install -y centos-release-scl-rh && \
       staging_repo_setup: >-4
@@ -19,6 +24,11 @@ specs:
        s2i_base: rhscl/s2i-core-rhel7
        org: "rhscl"
        prod: "rhel7"
+       openshift_tags: "database,postgresql,postgresql{{ spec.short }},rh-postgresql{{ spec.short }}"
+       redhat_component: "rh-postgresql{{ spec.short }}-container"
+       enabled_collection: "rh-postgresql{{ spec.short }}"
+       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+       pkgs: "rh-postgresql{{ spec.short }} rh-postgresql{{ spec.short }}-postgresql-contrib rh-postgresql{{ spec.prev_short }}-postgresql-server"
        repo_enable_reason: |-
          # rhel-7-server-ose-3.2-rpms is enabled for nss_wrapper until this pkg is
          # in base RHEL
@@ -27,6 +37,20 @@ specs:
                prepare-yum-repositories rhel-server-rhscl-7-rpms && \
        rhscl_version:
          development: 3.1
+    rhel8:
+       distros:
+         - rhel-8-x86_64
+       s2i_base: rhel8/s2i-core
+       org: "rhel8"
+       prod: "rhel8"
+       openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+       redhat_component: "postgresql-{{ spec.short }}-container"
+       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}"
+       pkgs: "postgresql-server postgresql-contrib"
+       environment_setup: >-4
+           yum -y module enable postgresql:{{ spec.version }} && \
+       post_install: >-4
+           yum -y reinstall tzdata && \
     fedora:
       distros:
         - fedora-29-x86_64
@@ -36,39 +60,33 @@ specs:
       version: "9.5"
       prev_version: "9.4"
       short: "95"
-      pkgs: "rh-postgresql95 rh-postgresql95-postgresql-contrib rh-postgresql94-postgresql-server"
-      enabled_collection: "rh-postgresql95"
-      openshift_tags: "database,postgresql,postgresql95,rh-postgresql95"
-      redhat_component: "rh-postgresql95-container"
+      prev_short: "94"
       common_image_name: "{{ spec.org }}/postgresql-95-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-95-rhel7"
       centos_image_name: "centos/postgresql-95-centos7"
+      cccp_job: "postgresql-95-centos7"
       latest_fedora: "f25"
 
     "9.6":
       version: "9.6"
       prev_version: "9.5"
       short: "96"
-      pkgs: "rh-postgresql96 rh-postgresql96-postgresql-contrib rh-postgresql95-postgresql-server"
-      enabled_collection: "rh-postgresql96"
-      openshift_tags: "database,postgresql,postgresql96,rh-postgresql96"
-      redhat_component: "rh-postgresql96-container"
+      prev_short: "95"
       common_image_name: "{{ spec.org }}/postgresql-96-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-96-rhel7"
       centos_image_name: "centos/postgresql-96-centos7"
+      cccp_job: "postgresql-96-centos7"
       latest_fedora: "f27"
 
     "10":
       version: "10"
       prev_version: "9.6"
       short: "10"
-      pkgs: "rh-postgresql10 rh-postgresql10-postgresql-contrib rh-postgresql96-postgresql-server"
-      enabled_collection: "rh-postgresql10"
-      openshift_tags: "database,postgresql,postgresql10,rh-postgresql10"
-      redhat_component: "rh-postgresql10-container"
+      prev_short: "96"
       common_image_name: "{{ spec.org }}/postgresql-10-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-10-rhel7"
       centos_image_name: "centos/postgresql-10-centos7"
+      cccp_job: "postgresql-10-centos7"
       latest_fedora: "f29"
       has_devel_repo:
         centos: True
@@ -77,4 +95,5 @@ matrix:
   exclude:
     - distros:
         - fedora-29-x86_64
+        - rhel-8-x86_64
       version: "9.5"
