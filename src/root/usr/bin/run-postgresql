@@ -20,7 +20,9 @@ generate_postgresql_config
 # Is this brand new data volume?
 PG_INITIALIZED=false
 
-if [ ! -f "$PGDATA/postgresql.conf" ]; then
+# Perform the DB initialization as an atomic operation,
+# IOW either complete all of its phases or redo it
+if [ "$PG_INITIALIZED" == "false" ]; then
   initialize_database
   PG_INITIALIZED=:
 else
