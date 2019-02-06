@@ -1,0 +1,412 @@
+#!/bin/bash
+#
+# Test the Postgresql image in OpenShift.
+#
+# IMAGE_NAME specifies a name of the candidate image used for testing.
+# The image has to be available before this script is executed.
+#
+
+THISDIR=$(dirname ${BASH_SOURCE[0]})
+TEMPLATES="$THISDIR/examples"
+REMOTE_TEMPLATES="https://raw.githubusercontent.com/openshift/origin/master/examples/db-templates"
+
+source "$THISDIR"/test-lib-openshift.sh
+source "$THISDIR"/test-lib-postgresql.sh
+
+set -exo nounset
+
+test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
+test -n "${VERSION-}" || false 'make sure $VERSION is defined'
+test -n "${OS-}" || false 'make sure $OS is defined'
+
+# Populate template variables if not set already
+if [ -z "${EPHEMERAL_TEMPLATES:-}" ]; then
+  EPHEMERAL_TEMPLATES="
+$REMOTE_TEMPLATES/postgresql-ephemeral-template.json
+$TEMPLATES/postgresql-ephemeral-template.json"
+fi
+
+if [ -z "${PERSISTENT_TEMPLATES:-}" ]; then
+  PERSISTENT_TEMPLATES="
+$REMOTE_TEMPLATES/postgresql-persistent-template.json
+$TEMPLATES/postgresql-persistent-template.json"
+fi
+
+function assert_cmd_fails() {
+  if eval "$@" &>/dev/null; then
+    echo " FAIL"
+    return 1
+  fi
+  echo " PASS"
+  return 0
+}
+
+function insert_postgresql_data() {
+  local image_name=$1 ; shift
+  local user=$1 ; shift
+  local pass=$1 ; shift
+  local database=$1 ; shift
+  local pod_ip=$1; shift
+
+  : "Inserting data into the database"
+  local cmd="PGPASSWORD=$pass psql -c \"CREATE TABLE testing (a integer); INSERT INTO testing VALUES (42);\""
+  local cmd_args="-h $pod_ip -U $user -d $database"
+  docker run --rm "$image_name" bash -c "$cmd $cmd_args"
+}
+
+function check_postgresql_data() {
+  local image_name=$1 ; shift
+  local user=$1 ; shift
+  local pass=$1 ; shift
+  local database=$1 ; shift
+  local pod_ip=$1; shift
+  local timeout=${1:-60}
+  SECONDS=0
+
+  : "Checking whether the data can be accessed"
+  local cmd="PGPASSWORD=$pass psql -c \"select * from testing;\""
+  local cmd_args="-h $pod_ip -U $user -d $database"
+  while true ; do
+    result=$(docker run --rm "$image_name" bash -c "$cmd -At $cmd_args")
+    if [ "$result" = "42" ]; then
+      echo " PASS"
+      return 0
+    fi
+    echo -n "."
+    [ $SECONDS -gt $timeout ] && break
+    sleep 3
+  done
+  echo " FAIL"
+  return 1
+}
+
+
+function check_postgresql_os_service_connection() {
+  local util_image_name=$1 ; shift
+  local service_name=$1 ; shift
+  local user=$1 ; shift
+  local pass=$1 ; shift
+  local database=$1 ; shift
+  local timeout=${1:-60} ; shift || :
+  local pod_ip=$(ct_os_get_service_ip ${service_name})
+
+  : "  Service ${service_name} check ..."
+
+  local cmd="PGPASSWORD=${pass} pg_isready -t 15 -h ${pod_ip} -U ${user} -d ${database}"
+  local expected_value='accepting connections'
+  local output
+  local ret
+  SECONDS=0
+
+  echo -n "Waiting for ${service_name} service becoming ready ..."
+  while true ; do
+    output=$(docker run --rm ${util_image_name} bash -c "${cmd}" || :)
+    echo "${output}" | grep -qe "${expected_value}" && ret=0 || ret=1
+    if [ ${ret} -eq 0 ] ; then
+      echo " PASS"
+      return 0
+    fi
+    echo -n "."
+    [ ${SECONDS} -gt ${timeout} ] && break
+    sleep 3
+  done
+  echo " FAIL"
+  return 1
+}
+
+function test_postgresql_pure_image() {
+  local image_name=$1
+  local image_name_no_namespace=${image_name##*/}
+  local service_name=${image_name_no_namespace}
+
+  ct_os_new_project
+  ct_os_upload_image "${image_name}"
+  # Create a specific imagestream tag for the image so that oc cannot use anything else
+  ct_os_upload_image "${image_name}" "$image_name_no_namespace:testing"
+
+  ct_os_deploy_pure_image "$image_name_no_namespace:testing" \
+                          --name "${service_name}" \
+                          --env POSTGRESQL_ADMIN_PASSWORD=test
+
+  ct_os_wait_pod_ready "${service_name}" 60
+  check_postgresql_os_service_connection "${image_name}" "${service_name}" postgres test postgres
+
+  ct_os_delete_project
+}
+
+function test_postgresql_template() {
+  local image_name=$1; shift
+  local template=$1
+  local image_name_no_namespace=${image_name##*/}
+  local service_name=${image_name_no_namespace}
+
+  ct_os_new_project
+  ct_os_upload_image "${image_name}" "postgresql:$VERSION"
+
+  ct_os_deploy_template_image "$template" \
+                              NAMESPACE="$(oc project -q)" \
+                              POSTGRESQL_VERSION="$VERSION" \
+                              DATABASE_SERVICE_NAME="${service_name}" \
+                              POSTGRESQL_USER=testu \
+                              POSTGRESQL_PASSWORD=testp \
+                              POSTGRESQL_DATABASE=testdb
+
+  ct_os_wait_pod_ready "${service_name}" 60
+  check_postgresql_os_service_connection "${image_name}" "${service_name}" testu testp testdb
+
+  ct_os_delete_project
+}
+
+function test_postgresql_update() {
+  local image_name=$1; shift
+  local template=$1
+  local image_name_no_registry=${image_name#*/}
+  local service_name=${image_name_no_registry#*/}
+  local user="testu" pass="testp" db="testdb"
+  local registry="" old_image="" pod_ip=""
+  local version released=:
+
+  case $OS in
+  rhel7)
+      registry=registry.access.redhat.com
+      ;;
+  centos7)
+      registry=docker.io
+      ;;
+  esac
+
+  old_image="$registry/$image_name"
+
+  for version in $NOT_RELEASED_VERSIONS; do
+    case $image_name in
+      *$version*)
+        released=false
+        break
+        ;;
+    esac
+  done
+
+  if docker pull "$old_image" 2>/dev/null; then
+    # Check if we do not have a stale unreleased versions list
+    # Fail only on rhel, on centos the image is likely already released
+    $released || [ "$OS" = "centos7" ]
+  elif $released; then
+    false "image '$old_image' should already be available"
+  else
+    return # not yet released image, skip
+  fi
+
+
+  ct_os_new_project
+  ct_os_upload_image "$old_image" "postgresql:$VERSION"
+  ct_os_deploy_template_image "$template" \
+                              NAMESPACE="$(oc project -q)" \
+                              POSTGRESQL_VERSION="$VERSION" \
+                              DATABASE_SERVICE_NAME="$service_name" \
+                              POSTGRESQL_USER="$user" \
+                              POSTGRESQL_PASSWORD="$pass" \
+                              POSTGRESQL_DATABASE="$db"
+
+  ct_os_wait_pod_ready "${service_name}" 60
+  check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
+
+  pod_ip=$(ct_os_get_service_ip "$service_name")
+  insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
+
+  ct_os_upload_image "$image_name" "postgresql:$VERSION"
+  : "Waiting for a few seconds while the pods get restarted"
+  sleep 5
+
+  ct_os_wait_pod_ready "$service_name" 60
+  check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
+
+  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
+  ct_os_delete_project
+}
+
+function test_postgresql_replication() {
+  local image_name=$1
+  local image_name_no_namespace=${image_name##*/}
+  local master_service_name=${image_name_no_namespace}-master
+  local slave_service_name=${image_name_no_namespace}-slave
+  local istag="postgresql:$VERSION"
+  local user="testu" pass="testp" db="testdb"
+  local master_name="" master_ip="" slave_name="" slave_ip=""
+
+  ct_os_new_project
+  ct_os_upload_image "${image_name}" "$istag"
+
+  ct_os_deploy_template_image "$TEMPLATES/replica/postgresql_replica.json" \
+                              NAMESPACE="$(oc project -q)" \
+                              IMAGESTREAMTAG="$istag" \
+                              POSTGRESQL_MASTER_SERVICE_NAME="$master_service_name" \
+                              POSTGRESQL_SLAVE_SERVICE_NAME="$slave_service_name" \
+                              POSTGRESQL_USER=testu \
+                              POSTGRESQL_PASSWORD=testp \
+                              POSTGRESQL_DATABASE=testdb
+
+  ct_os_wait_pod_ready "$master_service_name" 60
+  ct_os_wait_pod_ready "$slave_service_name" 60
+
+  # Force unused rc removal as we do not need rollbacks during testing
+  oc patch "dc/$master_service_name" -p '{"spec":{"revisionHistoryLimit":0}}'
+  oc patch "dc/$slave_service_name" -p '{"spec":{"revisionHistoryLimit":0}}'
+
+  master_name=$(ct_os_get_pod_name "$master_service_name")
+  slave_name=$(ct_os_get_pod_name "$slave_service_name")
+  master_ip=$(ct_os_get_pod_ip "$master_name")
+  slave_ip=$(ct_os_get_pod_ip "$slave_name")
+  insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$master_ip"
+  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$slave_ip"
+
+  : "Changing POSTGRESQL_PASSWORD for master and slave"
+  pass=redhat
+  oc set env "dc/$master_service_name" -e POSTGRESQL_PASSWORD="$pass"
+  oc set env "dc/$slave_service_name" -e POSTGRESQL_PASSWORD="$pass"
+  ct_os_wait_pod_ready "$master_service_name-2" 60
+  ct_os_wait_pod_ready "$slave_service_name-2" 60
+  # We need to get new pod names and IPs
+  master_name=$(ct_os_get_pod_name "$master_service_name")
+  slave_name=$(ct_os_get_pod_name "$slave_service_name")
+  master_ip=$(ct_os_get_pod_ip "$master_name")
+  slave_ip=$(ct_os_get_pod_ip "$slave_name")
+  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$master_ip"
+  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$slave_ip"
+
+  : "Redeploying slave node"
+  oc rollout latest "$slave_service_name"
+  ct_os_wait_pod_ready "$slave_service_name-3" 60
+  slave_name=$(ct_os_get_pod_name "$slave_service_name")
+  slave_ip=$(ct_os_get_pod_ip "$slave_name")
+  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$slave_ip"
+
+  : "Scaling slaves to 2"
+  oc scale --replicas 2 "dc/$slave_service_name"
+  ct_os_wait_rc_ready "$slave_service_name" 60
+  slave_name=$(ct_os_get_pod_name "$slave_service_name")
+  for slave in $slave_name; do
+    ct_os_wait_pod_ready "$slave" 60
+    slave_ip=$(ct_os_get_pod_ip "$slave")
+    check_postgresql_data "$image_name" "$user" "$pass" "$db" "$slave_ip"
+  done
+
+  ct_os_delete_project
+}
+
+function test_postgresql_persistent_redeploy() {
+  local image_name=$1; shift
+  local template=$1
+  local image_name_no_namespace=${image_name##*/}
+  local service_name=$image_name_no_namespace
+  local user="testu" pass="testp" db="testdb"
+  local registry="" old_image="" pod_ip=""
+
+  ct_os_new_project
+  ct_os_upload_image "$image_name" "postgresql:$VERSION"
+
+  ct_os_deploy_template_image "$template" \
+                              NAMESPACE="$(oc project -q)" \
+                              POSTGRESQL_VERSION="$VERSION" \
+                              DATABASE_SERVICE_NAME="$service_name" \
+                              POSTGRESQL_USER="$user" \
+                              POSTGRESQL_PASSWORD="$pass" \
+                              POSTGRESQL_DATABASE="$db"
+
+  ct_os_wait_pod_ready "$service_name" 60
+  check_postgresql_os_service_connection "$image_name" "$service_name" testu testp testdb
+
+  pod_ip=$(ct_os_get_service_ip "$service_name")
+  insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
+
+  : "Redeploying pod"
+  oc rollout latest "$service_name"
+  : "Waiting for a few seconds while the pod gets restarted"
+  sleep 5
+
+  ct_os_wait_pod_ready "$service_name" 60
+  check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
+
+  : "This should succeed"
+  check_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip" 0
+  ct_os_delete_project
+}
+
+function test_postgresql_ephemeral_redeploy() {
+  local image_name=$1; shift
+  local template=$1
+  local image_name_no_namespace=${image_name##*/}
+  local service_name=$image_name_no_namespace
+  local user="testu" pass="testp" db="testdb"
+  local registry="" old_image="" pod_ip=""
+
+  ct_os_new_project
+  ct_os_upload_image "$image_name" "postgresql:$VERSION"
+
+  ct_os_deploy_template_image "$template" \
+                              NAMESPACE="$(oc project -q)" \
+                              POSTGRESQL_VERSION="$VERSION" \
+                              DATABASE_SERVICE_NAME="$service_name" \
+                              POSTGRESQL_USER="$user" \
+                              POSTGRESQL_PASSWORD="$pass" \
+                              POSTGRESQL_DATABASE="$db"
+
+  ct_os_wait_pod_ready "$service_name" 60
+  check_postgresql_os_service_connection "$image_name" "$service_name" testu testp testdb
+
+  pod_ip=$(ct_os_get_service_ip "$service_name")
+  insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
+
+  : "Redeploying pod"
+  oc rollout latest "$service_name"
+  : "Waiting for a few seconds while the pod gets restarted"
+  sleep 5
+
+  ct_os_wait_pod_ready "$service_name" 60
+  check_postgresql_os_service_connection "$image_name" "$service_name" "$user" "$pass" "$db"
+
+  : "This should fail"
+  assert_cmd_fails check_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip" 0
+  ct_os_delete_project
+}
+
+function run_ephemeral_tests() {
+  local image_name=$1
+  for template in $EPHEMERAL_TEMPLATES; do
+    test_postgresql_ephemeral_redeploy "$image_name" "$template"
+    test_postgresql_template "$image_name" "$template"
+  done
+}
+
+function run_persistent_tests() {
+  local image_name=$1
+  for template in $PERSISTENT_TEMPLATES; do
+    test_postgresql_persistent_redeploy "$image_name" "$template"
+    test_postgresql_update "$image_name" "$template"
+  done
+}
+
+ct_os_cluster_up
+# Print oc logs on failure
+ct_os_enable_print_logs
+
+test_postgresql_pure_image "$IMAGE_NAME"
+test_postgresql_replication "$IMAGE_NAME"
+run_ephemeral_tests "$IMAGE_NAME"
+run_persistent_tests "$IMAGE_NAME"
+
+# test with the just built image and an integrated template
+test_postgresql_integration "${IMAGE_NAME}" "${VERSION}" postgresql
+
+# test with a released image and an integrated template
+if [ "${OS}" == "rhel7" ] ; then
+  PUBLIC_IMAGE_NAME=${PUBLIC_IMAGE_NAME:-${REGISTRY:-registry.access.redhat.com/}rhscl/${BASE_IMAGE_NAME}-${VERSION//./}-rhel7}
+else
+  PUBLIC_IMAGE_NAME=${PUBLIC_IMAGE_NAME:-${REGISTRY:-}centos/${BASE_IMAGE_NAME}-${VERSION//./}-centos7}
+fi
+
+export CT_SKIP_UPLOAD_IMAGE=true
+test_postgresql_integration postgresql "${VERSION}" "${PUBLIC_IMAGE_NAME}"
+
+OS_TESTSUITE_RESULT=0
+
+ct_os_cluster_down
