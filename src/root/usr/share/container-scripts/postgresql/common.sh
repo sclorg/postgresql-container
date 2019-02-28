@@ -153,10 +153,16 @@ initdb_wrapper ()
 }
 
 function initialize_database() {
-  initdb_wrapper initdb
+  local PG_INIT_DATA_DIR=${1:-"$PGDATA"}
+  if [ -n "$(find ${PG_INIT_DATA_DIR} -prune -empty)" ]; then
+    initdb_wrapper initdb --pgdata="${PG_INIT_DATA_DIR}"
+  else
+    >&2 echo "${FUNCNAME[0]}: ${PG_INIT_DATA_DIR} exists but is not empty"
+    exit 1
+  fi
 
   # PostgreSQL configuration.
-  cat >> "$PGDATA/postgresql.conf" <<EOF
+  cat >> "${PG_INIT_DATA_DIR}/postgresql.conf" <<EOF
 
 # Custom OpenShift configuration:
 include '${POSTGRESQL_CONFIG_FILE}'
@@ -165,7 +171,7 @@ EOF
   # Access control configuration.
   # FIXME: would be nice-to-have if we could allow connections only from
   #        specific hosts / subnet
-  cat >> "$PGDATA/pg_hba.conf" <<EOF
+  cat >> "${PG_INIT_DATA_DIR}/pg_hba.conf" <<EOF
 
 #
 # Custom OpenShift configuration starting at this point.

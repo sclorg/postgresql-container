@@ -20,8 +20,14 @@ generate_postgresql_config
 # Is this brand new data volume?
 PG_INITIALIZED=false
 
-if [ ! -f "$PGDATA/postgresql.conf" ]; then
-  initialize_database
+if [ ! -f "${PGDATA}/postgresql.conf" ]; then
+  # Minimize the race condition of unfinished DB initialization vs pod restart
+  # First initialize the DB into temporary directory
+  TEMP_PGDATA=$(mktemp -d $(printf '%0.sX' {1..32}))
+  initialize_database "${TEMP_PGDATA}"
+  # If DB initialization succeeded, move the content of temporary directory to
+  # final PGDATA & set PG_INITIALIZED flag
+  mv -T "${TEMP_PGDATA}" "${PGDATA}"
   PG_INITIALIZED=:
 else
   try_pgupgrade
