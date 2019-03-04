@@ -28,6 +28,7 @@ else
 fi
 
 pg_ctl -w start -o "-h ''"
+pg_isready
 if $PG_INITIALIZED ; then
     process_extending_files \
         "${APP_DATA}/src/postgresql-init" \
