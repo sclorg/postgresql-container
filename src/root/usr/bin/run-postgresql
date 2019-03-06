@@ -27,7 +27,18 @@ else
   try_pgupgrade
 fi
 
-pg_ctl -w start -o "-h ''"
+# Use insanely large timeout (24h) to ensure that the potential recovery has
+# enough time here to happen (unless liveness probe kills us).  Note that in
+# case of server failure this command still exists immediately.
+pg_ctl start -w --timeout 86400 -o "-h ''"
+
+# This is just a pedantic safety measure (the timeout above is unlikely to
+# happen), but `pt_ctl -w` is not reliable prior to PostgreSQL v10 where it
+# returns exit_status=0 even if the server is still starting.  For more info
+# see the issue#297 and
+# https://www.postgresql.org/message-id/CAB7nPqSJs85wK9aknm%3D_jmS6GnH3SQBhpzKcqs8Qo2LhEg2etw%40mail.gmail.com
+pg_isready
+
 if $PG_INITIALIZED ; then
     process_extending_files \
         "${APP_DATA}/src/postgresql-init" \
