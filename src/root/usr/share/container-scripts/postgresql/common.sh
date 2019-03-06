@@ -425,6 +425,7 @@ process_extending_files()
       if test -f "$file"; then
         echo "=> sourcing $file ..."
         source "$file"
+        set -e # ensure that users don't mistakenly change this
         break
       fi
     done
