@@ -153,19 +153,24 @@ initdb_wrapper ()
 }
 
 function initialize_database() {
-  initdb_wrapper initdb
+  # Create a new PostgreSQL database cluster
+  initdb_wrapper initdb &
+  local INITDB_PID=$!
+  # Wait for the DB initialization process to finish
+  wait ${INITDB_PID} 2>/dev/null
+  if [ "$?" -eq "0" ]; then
 
-  # PostgreSQL configuration.
-  cat >> "$PGDATA/postgresql.conf" <<EOF
+    # PostgreSQL configuration.
+    cat >> "$PGDATA/postgresql.conf" <<EOF
 
 # Custom OpenShift configuration:
 include '${POSTGRESQL_CONFIG_FILE}'
 EOF
 
-  # Access control configuration.
-  # FIXME: would be nice-to-have if we could allow connections only from
-  #        specific hosts / subnet
-  cat >> "$PGDATA/pg_hba.conf" <<EOF
+    # Access control configuration.
+    # FIXME: would be nice-to-have if we could allow connections only from
+    #        specific hosts / subnet
+    cat >> "$PGDATA/pg_hba.conf" <<EOF
 
 #
 # Custom OpenShift configuration starting at this point.
@@ -177,6 +182,25 @@ host all all all md5
 # Allow replication connections from all hosts.
 host replication all all md5
 EOF
+
+    if [ -f "${PGDATA}/postgresql.conf" -a -f "${PGDATA}/pg_hba.conf" ]; then
+      # Both of PostgreSQL cluster initialization & creation of custom
+      # OpenShift configuration succeeded, return success
+      return 0
+    fi
+  fi
+
+  # Default return value
+  return 1
+}
+
+function recover_invalid_initdb() {
+  echo >&2 "Invalid PostgreSQL database cluster initialization detected! Can't continue..."
+  echo >&2 "Removing the incomplete initial database cluster setup..."
+  # Work around for "rm: Cannot remove ... : Directory not empty" case on overlayfs
+  find "${PGDATA}" -path "${PGDATA}/*" -delete 2>/dev/null || rm -rf "${PGDATA}"
+  echo >&2 "Restart the container to start from scratch..."
+  exit 1
 }
 
 function create_users() {

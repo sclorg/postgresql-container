@@ -20,11 +20,22 @@ generate_postgresql_config
 # Is this brand new data volume?
 PG_INITIALIZED=false
 
-if [ ! -f "$PGDATA/postgresql.conf" ]; then
+if [ ! -f "${PGDATA}/postgresql.conf" ]; then
   initialize_database
-  PG_INITIALIZED=:
+  if [ "$?" -eq "0" ]; then
+    PG_INITIALIZED=:
+  # Recover if PostgreSQL database cluster initialization failed
+  else
+    recover_invalid_initdb
+  fi
 else
-  try_pgupgrade
+  # Recover from the case when PostgreSQL pod was previously restarted sooner
+  # than the database cluster initialization process has had chance to finish
+  if [ "${PG_INITIALIZED}" == "false" ]; then
+    recover_invalid_initdb
+  else
+    try_pgupgrade
+  fi
 fi
 
 pg_ctl -w start -o "-h ''"

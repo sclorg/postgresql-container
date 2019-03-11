@@ -16,6 +16,9 @@ test ! -f "$PGDATA/postgresql.conf"
 touch "$POSTGRESQL_CONFIG_FILE"
 
 initialize_database
+if [ "$?" -ne "0" ]; then
+  recover_invalid_initdb
+fi
 
 # start local PostgreSQL server (wait with '-w')
 pg_ctl -w start -o "-h ''"
