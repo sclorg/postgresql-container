@@ -29,6 +29,7 @@ LABEL summary="$SUMMARY" \
       io.k8s.display-name="PostgreSQL {{ spec.version }}" \
       io.openshift.expose-services="5432:postgresql" \
       io.openshift.tags="{{ spec.openshift_tags }}" \
+      io.openshift.s2i.assemble-user="26" \
       name="{{ spec.img_name }}" \
       com.redhat.component="{{ spec.redhat_component }}" \
 {% if spec.version not in ["9.4", "9.5", "9.6"] %}
