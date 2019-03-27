@@ -36,7 +36,7 @@ Choose either the CentOS7 or RHEL7 based image:
     These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/postgresql-10-rhel7).
     To download it run:
     ```
-    docker pull registry.access.redhat.com/rhscl/postgresql-10-rhel7
+    podman pull registry.access.redhat.com/rhscl/postgresql-10-rhel7
     ```
 
     To build a RHEL7 based image, you need to run Docker build on a properly
@@ -53,7 +53,7 @@ Choose either the CentOS7 or RHEL7 based image:
     These images are available on DockerHub. To download it run:
 
     ```
-    $ docker pull centos/postgresql-10-centos7
+    $ podman pull centos/postgresql-10-centos7
     ```
 
     To build a PostgreSQL image from scratch run:
@@ -63,6 +63,8 @@ Choose either the CentOS7 or RHEL7 based image:
     $ cd postgresql
     $ make build TARGET=centos7 VERSIONS=10
     ```
+
+Note: while the installation steps are calling `podman`, you can replace any such calls by `docker` with the same arguments.
 
 **Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
 on all provided versions of PostgreSQL.**
