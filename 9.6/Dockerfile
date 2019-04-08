@@ -27,6 +27,7 @@ LABEL summary="$SUMMARY" \
       io.k8s.display-name="PostgreSQL 9.6" \
       io.openshift.expose-services="5432:postgresql" \
       io.openshift.tags="database,postgresql,postgresql96,rh-postgresql96" \
+      io.openshift.s2i.assemble-user="26" \
       name="centos/postgresql-96-centos7" \
       com.redhat.component="rh-postgresql96-container" \
       version="9.6" \

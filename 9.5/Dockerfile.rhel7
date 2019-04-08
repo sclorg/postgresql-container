@@ -27,6 +27,7 @@ LABEL summary="$SUMMARY" \
       io.k8s.display-name="PostgreSQL 9.5" \
       io.openshift.expose-services="5432:postgresql" \
       io.openshift.tags="database,postgresql,postgresql95,rh-postgresql95" \
+      io.openshift.s2i.assemble-user="26" \
       name="rhscl/postgresql-95-rhel7" \
       com.redhat.component="rh-postgresql95-container" \
       version="9.5" \

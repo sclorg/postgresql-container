@@ -26,6 +26,7 @@ LABEL summary="$SUMMARY" \
       io.k8s.display-name="PostgreSQL 10" \
       io.openshift.expose-services="5432:postgresql" \
       io.openshift.tags="database,postgresql,postgresql10,postgresql-10" \
+      io.openshift.s2i.assemble-user="26" \
       name="rhel8/postgresql-10" \
       com.redhat.component="postgresql-10-container" \
       version="1" \
