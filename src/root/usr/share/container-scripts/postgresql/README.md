@@ -252,16 +252,21 @@ For this, we will assume that you are using the `{{ spec.rhel_image_name }}` ima
 available via `postgresql:{{ spec.version }}` imagestream tag in Openshift.
 
 For example to build customized image `new-postgresql`
-with configuration in `image-configuration/` run:
+with configuration from `https://github.com/sclorg/postgresql-container/tree/master/examples/extending-image` run:
 
 ```
-$ oc new-app postgresql:9.6~./image-configuration/ --name new-postgresql
+$ oc new-app postgresql:{{ spec.version }}~https://github.com/sclorg/postgresql-container.git \
+  --name new-postgresql \
+  --context-dir examples/extending-image/ \
+  -e POSTGRESQL_USER=user \
+  -e POSTGRESQL_DATABASE=db \
+  -e POSTGRESQL_PASSWORD=password
 ```
 
 or via `s2i`:
 
 ```
-$ s2i build ./image-configuration/ {{ spec.rhel_image_name }} new-postgresql
+$ s2i build --context-dir examples/extending-image/ https://github.com/sclorg/postgresql-container.git {{ spec.rhel_image_name }} new-postgresql
 ```
 
 The directory passed to Openshift should contain one or more of the
