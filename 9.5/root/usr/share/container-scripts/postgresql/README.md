@@ -2,11 +2,13 @@ PostgreSQL 9.5 SQL Database Server container image
 ===============================================
 
 This container image includes PostgreSQL 9.5 SQL database server for OpenShift and general usage.
-Users can choose between RHEL and CentOS based images.
-The RHEL image is available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/postgresql-95-rhel7)
-as registry.access.redhat.com/rhscl/postgresql-95-rhel7.
-The CentOS image is then available on [Docker Hub](https://hub.docker.com/r/centos/postgresql-95-centos7/)
-as centos/postgresql-95-centos7.
+Users can choose between RHEL, CentOS and Fedora based images.
+The RHEL images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/),
+the CentOS images are available on [Docker Hub](https://hub.docker.com/r/centos/),
+and the Fedora images are available in [Fedora Registry](https://registry.fedoraproject.org/).
+The resulting image can be run using [podman](https://github.com/containers/libpod).
+
+Note: while the examples in this README are calling `podman`, you can replace any such calls by `docker` with the same arguments
 
 
 Description
@@ -22,12 +24,12 @@ You can find more information on the PostgreSQL project from the project Web sit
 Usage
 -----
 
-For this, we will assume that you are using the `rhscl/postgresql-95-rhel7` image.
+For this, we will assume that you are using the `rhscl/postgresql-95-rhel7` image, available via `postgresql:9.5` imagestream tag in Openshift.
 If you want to set only the mandatory environment variables and not store the database
 in a host directory, execute the following command:
 
 ```
-$ docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhscl/postgresql-95-rhel7
+$ podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhscl/postgresql-95-rhel7
 ```
 
 This will create a container named `postgresql_database` running PostgreSQL with
@@ -36,12 +38,18 @@ and mapped to the host. If you want your database to be persistent across contai
 executions, also add a `-v /host/db/path:/var/lib/pgsql/data` argument (see
 below). This will be the PostgreSQL database cluster directory.
 
+The same can be achieved in an Openshift instance using templates provided by Openshift or available in [examples](https://github.com/sclorg/postgresql-container/tree/master/examples):
+
+```
+$ oc process -f examples/postgresql-ephemeral-template.json -p POSTGRESQL_VERSION=9.5 -p POSTGRESQL_USER=user -p POSTGRESQL_PASSWORD=pass -p POSTGRESQL_DATABASE=db | oc create -f -
+```
+
 If the database cluster directory is not initialized, the entrypoint script will
 first run [`initdb`](http://www.postgresql.org/docs/9.5/static/app-initdb.html)
 and setup necessary database users and passwords. After the database is initialized,
 or if it was already present, [`postgres`](http://www.postgresql.org/docs/9.5/static/app-postgres.html)
 is executed and will run as PID 1. You can stop the detached container by running
-`docker stop postgresql_database`.
+`podman stop postgresql_database`.
 
 
 
@@ -101,13 +109,13 @@ You can also set the following mount points by passing the `-v /host/dir:/contai
 directory has the appropriate permissions and that the owner and group of the directory
 matches the user UID or name which is running inside the container.**
 
-Typically (unless you use `docker run -u` option) processes in container
+Typically (unless you use `podman run -u` option) processes in container
 run under UID 26, so -- on GNU/Linux -- you can fix the datadir permissions
 for example by:
 
 ```
 $ setfacl -m u:26:-wx /your/data/dir
-$ docker run <...> -v /your/data/dir:/var/lib/pgsql/data:Z <...>
+$ podman run <...> -v /your/data/dir:/var/lib/pgsql/data:Z <...>
 ```
 
 
@@ -118,7 +126,7 @@ PostgreSQL container supports migration of data from remote PostgreSQL server.
 You can run it like:
 
 ```
-$ docker run -d --name postgresql_database \
+$ podman run -d --name postgresql_database \
     -e POSTGRESQL_MIGRATION_REMOTE_HOST=172.17.0.2 \
     -e POSTGRESQL_MIGRATION_ADMIN_PASSWORD=remoteAdminP@ssword \
     [ OPTIONAL_CONFIGURATION_VARIABLES ]
@@ -238,18 +246,30 @@ lead to data loss.
 Extending image
 ----------------
 
-This image can be extended using
-[source-to-image](https://github.com/openshift/source-to-image).
+This image can be extended in Openshift using the `Source` build strategy or via the standalone
+[source-to-image](https://github.com/openshift/source-to-image) application (where available).
+For this, we will assume that you are using the `rhscl/postgresql-95-rhel7` image,
+available via `postgresql:9.5` imagestream tag in Openshift.
 
 For example to build customized image `new-postgresql`
-with configuration in `~/image-configuration/` run:
-
+with configuration from `https://github.com/sclorg/postgresql-container/tree/master/examples/extending-image` run:
 
 ```
-$ s2i build ~/image-configuration/ postgresql new-postgresql
+$ oc new-app postgresql:9.5~https://github.com/sclorg/postgresql-container.git \
+  --name new-postgresql \
+  --context-dir examples/extending-image/ \
+  -e POSTGRESQL_USER=user \
+  -e POSTGRESQL_DATABASE=db \
+  -e POSTGRESQL_PASSWORD=password
 ```
 
-The directory passed to `s2i build` should contain one or more of the
+or via `s2i`:
+
+```
+$ s2i build --context-dir examples/extending-image/ https://github.com/sclorg/postgresql-container.git rhscl/postgresql-95-rhel7 new-postgresql
+```
+
+The directory passed to Openshift should contain one or more of the
 following directories:
 
 
@@ -282,7 +302,7 @@ always sourced (after `postgresql-init/` scripts, if they exist).
 
 ----------------------------------------------
 
-During `s2i build` all provided files are copied into `/opt/app-root/src`
+During the s2i build all provided files are copied into `/opt/app-root/src`
 directory in the new image. Only one
 file with the same name can be used for customization and user provided files
 are preferred over default files in `/usr/share/container-scripts/`-
@@ -293,7 +313,7 @@ Troubleshooting
 ---------------
 At first the postgres daemon writes its logs to the standard output, so these are available in the container log. The log can be examined by running:
 
-    docker logs <container>
+    podman logs <container>
 
 Then log output is redirected to logging collector process and will appear in directory "pg_log".
 
@@ -302,5 +322,6 @@ See also
 --------
 Dockerfile and other sources for this container image are available on
 https://github.com/sclorg/postgresql-container.
-In that repository, Dockerfile for CentOS is called Dockerfile, Dockerfile
-for RHEL is called Dockerfile.rhel7.
+In that repository, the Dockerfile for CentOS is called Dockerfile, the Dockerfile
+for RHEL7 is called Dockerfile.rhel7, the Dockerfile for RHEL8 is called Dockerfile.rhel8,
+and the Dockerfile for Fedora is called Dockerfile.fedora.
