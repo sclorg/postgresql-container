@@ -62,6 +62,9 @@ initialization by passing `-e VAR=VALUE` to the Docker run command.
 **`POSTGRESQL_USER`**  
        User name for PostgreSQL account to be created
 
+**`POSTGRESQL_CREATEUSER_OPTIONS`**
+       Options passed directly to PostgreSQL's createuser. Default: no options
+
 **`POSTGRESQL_PASSWORD`**  
        Password for the user account
 

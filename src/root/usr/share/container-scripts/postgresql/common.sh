@@ -179,14 +179,16 @@ host replication all all md5
 EOF
 }
 
+export POSTGRESQL_CREATEUSER_OPTIONS=${POSTGRESQL_CREATEUSER_OPTIONS:-}
+export POSTGRESQL_MASTER_CREATEUSER_OPTIONS=${POSTGRESQL_MASTER_CREATEUSER_OPTIONS:-}
 function create_users() {
   if [[ ",$postinitdb_actions," = *,simple_db,* ]]; then
-    createuser "$POSTGRESQL_USER"
+    createuser "$POSTGRESQL_CREATEUSER_OPTIONS" "$POSTGRESQL_USER"
     createdb --owner="$POSTGRESQL_USER" "$POSTGRESQL_DATABASE"
   fi
 
   if [ -v POSTGRESQL_MASTER_USER ]; then
-    createuser "$POSTGRESQL_MASTER_USER"
+    createuser "$POSTGRESQL_MASTER_CREATEUSER_OPTIONS" "$POSTGRESQL_MASTER_USER"
   fi
 }
 
