@@ -14,7 +14,7 @@
         "annotations": {
           "openshift.io/display-name": "PostgreSQL (Latest)",
           "openshift.io/provider-display-name": "Red Hat, Inc.",
-          "description": "Provides a PostgreSQL database on CentOS 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.\n\nWARNING: By selecting this tag, your application will automatically update to use the latest version of PostgreSQL available on OpenShift, including major versions updates.",
+          "description": "Provides a PostgreSQL database on CentOS 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.\n\nWARNING: By selecting this tag, your application will automatically update to use the latest version of PostgreSQL available on OpenShift, including major version updates.",
           "iconClass": "icon-postgresql",
           "tags": "database,postgresql"
         },
