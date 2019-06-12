@@ -51,8 +51,7 @@ RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-cont
     dnf clean all && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     mkdir -p /var/lib/pgsql/data && \
-    /usr/libexec/fix-permissions /var/lib/pgsql && \
-    /usr/libexec/fix-permissions /var/run/postgresql
+    /usr/libexec/fix-permissions /var/lib/pgsql /var/run/postgresql
 
 # Get prefix path and path to scripts rather than hard-code them in scripts
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql
@@ -62,10 +61,19 @@ COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 
 VOLUME ["/var/lib/pgsql/data"]
 
-# {APP_DATA} needs to be accessed by postgres user while s2i assembling
-# postgres user changes permissions of files in APP_DATA during assembling
-RUN /usr/libexec/fix-permissions ${APP_DATA} && \
-    usermod -a -G root postgres
+# S2I permission fixes
+# --------------------
+# 1. unless specified otherwise (or - equivalently - we are in OpenShift), s2i
+#    build process would be executed as 'uid=26(postgres) gid=26(postgres)'.
+#    Such process wouldn't be able to execute the default 'assemble' script
+#    correctly (it transitively executes 'fix-permissions' script).  So let's
+#    add the 'postgres' user into 'root' group here
+#
+# 2. we call fix-permissions on $APP_DATA here directly (UID=0 during build
+#    anyways) to assure that s2i process is actually able to _read_ the
+#    user-specified scripting.
+RUN usermod -a -G root postgres && \
+    /usr/libexec/fix-permissions --read-only "$APP_DATA"
 
 USER 26
 
