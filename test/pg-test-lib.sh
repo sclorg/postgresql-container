@@ -35,6 +35,10 @@ get_image_id ()
                 fi
                 local image=docker.io/$ns/postgresql-${1//\./}-centos7
                 ;;
+            rhel8)
+                ns=rhel8
+                local image=registry.redhat.io/$ns/postgresql-${version}
+                ;;
             esac
             docker pull "$image" >/dev/null
             echo "$image"

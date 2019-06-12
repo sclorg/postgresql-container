@@ -11,7 +11,7 @@ FROM {{ spec.s2i_base }}
 #                           PostgreSQL administrative account
 
 ENV POSTGRESQL_VERSION={{ spec.version }} \
-    {% if spec.version not in ["9.6", "10"] or spec.prod != "rhel8" %}
+    {% if spec.prod != "rhel8" or spec.version == "10" %}
     POSTGRESQL_PREV_VERSION={{ spec.prev_version }} \
     {% endif %}
     HOME=/var/lib/pgsql \
@@ -94,7 +94,9 @@ ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     PROMPT_COMMAND=". ${CONTAINER_SCRIPTS_PATH}/scl_enable"
 
 {% endif %}
-VOLUME ["/var/lib/pgsql/data"]
+# Not using VOLUME statement since it's not working in OpenShift Online:
+# https://github.com/sclorg/httpd-container/issues/30
+# VOLUME ["/var/lib/pgsql/data"]
 
 # S2I permission fixes
 # --------------------
