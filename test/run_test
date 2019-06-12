@@ -16,8 +16,6 @@ shopt -s nullglob
 . test/pg-test-lib.sh
 
 TEST_LIST="\
-run_upgrade_test
-run_migration_test
 run_container_creation_tests
 run_general_tests
 run_change_password_test
@@ -27,6 +25,8 @@ run_doc_test
 run_s2i_test
 run_test_cfg_hook
 run_s2i_bake_data_test
+run_upgrade_test
+run_migration_test
 "
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
@@ -635,7 +635,9 @@ $volume_options
 
 run_upgrade_test ()
 {
-    [ "${OS}" == "fedora" ] && return 0
+    # Do not run on Fedora or RHEL8 until the upgrade script
+    # is fixed for non-SCL use cases
+    [ "${OS}" == "fedora" or "${OS}" == "rhel8" ] && return 0
 
     local upgrade_path="none 9.4 9.5 9.6 10 none" prev= act=
     for act in $upgrade_path; do
@@ -655,7 +657,11 @@ run_migration_test ()
     [ "${OS}" == "fedora" ] && return 0
 
     local from_version
-    local upgrade_path="9.4 9.5 9.6 10"
+    if [ "${OS}" == "rhel8" ]; then
+        local upgrade_path="9.6 10"
+    else
+        local upgrade_path="9.4 9.5 9.6 10"
+    fi
 
     for from_version in $upgrade_path; do
         # Do not test migration from $VERSION:remote to $VERSION:local
