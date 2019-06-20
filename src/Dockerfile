@@ -39,7 +39,7 @@ LABEL summary="$SUMMARY" \
 {% else %}
       version="{{ spec.version }}" \
 {% endif %}
-      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 {{ spec.img_name }}" \
+      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 {{ spec.img_name }}" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
