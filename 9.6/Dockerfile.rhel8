@@ -1,4 +1,4 @@
-FROM rhel8/s2i-core
+FROM ubi8/s2i-core
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -30,7 +30,7 @@ LABEL summary="$SUMMARY" \
       name="rhel8/postgresql-96" \
       com.redhat.component="postgresql-96-container" \
       version="1" \
-      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel8/postgresql-96" \
+      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel8/postgresql-96" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
