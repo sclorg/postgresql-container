@@ -11,6 +11,7 @@ FROM ubi8/s2i-core
 #                           PostgreSQL administrative account
 
 ENV POSTGRESQL_VERSION=10 \
+    POSTGRESQL_PREV_VERSION=9.6 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
@@ -58,7 +59,9 @@ ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
 COPY root /
 COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 
-VOLUME ["/var/lib/pgsql/data"]
+# Not using VOLUME statement since it's not working in OpenShift Online:
+# https://github.com/sclorg/httpd-container/issues/30
+# VOLUME ["/var/lib/pgsql/data"]
 
 # S2I permission fixes
 # --------------------
