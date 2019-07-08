@@ -27,60 +27,6 @@
         }
       },
       {
-        "name": "9.2",
-        "annotations": {
-          "openshift.io/display-name": "PostgreSQL 9.2",
-          "openshift.io/provider-display-name": "Red Hat, Inc.",
-          "description": "Provides a PostgreSQL 9.2 database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
-          "iconClass": "icon-postgresql",
-          "tags": "hidden,postgresql",
-          "version": "9.2"
-        },
-        "from": {
-          "kind": "DockerImage",
-          "name": "registry.redhat.io/openshift3/postgresql-92-rhel7:latest"
-        },
-        "referencePolicy": {
-          "type": "Local"
-        }
-      },
-      {
-        "name": "9.4",
-        "annotations": {
-          "openshift.io/display-name": "PostgreSQL 9.4",
-          "openshift.io/provider-display-name": "Red Hat, Inc.",
-          "description": "Provides a PostgreSQL 9.4 database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
-          "iconClass": "icon-postgresql",
-          "tags": "hidden,database,postgresql",
-          "version": "9.4"
-        },
-        "from": {
-          "kind": "DockerImage",
-          "name": "registry.redhat.io/rhscl/postgresql-94-rhel7:latest"
-        },
-        "referencePolicy": {
-          "type": "Local"
-        }
-      },
-      {
-        "name": "9.5",
-        "annotations": {
-          "openshift.io/display-name": "PostgreSQL 9.5",
-          "openshift.io/provider-display-name": "Red Hat, Inc.",
-          "description": "Provides a PostgreSQL 9.5 database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
-          "iconClass": "icon-postgresql",
-          "tags": "hidden,database,postgresql",
-          "version": "9.5"
-        },
-        "from": {
-          "kind": "DockerImage",
-          "name": "registry.redhat.io/rhscl/postgresql-95-rhel7:latest"
-        },
-        "referencePolicy": {
-          "type": "Local"
-        }
-      },
-      {
         "name": "9.6",
         "annotations": {
           "openshift.io/display-name": "PostgreSQL (Ephemeral) 9.6",
