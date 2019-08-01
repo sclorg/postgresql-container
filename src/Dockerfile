@@ -112,6 +112,11 @@ ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
 RUN usermod -a -G root postgres && \
     /usr/libexec/fix-permissions --read-only "$APP_DATA"
 
+# fix incorrect permissions copied from host
+RUN chmod a+rx /usr /usr/bin /usr/libexec /usr/share
+RUN /usr/libexec/fix-permissions --read-only /usr/share/container-scripts
+
+
 USER 26
 
 ENTRYPOINT ["container-entrypoint"]
