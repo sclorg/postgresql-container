@@ -23,14 +23,14 @@ get_image_id ()
             case $OS in
             rhel7)
                 ns=rhscl
-                if test "$version" -le 92; then
+                if test "$version" -eq 92; then
                     ns=openshift3
                 fi
                 image=registry.access.redhat.com/$ns/postgresql-${version}-rhel7
                 ;;
             centos7)
                 ns=centos
-                if test "$version" -le 92; then
+                if test "$version" -eq 92; then
                     ns=openshift
                 fi
                 local image=docker.io/$ns/postgresql-${1//\./}-centos7
