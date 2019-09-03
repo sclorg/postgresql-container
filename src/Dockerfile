@@ -39,6 +39,9 @@ LABEL summary="$SUMMARY" \
 {% else %}
       version="{{ spec.version }}" \
 {% endif %}
+{% if config.os.id == 'rhel' %}
+      com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
+{% endif %}
       usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 {{ spec.img_name }}" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
