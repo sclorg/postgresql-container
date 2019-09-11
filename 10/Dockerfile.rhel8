@@ -31,6 +31,7 @@ LABEL summary="$SUMMARY" \
       name="rhel8/postgresql-10" \
       com.redhat.component="postgresql-10-container" \
       version="1" \
+      com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
       usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel8/postgresql-10" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
