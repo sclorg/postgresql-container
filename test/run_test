@@ -785,7 +785,7 @@ run_test_cfg_hook()
   assert_runtime_option "$name-3" shared_buffers 111MB
 }
 
-run_s2i_ssl_enable_test()
+run_s2i_enable_ssl_test()
 {
   local s2i_image_name="$IMAGE_NAME-ssl_$(ct_random_string)"
   ct_s2i_build_as_df "file://$test_dir/examples/enable-ssl" "${IMAGE_NAME}" "$s2i_image_name" 1>/dev/null
