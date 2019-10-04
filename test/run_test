@@ -640,7 +640,7 @@ run_upgrade_test ()
     # is fixed for non-SCL use cases
     { [ "${OS}" == "fedora" ] || [ "${OS}" == "rhel8" ]; } && return 0
 
-    local upgrade_path="none 9.2 9.4 9.5 9.6 10 none" prev= act=
+    local upgrade_path="none 9.2 9.4 9.5 9.6 10 12 none" prev= act=
     for act in $upgrade_path; do
         if test "$act" = $VERSION; then
             break
@@ -662,9 +662,9 @@ run_migration_test ()
     local from_version
     # Only test a subset of the migration path on non-intel hosts
     if [ "$(uname -i)" == "x86_64" ]; then
-        local upgrade_path="9.2 9.4 9.5 9.6 10"
+        local upgrade_path="9.2 9.4 9.5 9.6 10 12"
     else
-        local upgrade_path="10"
+        local upgrade_path="10 12"
     fi
 
     for from_version in $upgrade_path; do
