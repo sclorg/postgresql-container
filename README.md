@@ -111,10 +111,10 @@ Users can choose between testing PostgreSQL based on a RHEL or CentOS image.
     $ cd postgresql
     $ make test TARGET=centos7 VERSIONS=10
     ```
-+By using the `TEST_CASE` parameter you can choose a test case subset to be run against the image, eg:
++By using the `TESTS` parameter you can choose a test case subset to be run against the image, eg:
 
     $ cd postgresql
-    $ make test VERSIONS=10 TEST_CASE="run_general_tests run_replication_test"
+    $ make test VERSIONS=10 TESTS="run_general_tests run_replication_test"
 
 
 **Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
