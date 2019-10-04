@@ -13,6 +13,13 @@ DISTGEN_RULES="
 
     src=src/root/usr/share/container-scripts/postgresql/common.sh
     dest=root/usr/share/container-scripts/postgresql/common.sh;
+
+    src=src/root/usr/bin/run-postgresql-slave
+    dest=root/usr/bin/run-postgresql-slave
+    mode=0755;
+
+    src=src/root/usr/share/container-scripts/postgresql/openshift-custom-recovery.conf.template
+    dest=root/usr/share/container-scripts/postgresql/openshift-custom-recovery.conf.template;
 "
 
 # Files containing distgen directives, which are used for each
@@ -58,9 +65,6 @@ COPY_RULES="
     src=src/root/usr/share/container-scripts/postgresql/openshift-custom-postgresql.conf.template
     dest=root/usr/share/container-scripts/postgresql/openshift-custom-postgresql.conf.template;
 
-    src=src/root/usr/share/container-scripts/postgresql/openshift-custom-recovery.conf.template
-    dest=root/usr/share/container-scripts/postgresql/openshift-custom-recovery.conf.template;
-
     src=src/root/usr/share/container-scripts/postgresql/scl_enable
     dest=root/usr/share/container-scripts/postgresql/scl_enable;
 
@@ -70,10 +74,6 @@ COPY_RULES="
 
     src=src/root/usr/bin/run-postgresql-master
     dest=root/usr/bin/run-postgresql-master
-    mode=0755;
-
-    src=src/root/usr/bin/run-postgresql-slave
-    dest=root/usr/bin/run-postgresql-slave
     mode=0755;
 
     src=src/root/usr/bin/container-entrypoint
