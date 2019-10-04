@@ -640,7 +640,7 @@ run_upgrade_test ()
     # is fixed for non-SCL use cases
     [ "${OS}" == "fedora" or "${OS}" == "rhel8" ] && return 0
 
-    local upgrade_path="none 9.4 9.5 9.6 10 none" prev= act=
+    local upgrade_path="none 9.2 9.4 9.5 9.6 10 none" prev= act=
     for act in $upgrade_path; do
         if test "$act" = $VERSION; then
             break
@@ -661,7 +661,7 @@ run_migration_test ()
     if [ "${OS}" == "rhel8" ]; then
         local upgrade_path="9.6 10"
     else
-        local upgrade_path="9.4 9.5 9.6 10"
+        local upgrade_path="9.2 9.4 9.5 9.6 10"
     fi
 
     for from_version in $upgrade_path; do
