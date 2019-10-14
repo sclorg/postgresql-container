@@ -70,6 +70,9 @@ RUN {{ spec.environment_setup }}
   {% endif %}
 {% endif %}
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper {{ spec.pkgs }}" && \
+{% if spec.version in ["12"] %}
+    INSTALL_PKGS="$INSTALL_PKGS rh-postgresql{{ spec.short }}-pgaudit" && \
+{% endif %}
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     {% if spec.post_install %}

@@ -28,6 +28,7 @@ run_s2i_bake_data_test
 run_s2i_enable_ssl_test
 run_upgrade_test
 run_migration_test
+run_pgaudit_test
 "
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
@@ -829,6 +830,57 @@ run_s2i_bake_data_test ()
                            bash -c "psql -tA -c 'SELECT * FROM test;'")"
 
   docker stop "$(get_cid "$container_name")"
+}
+
+run_pgaudit_test()
+{
+  # extension pgaudit is not available for older versions
+  case ${VERSION} in
+    9.2|9.4|9.5|9.6|10) echo "pgaudit not expected, test skipped."; return ;;
+    *) ;;
+  esac
+
+  local config_dir data_dir name=pg-test-pgaudit
+
+  # create a dir for config
+  config_dir=$(mktemp -d --tmpdir pg-hook-volume.XXXXX)
+  add_cleanup_command /bin/rm -rf "$config_dir"
+  cp -r "$test_dir"/examples/pgaudit/* "$config_dir"
+  setfacl -R -m u:26:rwx "$config_dir"
+
+  # create a dir for data
+  create_volume_dir
+  data_dir="${volume_dir}"
+
+  DOCKER_ARGS="
+-e POSTGRESQL_ADMIN_PASSWORD=password
+-v ${config_dir}:/opt/app-root/src:Z
+-v ${data_dir}:/var/lib/pgsql/data:Z
+  " create_container "$name"
+
+  assert_runtime_option "$name" shared_preload_libraries pgaudit
+  wait_ready "$name"
+
+  # enable the pgaudit extension
+  docker exec -i $(get_cid "$name") bash -c psql <<EOSQL
+CREATE EXTENSION pgaudit;
+SET pgaudit.log = 'read, ddl';
+CREATE DATABASE pgaudittest;
+EOSQL
+
+  # simulate some trafic that should be audited
+  docker exec -i $(get_cid "$name") bash -c psql pgaudittest <<EOSQL
+SET pgaudit.log = 'read, ddl';
+CREATE TABLE account (id int, name text, password text, description text);
+INSERT INTO account (id, name, password, description) VALUES (1, 'user1', 'HASH1', 'blah, blah');
+SELECT * FROM account;
+EOSQL
+
+  # give server some time for write all audit messages
+  sleep 1
+
+  grep -E 'AUDIT: SESSION,.*,.*,DDL,CREATE DATABASE,,,CREATE DATABASE pgaudittest' "${data_dir}"/userdata/log/postgresql-*.log
+  grep -E 'AUDIT: SESSION,.*,.*,READ,SELECT,,,SELECT' "${data_dir}"/userdata/log/postgresql-*.log
 }
 
 function run_all_tests() {

@@ -1,0 +1,10 @@
+The PostgreSQL Audit Extension (or pgaudit) provides detailed session and/or object
+audit logging via the standard logging facility provided by PostgreSQL.
+
+Bind-mount this directory under /opt/app-root/src in the container, and all the
+*.conf files from postgresql-cfg/ files will be included to postgresql.conf.
+
+This config file enables the pgaudit extensions that is available in the container
+image, but needs to be enabled.
+
+More about pgaudit extension at https://www.pgaudit.org.
