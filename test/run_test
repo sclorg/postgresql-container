@@ -648,6 +648,8 @@ run_upgrade_test ()
         prev=$act
     done
     test "$prev" != none
+    # Check if the previous image is available in the registry
+    docker pull "$(get_image_id "$prev:remote")" || return 0
 
     # TODO: We run this script from $VERSION directory, through test/run symlink.
     test/run_upgrade_test "$prev:remote" "$VERSION:local"
@@ -658,16 +660,19 @@ run_migration_test ()
     [ "${OS}" == "fedora" ] && return 0
 
     local from_version
-    if [ "${OS}" == "rhel8" ]; then
-        local upgrade_path="9.6 10"
-    else
+    # Only test a subset of the migration path on non-intel hosts
+    if [ "$(uname -i)" == "x86_64" ]; then
         local upgrade_path="9.2 9.4 9.5 9.6 10"
+    else
+        local upgrade_path="10"
     fi
 
     for from_version in $upgrade_path; do
         # Do not test migration from $VERSION:remote to $VERSION:local
         test $(version2number $from_version) -lt $(version2number "$VERSION") \
             || break
+        # Skip if the previous image is not available in the registry
+        docker pull "$(get_image_id "$from_version:remote")" || continue
         test/run_migration_test $from_version:remote $VERSION:local
     done
 }
