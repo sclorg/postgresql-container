@@ -408,7 +408,7 @@ get_matched_files ()
   shift
   for dir; do
     test -d "$dir" || continue
-    find "$dir" -maxdepth 1 -type f -name "$pattern" -printf "%f\n"
+    find -L "$dir" -maxdepth 1 -type f -name "$pattern" -printf "%f\n"
   done
 }
 
