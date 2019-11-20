@@ -369,6 +369,46 @@ function test_postgresql_ephemeral_redeploy() {
   ct_os_delete_project
 }
 
+function test_postgresql_configmap_start() {
+  local image_name=$1; shift
+  local template="$TEMPLATES/postgresql-ephemeral-template.json"
+  local image_name_no_namespace=${image_name##*/}
+  local service_name=$image_name_no_namespace
+  local user="testu" pass="testp" db="testdb"
+  local registry="" old_image="" pod_ip="" tmpdir=""
+  local test_string=""
+
+  ct_os_new_project
+  ct_os_upload_image "$image_name" "postgresql:$VERSION"
+
+  ct_os_deploy_template_image "$template" \
+                              NAMESPACE="$(oc project -q)" \
+                              POSTGRESQL_VERSION="$VERSION" \
+                              DATABASE_SERVICE_NAME="$service_name" \
+                              POSTGRESQL_USER="$user" \
+                              POSTGRESQL_PASSWORD="$pass" \
+                              POSTGRESQL_DATABASE="$db"
+
+  ct_os_wait_pod_ready "$service_name" 60
+  check_postgresql_os_service_connection "$image_name" "$service_name" testu testp testdb
+
+  # Create a simple configMap with a start.sh script
+  tmpdir=$(mktemp -d)
+  test_string="Start is working"
+  echo "echo $test_string" >> "$tmpdir/start.sh"
+  oc create configmap postgresql-start --from-file="$tmpdir/start.sh"
+  oc set volume "dc/$service_name" --add -t configmap --configmap-name=postgresql-start -m /opt/app-root/src/postgresql-start --name postgresql-start
+
+  # Wait for redeploy
+  ct_os_wait_pod_ready "$service_name-2" 60
+  check_postgresql_os_service_connection "$image_name" "$service_name" testu testp testdb
+
+  # Check logs for the test string
+  oc logs "$(ct_os_get_pod_name "$service_name")" | grep "$test_string"
+
+  ct_os_delete_project
+}
+
 function run_ephemeral_tests() {
   local image_name=$1
   for template in $EPHEMERAL_TEMPLATES; do
@@ -393,6 +433,7 @@ test_postgresql_pure_image "$IMAGE_NAME"
 test_postgresql_replication "$IMAGE_NAME"
 run_ephemeral_tests "$IMAGE_NAME"
 run_persistent_tests "$IMAGE_NAME"
+test_postgresql_configmap_start "$IMAGE_NAME"
 
 # test with the just built image and an integrated template
 test_postgresql_integration "${IMAGE_NAME}" "${VERSION}" postgresql
