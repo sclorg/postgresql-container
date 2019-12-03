@@ -119,6 +119,16 @@ function generate_postgresql_config() {
         >> "${POSTGRESQL_CONFIG_FILE}"
   fi
 
+  if [ "$POSTGRESQL_VERSION" -ge 12 ] && [ "$(uname -p)" != 'x86_64' ] && [[ "$(. /etc/os-release ; echo $VERSION_ID)" =~ 7.* ]] ; then
+    # On non-intel arches, data_sync_retry = off does not work
+    # Upstream discussion: https://www.postgresql.org/message-id/CA+mCpegfOUph2U4ZADtQT16dfbkjjYNJL1bSTWErsazaFjQW9A@mail.gmail.com
+    # Upstream changes that caused this issue:
+    # https://github.com/postgres/postgres/commit/483520eca426fb1b428e8416d1d014ac5ad80ef4
+    # https://github.com/postgres/postgres/commit/9ccdd7f66e3324d2b6d3dec282cfa9ff084083f1
+    # RHBZ: https://bugzilla.redhat.com/show_bug.cgi?id=1779150
+    echo "data_sync_retry = on" >>"${POSTGRESQL_CONFIG_FILE}"
+  fi
+
   (
   shopt -s nullglob
   for conf in "${APP_DATA}"/src/postgresql-cfg/*.conf; do
@@ -310,6 +320,9 @@ run_pgupgrade ()
   # User-specififed options for pg_upgrade.
   eval "upgrade_cmd+=(${POSTGRESQL_UPGRADE_PGUPGRADE_OPTIONS-})"
 
+  # On non-intel arches the data_sync_retry set to on
+  sed -i -e 's/data_sync_retry/#data_sync_retry/' "${POSTGRESQL_CONFIG_FILE}"
+
   # the upgrade
   info_msg "Starting the pg_upgrade process."
 
@@ -317,7 +330,7 @@ run_pgupgrade ()
   # REDHAT_PGUPGRADE_FROM_RHEL hack as we don't upgrade from 9.2 -- that means
   # that we don't need to fiddle with unix_socket_director{y,ies} option.
   REDHAT_PGUPGRADE_FROM_RHEL=1 \
-  "${upgrade_cmd[@]}" || { rm -rf "$PGDATA_new" && false ; }
+  "${upgrade_cmd[@]}" || { cat $(find "$PGDATA_new"/.. -name pg_upgrade_server.log) ; rm -rf "$PGDATA_new" && false ; }
 
   # Move the important configuration and remove old data.  This is highly
   # careless, but we can't do more for this over-automatized process.
@@ -325,6 +338,9 @@ run_pgupgrade ()
   mv "$PGDATA"/*.conf "$PGDATA_new"
   rm -rf "$PGDATA"
   mv "$PGDATA_new" "$PGDATA"
+
+  # Get back the option we changed above
+  sed -i -e 's/#data_sync_retry/data_sync_retry/' "${POSTGRESQL_CONFIG_FILE}"
 
   info_msg "Upgrade DONE."
 )
