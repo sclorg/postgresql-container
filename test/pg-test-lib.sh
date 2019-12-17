@@ -26,7 +26,7 @@ get_image_id ()
                 if test "$version" -eq 92; then
                     ns=openshift3
                 fi
-                image=registry.access.redhat.com/$ns/postgresql-${version}-rhel7
+                image=registry.redhat.io/$ns/postgresql-${version}-rhel7
                 ;;
             centos7)
                 ns=centos
