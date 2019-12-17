@@ -10,6 +10,7 @@ THISDIR=$(dirname ${BASH_SOURCE[0]})
 TEMPLATES="$THISDIR/examples"
 REMOTE_TEMPLATES="https://raw.githubusercontent.com/openshift/origin/master/examples/db-templates"
 
+source "$THISDIR"/pg-test-lib.sh
 source "$THISDIR"/test-lib-openshift.sh
 source "$THISDIR"/test-lib-postgresql.sh
 
@@ -166,16 +167,7 @@ function test_postgresql_update() {
   local registry="" old_image="" pod_ip=""
   local version released=:
 
-  case $OS in
-  rhel7)
-      registry=registry.access.redhat.com
-      ;;
-  centos7)
-      registry=docker.io
-      ;;
-  esac
-
-  old_image="$registry/$image_name"
+  old_image=$(get_image_id "$VERSION:remote")
 
   for version in $NOT_RELEASED_VERSIONS; do
     case $image_name in
