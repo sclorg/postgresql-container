@@ -110,6 +110,5 @@ matrix:
       version: "9.5"
     - distros:
         - rhel-8-x86_64
-        - centos-7-x86_64
         - fedora-29-x86_64
       version: "12"
