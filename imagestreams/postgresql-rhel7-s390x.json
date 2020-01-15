@@ -16,29 +16,11 @@
           "openshift.io/provider-display-name": "Red Hat, Inc.",
           "description": "Provides a PostgreSQL database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.\n\nWARNING: By selecting this tag, your application will automatically update to use the latest version of PostgreSQL available on OpenShift, including major version updates.",
           "iconClass": "icon-postgresql",
-          "tags": "database,postgresql"
+          "tags": "database,postgresql,s390x"
         },
         "from": {
           "kind": "ImageStreamTag",
           "name": "12"
-        },
-        "referencePolicy": {
-          "type": "Local"
-        }
-      },
-      {
-        "name": "9.6",
-        "annotations": {
-          "openshift.io/display-name": "PostgreSQL (Ephemeral) 9.6",
-          "openshift.io/provider-display-name": "Red Hat, Inc.",
-          "description": "Provides a PostgreSQL 9.6 database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
-          "iconClass": "icon-postgresql",
-          "tags": "database,postgresql",
-          "version": "9.6"
-        },
-        "from": {
-          "kind": "DockerImage",
-          "name": "registry.redhat.io/rhscl/postgresql-96-rhel7:latest"
         },
         "referencePolicy": {
           "type": "Local"
@@ -51,7 +33,7 @@
           "openshift.io/provider-display-name": "Red Hat, Inc.",
           "description": "Provides a PostgreSQL 10 database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
           "iconClass": "icon-postgresql",
-          "tags": "database,postgresql",
+          "tags": "database,postgresql,s390x",
           "version": "10"
         },
         "from": {
@@ -69,7 +51,7 @@
           "openshift.io/provider-display-name": "Red Hat, Inc.",
           "description": "Provides a PostgreSQL 12 database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
           "iconClass": "icon-postgresql",
-          "tags": "database,postgresql",
+          "tags": "database,postgresql,s390x",
           "version": "12"
         },
         "from": {

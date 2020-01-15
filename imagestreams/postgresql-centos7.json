@@ -20,7 +20,7 @@
         },
         "from": {
           "kind": "ImageStreamTag",
-          "name": "10"
+          "name": "12"
         },
         "referencePolicy": {
           "type": "Local"
@@ -57,6 +57,24 @@
         "from": {
           "kind": "DockerImage",
           "name": "docker.io/centos/postgresql-10-centos7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      },
+      {
+        "name": "12",
+        "annotations": {
+          "openshift.io/display-name": "PostgreSQL 12",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a PostgreSQL 12 database on CentOS 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
+          "iconClass": "icon-postgresql",
+          "tags": "database,postgresql",
+          "version": "12"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "docker.io/centos/postgresql-12-centos7:latest"
         },
         "referencePolicy": {
           "type": "Local"
