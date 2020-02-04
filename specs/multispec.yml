@@ -56,17 +56,6 @@ specs:
         - fedora-29-x86_64
 
   version:
-    "9.5":
-      version: "9.5"
-      prev_version: "9.4"
-      short: "95"
-      prev_short: "94"
-      common_image_name: "{{ spec.org }}/postgresql-95-{{ spec.prod }}"
-      rhel_image_name: "rhscl/postgresql-95-rhel7"
-      centos_image_name: "centos/postgresql-95-centos7"
-      cccp_job: "postgresql-95-centos7"
-      latest_fedora: "f25"
-
     "9.6":
       version: "9.6"
       prev_version: "9.5"
@@ -104,10 +93,6 @@ specs:
 
 matrix:
   exclude:
-    - distros:
-        - fedora-29-x86_64
-        - rhel-8-x86_64
-      version: "9.5"
     - distros:
         - rhel-8-x86_64
         - fedora-29-x86_64
