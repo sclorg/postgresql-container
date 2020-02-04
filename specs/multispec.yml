@@ -12,7 +12,7 @@ specs:
       redhat_component: "rh-postgresql{{ spec.short }}-container"
       enabled_collection: "rh-postgresql{{ spec.short }}"
       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      pkgs: "rh-postgresql{{ spec.short }} rh-postgresql{{ spec.short }}-postgresql-contrib rh-postgresql{{ spec.prev_short }}-postgresql-server"
+      pkgs: "rh-postgresql{{ spec.short }} rh-postgresql{{ spec.short }}-postgresql-contrib rh-postgresql{{ spec.short }}-syspaths rh-postgresql{{ spec.prev_short }}-postgresql-server"
       repo_enable_reason: ""
       environment_setup: yum install -y centos-release-scl-rh && \
       staging_repo_setup: >-4
@@ -28,7 +28,7 @@ specs:
        redhat_component: "rh-postgresql{{ spec.short }}-container"
        enabled_collection: "rh-postgresql{{ spec.short }}"
        img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-       pkgs: "rh-postgresql{{ spec.short }} rh-postgresql{{ spec.short }}-postgresql-contrib rh-postgresql{{ spec.prev_short }}-postgresql-server"
+       pkgs: "rh-postgresql{{ spec.short }} rh-postgresql{{ spec.short }}-postgresql-contrib rh-postgresql{{ spec.short }}-syspaths rh-postgresql{{ spec.prev_short }}-postgresql-server"
        repo_enable_reason: |-
          # rhel-7-server-ose-3.2-rpms is enabled for nss_wrapper until this pkg is
          # in base RHEL
