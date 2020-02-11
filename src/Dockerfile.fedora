@@ -45,7 +45,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
-    INSTALL_PKGS+="findutils python2 xz" && \
+    INSTALL_PKGS+="findutils xz" && \
 {% if spec.version not in ["9.6", "10"] %}
     INSTALL_PKGS+=" pgaudit" && \
 {% endif %}
