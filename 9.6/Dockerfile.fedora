@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/f27/s2i-core:latest
+FROM registry.fedoraproject.org/f31/s2i-core:latest
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -45,7 +45,8 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
-    INSTALL_PKGS+="findutils python2 xz" && \
+    INSTALL_PKGS+="findutils xz" && \
+    dnf -y module enable postgresql:9.6 && \
     dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     dnf clean all && \
