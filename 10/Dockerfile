@@ -42,7 +42,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN yum install -y centos-release-scl-rh && \
-    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper rh-postgresql10 rh-postgresql10-postgresql-contrib rh-postgresql96-postgresql-server" && \
+    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper rh-postgresql10 rh-postgresql10-postgresql-contrib rh-postgresql10-syspaths rh-postgresql96-postgresql-server" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum -y clean all --enablerepo='*' && \
