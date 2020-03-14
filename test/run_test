@@ -300,6 +300,7 @@ function try_image_invalid_combinations() {
 }
 
 function run_container_creation_tests() {
+false
   echo "  Testing image entrypoint usage"
   try_image_invalid_combinations
   try_image_invalid_combinations  -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
@@ -349,6 +350,7 @@ assert_runtime_option ()
 
 
 function run_configuration_tests() {
+false
   local name=$1 ; shift
   echo "  Testing image configuration settings"
   test_config_option ${name} max_connections ${POSTGRESQL_MAX_CONNECTIONS}
@@ -522,6 +524,7 @@ function setup_replication_cluster() {
 }
 
 function run_master_restart_test() {
+false
   local DB=postgres
   local PGUSER=master
   local PASS=master
@@ -565,6 +568,7 @@ function run_master_restart_test() {
 }
 
 function run_replication_test() {
+false
   local DB=postgres
   local PGUSER=master
   local PASS=master
@@ -587,6 +591,7 @@ function run_replication_test() {
 }
 
 function run_change_password_test() {
+false
   echo "  Testing password change"
   local name="change_password"
 
@@ -650,6 +655,7 @@ $volume_options
 
 run_upgrade_test ()
 {
+false
     # Do not run on Fedora or RHEL8 until the upgrade script
     # is fixed for non-SCL use cases
     { [ "${OS}" == "fedora" ] || [ "${OS}" == "rhel8" ]; } && return 0
@@ -671,6 +677,7 @@ run_upgrade_test ()
 
 run_migration_test ()
 {
+false
     [ "${OS}" == "fedora" ] && return 0
 
     local from_version
@@ -692,6 +699,7 @@ run_migration_test ()
 }
 
 run_doc_test() {
+false
   local tmpdir=$(mktemp -d)
   local f
   echo "  Testing documentation in the container image"
@@ -740,6 +748,7 @@ ${mount_opts}
 }
 
 run_s2i_test() {
+false
   local temp_file
   echo "  Testing s2i usage"
   ct_s2i_usage "${IMAGE_NAME}" --pull-policy=never 1>/dev/null
