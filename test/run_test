@@ -5,9 +5,6 @@
 # IMAGE_NAME specifies the name of the candidate image used for testing.
 # The image has to be available before this script is executed.
 #
-# By default, all the tests are run. For debugging purposes, FAIL_QUICKLY
-# variable can be set to 1, which makes the test-suite to fail right after any
-# of the tests fails.
 
 set -exo nounset
 shopt -s nullglob
@@ -897,18 +894,10 @@ EOSQL
 }
 
 function run_all_tests() {
-  local suite_result=0
   for test_case in $TEST_LIST; do
     : "Running test $test_case"
-    if $test_case ; then
-      printf -v test_short_summary "${test_short_summary}[PASSED] $test_case\n"
-    else
-      printf -v test_short_summary "${test_short_summary}[FAILED] $test_case\n"
-      suite_result=1
-      [ -n "${FAIL_QUICKLY:-}" ] && echo "$sum" && return $suite_result
-    fi
+    $test_case
   done;
-  return $suite_result
 }
 
 # configuration defaults
