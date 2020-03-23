@@ -78,6 +78,15 @@ specs:
       cccp_job: "postgresql-10-centos7"
       latest_fedora: "f29"
 
+    "11":
+      version: "11"
+      prev_version: "10"
+      short: "11"
+      prev_short: "10"
+      common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      cccp_job: "postgresql-{{ spec.short }}-centos7"
+      latest_fedora: "f31"
+
     "12":
       version: "12"
       prev_version: "10"
@@ -93,6 +102,11 @@ specs:
 
 matrix:
   exclude:
+    - distros:
+        - rhel-7-x86_64
+        - rhel-8-x86_64
+        - centos-7-x86_64
+      version: "11"
     - distros:
         - rhel-8-x86_64
       version: "12"

@@ -46,7 +46,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # to make sure of that.
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
     INSTALL_PKGS+="findutils xz" && \
-{% if spec.version not in ["9.6", "10"] %}
+{% if spec.version not in ["9.6", "10", "11"] %}
     INSTALL_PKGS+=" pgaudit" && \
 {% endif %}
     dnf -y module enable postgresql:{{ spec.version }} && \
