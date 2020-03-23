@@ -72,7 +72,7 @@ Sets how much memory is dedicated to PostgreSQL to use for caching data
 Set to an estimate of how much memory is available for disk caching by the operating system and within the database itself
 
 **`POSTGRESQL_LOG_DESTINATION (default: /var/lib/pgsql/data/userdata/log/postgresql-*.log)`**  
- Where to log errors, the default is `/var/lib/pgsql/data/userdata/log/postgresql-*.log` and this file is rotated; it can be changed to `/dev/stderr` to make debugging easier
+Where to log errors, the default is `/var/lib/pgsql/data/userdata/log/postgresql-*.log` and this file is rotated; it can be changed to `/dev/stderr` to make debugging easier
 
 The following environment variables deal with extensions. They are all optional, and if not set, no extensions will be enabled.
 
