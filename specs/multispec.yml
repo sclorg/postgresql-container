@@ -96,12 +96,18 @@ specs:
       rhel_image_name: "rhscl/postgresql-{{ spec.short }}-rhel7"
       centos_image_name: "centos/postgresql-{{ spec.short }}-centos7"
       cccp_job: "postgresql-{{ spec.short }}-centos7"
-      latest_fedora: "rawhide"
+      latest_fedora: "f32"
       has_devel_repo:
         centos: True
 
 matrix:
   exclude:
+    - distros:
+        - fedora-31-x86_64
+      version: "9.6"
+    - distros:
+        - fedora-31-x86_64
+      version: "10"
     - distros:
         - rhel-7-x86_64
         - rhel-8-x86_64

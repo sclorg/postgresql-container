@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/f{{ config.os.version }}/s2i-core:latest
+FROM registry.fedoraproject.org/{{ spec.latest_fedora }}/s2i-core:latest
 
 # PostgreSQL image for OpenShift.
 # Volumes:
