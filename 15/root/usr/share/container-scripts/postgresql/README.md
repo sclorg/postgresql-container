@@ -101,6 +101,9 @@ The following environment variables influence the PostgreSQL configuration file.
 **`POSTGRESQL_EFFECTIVE_CACHE_SIZE (default: 1/2 of memory limit or 128M)`**
        Set to an estimate of how much memory is available for disk caching by the operating system and within the database itself
 
+**`POSTGRESQL_LOG_DESTINATION (default: /var/lib/pgsql/data/userdata/log/postgresql-*.log)`**  
+       Where to log errors, the default is `/var/lib/pgsql/data/userdata/log/postgresql-*.log` and this file is rotated; it can be changed to `/dev/stderr` to make debugging easier
+
 
 You can also set the following mount points by passing the `-v /host/dir:/container/dir:Z` flag to Docker.
 

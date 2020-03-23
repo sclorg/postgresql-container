@@ -18,6 +18,8 @@ else
     export POSTGRESQL_EFFECTIVE_CACHE_SIZE=${POSTGRESQL_EFFECTIVE_CACHE_SIZE:-$effective_cache}
 fi
 
+export POSTGRESQL_LOG_DESTINATION=${POSTGRESQL_LOG_DESTINATION:-}
+
 export POSTGRESQL_RECOVERY_FILE=$HOME/openshift-custom-recovery.conf
 export POSTGRESQL_CONFIG_FILE=$HOME/openshift-custom-postgresql.conf
 
@@ -158,6 +160,16 @@ function generate_postgresql_config() {
 
   if should_hack_data_sync_retry ; then
     echo "data_sync_retry = on" >>"${POSTGRESQL_CONFIG_FILE}"
+  fi
+
+  # For easier debugging, allow users to log to stderr (will be visible
+  # in the pod logs) using a single variable
+  # https://github.com/sclorg/postgresql-container/issues/353
+  if [ -n "${POSTGRESQL_LOG_DESTINATION:-}" ] ; then
+    echo "log_destination = 'stderr'" >>"${POSTGRESQL_CONFIG_FILE}"
+    echo "logging_collector = on" >>"${POSTGRESQL_CONFIG_FILE}"
+    echo "log_directory = '$(dirname "${POSTGRESQL_LOG_DESTINATION}")'" >>"${POSTGRESQL_CONFIG_FILE}"
+    echo "log_filename = '$(basename "${POSTGRESQL_LOG_DESTINATION}")'" >>"${POSTGRESQL_CONFIG_FILE}"
   fi
 
   (
