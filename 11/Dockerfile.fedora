@@ -14,8 +14,8 @@ ENV NAME=postgresql \
     VERSION=0 \
     ARCH=x86_64 \
     \
-    POSTGRESQL_VERSION=10 \
-    POSTGRESQL_PREV_VERSION=9.6 \
+    POSTGRESQL_VERSION=11 \
+    POSTGRESQL_PREV_VERSION=10 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
@@ -28,9 +28,9 @@ create, run, maintain and access a PostgreSQL DBMS server."
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="PostgreSQL 10" \
+      io.k8s.display-name="PostgreSQL 11" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql10" \
+      io.openshift.tags="database,postgresql,postgresql11" \
       com.redhat.component="$NAME" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>" \
       name="$FGC/$NAME" \
@@ -46,7 +46,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # to make sure of that.
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
     INSTALL_PKGS+="findutils xz" && \
-    dnf -y module enable postgresql:10 && \
+    dnf -y module enable postgresql:11 && \
     dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     dnf clean all && \
