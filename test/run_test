@@ -846,7 +846,7 @@ run_pgaudit_test()
 {
   # extension pgaudit is not available for older versions
   case ${VERSION} in
-    9.6|10) echo "pgaudit not expected, test skipped."; return ;;
+    9.6|10|11) echo "pgaudit not expected, test skipped."; return ;;
     *) ;;
   esac
 
