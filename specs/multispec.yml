@@ -97,8 +97,6 @@ specs:
       centos_image_name: "centos/postgresql-{{ spec.short }}-centos7"
       cccp_job: "postgresql-{{ spec.short }}-centos7"
       latest_fedora: "f32"
-      has_devel_repo:
-        centos: True
 
 matrix:
   exclude:
