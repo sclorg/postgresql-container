@@ -119,7 +119,7 @@ function generate_postgresql_config() {
         >> "${POSTGRESQL_CONFIG_FILE}"
   fi
 
-  if [ "$POSTGRESQL_VERSION" -ge 12 ] && [ "$(uname -p)" != 'x86_64' ] && [[ "$(. /etc/os-release ; echo $VERSION_ID)" =~ 7.* ]] ; then
+  if [ "$(uname -p)" != 'x86_64' ] && [[ "$(. /etc/os-release ; echo $VERSION_ID)" =~ 7.* ]] ; then
     # On non-intel arches, data_sync_retry = off does not work
     # Upstream discussion: https://www.postgresql.org/message-id/CA+mCpegfOUph2U4ZADtQT16dfbkjjYNJL1bSTWErsazaFjQW9A@mail.gmail.com
     # Upstream changes that caused this issue:
