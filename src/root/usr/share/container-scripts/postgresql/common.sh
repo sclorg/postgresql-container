@@ -106,6 +106,43 @@ function postgresql_master_addr() {
   echo -n "$(echo $endpoints | cut -d ' ' -f 1)"
 }
 
+# Converts the version in format x.y or x.y.z to a number.
+version2number ()
+{
+    local old_IFS=$IFS
+    local to_print= depth=${2-3} width=${3-2} sum=0 one_part
+    IFS='.'
+    set -- $1
+    while test $depth -ge 1; do
+        depth=$(( depth - 1 ))
+        part=${1-0} ; shift || :
+        printf "%0${width}d" "$part"
+    done
+    IFS=$old_IFS
+}
+
+# On non-intel arches, data_sync_retry = off does not work
+# Upstream discussion: https://www.postgresql.org/message-id/CA+mCpegfOUph2U4ZADtQT16dfbkjjYNJL1bSTWErsazaFjQW9A@mail.gmail.com
+# Upstream changes that caused this issue:
+# https://github.com/postgres/postgres/commit/483520eca426fb1b428e8416d1d014ac5ad80ef4
+# https://github.com/postgres/postgres/commit/9ccdd7f66e3324d2b6d3dec282cfa9ff084083f1
+# RHBZ: https://bugzilla.redhat.com/show_bug.cgi?id=1779150
+# Special handle of data_sync_retry should handle only in some cases.
+# These cases are: non-intel architectures, and version higher or equal 12.0, 10.7, 9.6.12
+# Return value 0 means the hack is needed.
+function should_hack_data_sync_retry() {
+  [ "$(uname -p)" == 'x86_64' ] && return 1
+  local version_number=$(version2number "$(pg_ctl -V | sed -e 's/^pg_ctl (PostgreSQL) //')")
+  # this matches all 12.x and versions of 10.x where we need the hack
+  [ "$version_number" -ge 100700 ] && return 0
+  # this matches all 10.x that were not matched above
+  [ "$version_number" -ge 100000 ] && return 1
+  # this matches all 9.x where need the hack
+  [ "$version_number" -ge 090612 ] && return 0
+  # all rest should be older 9.x releases
+  return 1
+}
+
 # New config is generated every time a container is created. It only contains
 # additional custom settings and is included from $PGDATA/postgresql.conf.
 function generate_postgresql_config() {
@@ -119,13 +156,7 @@ function generate_postgresql_config() {
         >> "${POSTGRESQL_CONFIG_FILE}"
   fi
 
-  if [ "$(uname -p)" != 'x86_64' ]; then
-    # On non-intel arches, data_sync_retry = off does not work
-    # Upstream discussion: https://www.postgresql.org/message-id/CA+mCpegfOUph2U4ZADtQT16dfbkjjYNJL1bSTWErsazaFjQW9A@mail.gmail.com
-    # Upstream changes that caused this issue:
-    # https://github.com/postgres/postgres/commit/483520eca426fb1b428e8416d1d014ac5ad80ef4
-    # https://github.com/postgres/postgres/commit/9ccdd7f66e3324d2b6d3dec282cfa9ff084083f1
-    # RHBZ: https://bugzilla.redhat.com/show_bug.cgi?id=1779150
+  if should_hack_data_sync_retry ; then
     echo "data_sync_retry = on" >>"${POSTGRESQL_CONFIG_FILE}"
   fi
 
