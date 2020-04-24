@@ -875,6 +875,8 @@ run_pgaudit_test()
   wait_ready "$name"
 
   # enable the pgaudit extension
+  # Deliberately moving heredoc into the container, otherwise it does not work
+  # in podman 1.6.x due to https://bugzilla.redhat.com/show_bug.cgi?id=1827324
   docker exec -i $(get_cid "$name") bash -c "psql <<EOSQL
 CREATE EXTENSION pgaudit;
 SET pgaudit.log = 'read, ddl';
