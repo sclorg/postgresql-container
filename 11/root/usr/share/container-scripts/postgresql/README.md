@@ -33,7 +33,10 @@ $ podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL
 ```
 
 This will create a container named `postgresql_database` running PostgreSQL with
-database `db` and user with credentials `user:pass`. Port 5432 will be exposed
+database `db` and user with credentials `user:pass`. 
+> Note: user `postgres` is reserved for internal usage
+
+Port 5432 will be exposed
 and mapped to the host. If you want your database to be persistent across container
 executions, also add a `-v /host/db/path:/var/lib/pgsql/data` argument (see
 below). This will be the PostgreSQL database cluster directory.
