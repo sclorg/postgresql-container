@@ -60,6 +60,9 @@ add_cleanup_command ()
 '
 }
 function cleanup() {
+  # Print a big fat separator to find the error easier
+  echo "=================================== Cleanup begins here ============================="
+
   for cidfile in $CIDFILE_DIR/* ; do
     CONTAINER=$(cat $cidfile)
 
@@ -872,19 +875,21 @@ run_pgaudit_test()
   wait_ready "$name"
 
   # enable the pgaudit extension
-  docker exec -i $(get_cid "$name") bash -c psql <<EOSQL
+  # Deliberately moving heredoc into the container, otherwise it does not work
+  # in podman 1.6.x due to https://bugzilla.redhat.com/show_bug.cgi?id=1827324
+  docker exec -i $(get_cid "$name") bash -c "psql <<EOSQL
 CREATE EXTENSION pgaudit;
 SET pgaudit.log = 'read, ddl';
 CREATE DATABASE pgaudittest;
-EOSQL
+EOSQL"
 
   # simulate some trafic that should be audited
-  docker exec -i $(get_cid "$name") bash -c psql pgaudittest <<EOSQL
+  docker exec -i $(get_cid "$name") bash -c "psql pgaudittest <<EOSQL
 SET pgaudit.log = 'read, ddl';
 CREATE TABLE account (id int, name text, password text, description text);
 INSERT INTO account (id, name, password, description) VALUES (1, 'user1', 'HASH1', 'blah, blah');
 SELECT * FROM account;
-EOSQL
+EOSQL"
 
   # give server some time for write all audit messages
   sleep 1
