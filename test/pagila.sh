@@ -34,4 +34,9 @@ case $(sha256sum "$pagila_file") in
 *) false ;;
 esac
 
-docker exec -i "$CID" container-entrypoint psql -tA < "$pagila_file" &>/dev/null
+# Deliberately using a separate container, otherwise the docker exec with redirection
+# does not work in podman 1.6.x due to https://bugzilla.redhat.com/show_bug.cgi?id=1827324
+# This change can be reverted to the previous variant, once this BZ is fixed.
+server_ip=$(docker inspect --format='{{.NetworkSettings.IPAddress}}' "$CID")
+admin_pass=$(docker exec "$CID" bash -c 'echo $POSTGRESQL_ADMIN_PASSWORD')
+docker run --rm -i "$IMAGE_NAME" bash -c "PGPASSWORD=$admin_pass psql -h $server_ip" <"$pagila_file" &>/dev/null

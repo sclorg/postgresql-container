@@ -58,11 +58,13 @@ data_pagila_check ()
     local exp_output='28
 16
 2'
-    local output=$(docker exec -i "$CID" container-entrypoint psql -tA <<EOF
+    # Deliberately moving heredoc into the container, otherwise it does not work
+    # in podman 1.6.x due to https://bugzilla.redhat.com/show_bug.cgi?id=1827324
+    local output=$(docker exec -i "$CID" bash -c "psql -tA <<EOF
 select count(*) from information_schema.tables where table_schema = 'public';
 select count(*) from information_schema.triggers;
 select count(*) from staff;
-EOF
+EOF"
 )
     test "$exp_output" = "$output" \
         || error "Unexpected output: '$output', expected: '$exp_output'"
@@ -70,10 +72,12 @@ EOF
 
 data_empty_create ()
 {
-    docker exec -i "$CID" container-entrypoint psql &>/dev/null <<EOF
+    # Deliberately moving heredoc into the container, otherwise it does not work
+    # in podman 1.6.x due to https://bugzilla.redhat.com/show_bug.cgi?id=1827324
+    docker exec -i "$CID" bash -c "psql &>/dev/null <<EOF
 create table blah (id int);
 insert into blah values (1), (2), (3);
-EOF
+EOF"
 }
 
 data_empty_check ()
@@ -82,9 +86,11 @@ data_empty_check ()
     local exp_output='1
 2
 3'
-    local output=$(docker exec -i "$CID" container-entrypoint psql -tA <<EOF
+    # Deliberately moving heredoc into the container, otherwise it does not work
+    # in podman 1.6.x due to https://bugzilla.redhat.com/show_bug.cgi?id=1827324
+    local output=$(docker exec -i "$CID" bash -c "psql -tA <<EOF
 select * from blah order by id;
-EOF
+EOF"
 )
     test "$exp_output" = "$output" || error "Unexpected output '$output'"
 }
