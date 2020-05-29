@@ -25,7 +25,7 @@ export CT_SKIP_UPLOAD_IMAGE=true
 export CT_NAMESPACE=openshift
 
 # Check the template
-test_postgresql_integration "${IMAGE_NAME}" ${VERSION} postgresql
+test_postgresql_integration "${IMAGE_NAME}"
 
 # Check the imagestream
 test_postgresql_imagestream

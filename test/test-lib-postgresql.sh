@@ -13,9 +13,7 @@ source ${THISDIR}/test-lib-openshift.sh
 
 function test_postgresql_integration() {
   local image_name=$1
-  local VERSION=$2
-  local service_name=$3
-  local image_tagged="${service_name}:${VERSION}"
+  local service_name=postgresql
   ct_os_template_exists postgresql-ephemeral && t=postgresql-ephemeral || t=postgresql-persistent
   ct_os_test_template_app_func "${image_name}" \
                                "${t}" \
