@@ -16,9 +16,9 @@ source "$THISDIR"/test-lib-postgresql.sh
 
 set -exo nounset
 
-test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
-test -n "${VERSION-}" || false 'make sure $VERSION is defined'
-test -n "${OS-}" || false 'make sure $OS is defined'
+trap ct_os_cleanup EXIT SIGINT
+
+ct_os_check_compulsory_vars
 
 # Populate template variables if not set already
 if [ -z "${EPHEMERAL_TEMPLATES:-}" ]; then
@@ -428,27 +428,29 @@ run_persistent_tests "$IMAGE_NAME"
 test_postgresql_configmap_start "$IMAGE_NAME"
 
 # test with the just built image and an integrated template
-test_postgresql_integration "${IMAGE_NAME}" "${VERSION}" postgresql
+echo "Running test_postgresql_integration with ${IMAGE_NAME}"
+test_postgresql_integration "${IMAGE_NAME}"
 
 # test with a released image and an integrated template
-# ignore possible failure of this test for centos images
-fail_not_released=true
-if [ "${OS}" == "rhel7" ] ; then
-  PUBLIC_IMAGE_NAME=${PUBLIC_IMAGE_NAME:-${REGISTRY:-registry.redhat.io/}rhscl/${BASE_IMAGE_NAME}-${VERSION//./}-rhel7}
-else
-  PUBLIC_IMAGE_NAME=${PUBLIC_IMAGE_NAME:-${REGISTRY:-}centos/${BASE_IMAGE_NAME}-${VERSION//./}-centos7}
-  fail_not_released=false
-fi
+PUBLIC_IMAGE_NAME=${PUBLIC_IMAGE_NAME:-$(ct_get_public_image_name "${OS}" "${BASE_IMAGE_NAME}" "${VERSION}")}
 
-export CT_SKIP_UPLOAD_IMAGE=true
 # Try pulling the image first to see if it is accessible
 if docker pull "${PUBLIC_IMAGE_NAME}"; then
-  test_postgresql_integration postgresql "${VERSION}" "${PUBLIC_IMAGE_NAME}"
+  echo "Running test_postgresql_integration with ${PUBLIC_IMAGE_NAME}"
+  test_postgresql_integration "${PUBLIC_IMAGE_NAME}"
 else
   echo "Warning: ${PUBLIC_IMAGE_NAME} could not be downloaded via 'docker'"
-  ! $fail_not_released || false "ERROR: Failed to pull image"
+  # ignore possible failure of this test for centos images
+  [ "${OS}" == "rhel7" ] && false "ERROR: Failed to pull image"
 fi
+
+# Check the imagestream
+echo "Running test_mariadb_imagestream"
+test_postgresql_imagestream
 
 OS_TESTSUITE_RESULT=0
 
 ct_os_cluster_down
+
+# vim: set tabstop=2:shiftwidth=2:expandtab:
+

@@ -24,7 +24,13 @@ export CT_SKIP_NEW_PROJECT=true
 export CT_SKIP_UPLOAD_IMAGE=true
 export CT_NAMESPACE=openshift
 
-test_postgresql_integration postgresql ${VERSION} "${IMAGE_NAME}"
+# Check the template
+test_postgresql_integration "${IMAGE_NAME}"
+
+# Check the imagestream
+test_postgresql_imagestream
 
 OS_TESTSUITE_RESULT=0
+
+# vim: set tabstop=2:shiftwidth=2:expandtab:
 
