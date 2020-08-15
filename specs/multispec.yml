@@ -2,7 +2,7 @@ version: 1
 
 specs:
   distroinfo:
-    centos:
+    centos7:
       distros:
         - centos-7-x86_64
       s2i_base: centos/s2i-core-centos7
@@ -18,6 +18,20 @@ specs:
       staging_repo_setup: >-4
               yum-config-manager --add-repo https://cbs.centos.org/repos/sclo7-rh-postgresql96-rh-candidate/x86_64/os/ && \
               echo gpgcheck=0 >> /etc/yum.repos.d/cbs.centos.org_repos_sclo7-rh-postgresql96-rh-candidate_x86_64_os_.repo && \
+    centos8:
+      distros:
+        - centos-8-x86_64
+      s2i_base: centos/s2i-core-centos8
+      org: "centos"
+      prod: "centos8"
+      openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+      redhat_component: "postgresql-{{ spec.short }}-container"
+      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      pkgs: "postgresql-server postgresql-contrib"
+      environment_setup: >-4
+          yum -y module enable postgresql:{{ spec.version }} && \
+      post_install: >-4
+          yum -y reinstall tzdata && \
     rhel7:
        distros:
          - rhel-7-x86_64
@@ -110,6 +124,7 @@ matrix:
         - rhel-7-x86_64
         - rhel-8-x86_64
         - centos-7-x86_64
+        - centos-8-x86_64
       version: "11"
     - distros:
         - rhel-8-x86_64
