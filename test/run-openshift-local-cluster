@@ -118,14 +118,13 @@ function check_postgresql_os_service_connection() {
 function test_postgresql_pure_image() {
   local image_name=$1
   local image_name_no_namespace=${image_name##*/}
-  local service_name=${image_name_no_namespace}
+  local service_name="${image_name_no_namespace%%:*}-testing"
 
   ct_os_new_project
-  ct_os_upload_image "${image_name}"
   # Create a specific imagestream tag for the image so that oc cannot use anything else
-  ct_os_upload_image "${image_name}" "$image_name_no_namespace:testing"
+  ct_os_upload_image "${image_name}" "$image_name_no_namespace"
 
-  ct_os_deploy_pure_image "$image_name_no_namespace:testing" \
+  ct_os_deploy_pure_image "$image_name_no_namespace" \
                           --name "${service_name}" \
                           --env POSTGRESQL_ADMIN_PASSWORD=test
 
@@ -139,7 +138,7 @@ function test_postgresql_template() {
   local image_name=$1; shift
   local template=$1
   local image_name_no_namespace=${image_name##*/}
-  local service_name=${image_name_no_namespace}
+  local service_name="${image_name_no_namespace%%:*}-testing"
 
   ct_os_new_project
   ct_os_upload_image "${image_name}" "postgresql:$VERSION"
@@ -161,8 +160,8 @@ function test_postgresql_template() {
 function test_postgresql_update() {
   local image_name=$1; shift
   local template=$1
-  local image_name_no_registry=${image_name#*/}
-  local service_name=${image_name_no_registry#*/}
+  local image_name_no_registry=${image_name##*/}
+  local service_name="${image_name_no_registry%%:*}-testing"
   local user="testu" pass="testp" db="testdb"
   local registry="" old_image="" pod_ip=""
   local version released=:
@@ -219,8 +218,8 @@ function test_postgresql_update() {
 function test_postgresql_replication() {
   local image_name=$1
   local image_name_no_namespace=${image_name##*/}
-  local master_service_name=${image_name_no_namespace}-master
-  local slave_service_name=${image_name_no_namespace}-slave
+  local master_service_name="${image_name_no_namespace%%:*}-master"
+  local slave_service_name="${image_name_no_namespace%%:*}-slave"
   local istag="postgresql:$VERSION"
   local user="testu" pass="testp" db="testdb"
   local master_name="" master_ip="" slave_name="" slave_ip=""
@@ -289,7 +288,7 @@ function test_postgresql_persistent_redeploy() {
   local image_name=$1; shift
   local template=$1
   local image_name_no_namespace=${image_name##*/}
-  local service_name=$image_name_no_namespace
+  local service_name="${image_name_no_namespace%%:*}-testing"
   local user="testu" pass="testp" db="testdb"
   local registry="" old_image="" pod_ip=""
 
@@ -327,7 +326,7 @@ function test_postgresql_ephemeral_redeploy() {
   local image_name=$1; shift
   local template=$1
   local image_name_no_namespace=${image_name##*/}
-  local service_name=$image_name_no_namespace
+  local service_name="${image_name_no_namespace%%:*}-testing"
   local user="testu" pass="testp" db="testdb"
   local registry="" old_image="" pod_ip=""
 
@@ -365,7 +364,7 @@ function test_postgresql_configmap_start() {
   local image_name=$1; shift
   local template="$TEMPLATES/postgresql-ephemeral-template.json"
   local image_name_no_namespace=${image_name##*/}
-  local service_name=$image_name_no_namespace
+  local service_name="${image_name_no_namespace%%:*}-testing"
   local user="testu" pass="testp" db="testdb"
   local registry="" old_image="" pod_ip="" tmpdir=""
   local test_string=""
