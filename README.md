@@ -16,7 +16,6 @@ For more information about concepts used in these container images, see the
 Versions
 ---------------
 PostgreSQL versions currently supported are:
-* [postgresql-9.6](https://github.com/sclorg/postgresql-container/tree/generated/9.6)
 * [postgresql-10](https://github.com/sclorg/postgresql-container/tree/generated/10)
 * [postgresql-12](https://github.com/sclorg/postgresql-container/tree/generated/12)
 
@@ -77,9 +76,6 @@ In this repository [distgen](https://github.com/devexp-db/distgen/) is used for 
 Usage
 ---------------------------------
 
-For information about usage of Dockerfile for PostgreSQL 9.6,
-see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/9.6).
-
 For information about usage of Dockerfile for PostgreSQL 10,
 see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/10).
 
@@ -87,9 +83,10 @@ For information about usage of Dockerfile for PostgreSQL 12,
 see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/12).
 
 For versions which are not supported anymore:
-[PostgreSQL 9.2](https://github.com/sclorg/postgresql-container/blob/f213e5d0/9.2)
-and
-[PostgreSQL 9.4](https://github.com/sclorg/postgresql-container/blob/2ab68e86/9.4).
+
+* [PostgreSQL 9.2](https://github.com/sclorg/postgresql-container/blob/f213e5d0/9.2)
+* [PostgreSQL 9.4](https://github.com/sclorg/postgresql-container/blob/2ab68e86/9.4)
+* [PostgreSQL 9.6](https://github.com/sclorg/postgresql-container/tree/139dafa9/9.6)
 
 Test
 ---------------------------------
