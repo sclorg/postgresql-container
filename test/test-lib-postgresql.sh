@@ -33,7 +33,7 @@ function test_postgresql_imagestream() {
     *) echo "Imagestream testing not supported for $OS environment." ; return 0 ;;
   esac
 
-  ct_os_test_image_stream_template "${THISDIR}/../imagestreams/postgresql-${OS%[0-9]*}.json" "${THISDIR}/../examples/postgresql-ephemeral-template.json" postgresql "-p POSTGRESQL_VERSION=${VERSION}"
+  ct_os_test_image_stream_template "${THISDIR}/../imagestreams/postgresql-${OS%%[0-9]*}.json" "${THISDIR}/../examples/postgresql-ephemeral-template.json" postgresql "-p POSTGRESQL_VERSION=${VERSION}"
 }
 
 # vim: set tabstop=2:shiftwidth=2:expandtab:

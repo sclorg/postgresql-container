@@ -29,7 +29,6 @@ run_s2i_enable_ssl_test
 run_upgrade_test
 run_migration_test
 run_pgaudit_test
-run_latest_imagestreams_test
 "
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
@@ -897,17 +896,6 @@ EOSQL"
 
   grep -E 'AUDIT: SESSION,.*,.*,DDL,CREATE DATABASE,,,CREATE DATABASE pgaudittest' "${data_dir}"/userdata/log/postgresql-*.log
   grep -E 'AUDIT: SESSION,.*,.*,READ,SELECT,,,SELECT' "${data_dir}"/userdata/log/postgresql-*.log
-}
-
-function run_latest_imagestreams_test() {
-  local result=1
-  # Switch to root directory of a container
-  echo "Testing the latest version in imagestreams"
-  pushd "${test_dir}/.." >/dev/null || return 1
-  ct_check_latest_imagestreams
-  result=$?
-  popd >/dev/null || return 1
-  return $result
 }
 
 function run_all_tests() {
