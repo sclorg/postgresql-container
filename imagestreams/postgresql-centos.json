@@ -56,7 +56,7 @@
         },
         "from": {
           "kind": "DockerImage",
-          "name": "docker.io/centos/postgresql-12-centos7:latest"
+          "name": "quay.io/centos7/postgresql-12-centos7:latest"
         },
         "referencePolicy": {
           "type": "Local"
@@ -74,7 +74,7 @@
         },
         "from": {
           "kind": "DockerImage",
-          "name": "docker.io/centos/postgresql-12-centos7:latest"
+          "name": "quay.io/centos7/postgresql-12-centos7:latest"
         },
         "referencePolicy": {
           "type": "Local"
@@ -110,7 +110,7 @@
         },
         "from": {
           "kind": "DockerImage",
-          "name": "docker.io/centos/postgresql-10-centos7:latest"
+          "name": "quay.io/centos7/postgresql-10-centos7:latest"
         },
         "referencePolicy": {
           "type": "Local"
@@ -128,7 +128,7 @@
         },
         "from": {
           "kind": "DockerImage",
-          "name": "docker.io/centos/postgresql-10-centos7:latest"
+          "name": "quay.io/centos7/postgresql-10-centos7:latest"
         },
         "referencePolicy": {
           "type": "Local"
