@@ -1,4 +1,4 @@
-FROM centos/s2i-core-centos7
+FROM quay.io/centos7/s2i-core-centos7
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -28,10 +28,10 @@ LABEL summary="$SUMMARY" \
       io.openshift.expose-services="5432:postgresql" \
       io.openshift.tags="database,postgresql,postgresql12,rh-postgresql12" \
       io.openshift.s2i.assemble-user="26" \
-      name="centos/postgresql-12-centos7" \
+      name="quay.io/centos7/postgresql-12-centos7" \
       com.redhat.component="rh-postgresql12-container" \
       version="1" \
-      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 centos/postgresql-12-centos7" \
+      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 quay.io/centos7/postgresql-12-centos7" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
