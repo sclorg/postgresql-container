@@ -5,13 +5,13 @@ specs:
     centos:
       distros:
         - centos-7-x86_64
-      s2i_base: centos/s2i-core-centos7
-      org: "centos"
+      s2i_base: quay.io/centos7/s2i-core-centos7
+      org: "centos7"
       prod: "centos7"
       openshift_tags: "database,postgresql,postgresql{{ spec.short }},rh-postgresql{{ spec.short }}"
       redhat_component: "rh-postgresql{{ spec.short }}-container"
       enabled_collection: "rh-postgresql{{ spec.short }}"
-      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      img_name: "quay.io/{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       pkgs: "rh-postgresql{{ spec.short }} rh-postgresql{{ spec.short }}-postgresql-contrib rh-postgresql{{ spec.short }}-syspaths rh-postgresql{{ spec.prev_short }}-postgresql-server"
       repo_enable_reason: ""
       environment_setup: yum install -y centos-release-scl-rh && \
