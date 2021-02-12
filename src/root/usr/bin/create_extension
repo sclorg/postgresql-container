@@ -1,0 +1,5 @@
+#!/bin/sh
+EXT=$1
+mkdir -p ~/postgresql-start
+echo "psql -c 'CREATE EXTENSION IF NOT EXISTS ${EXT};' \$POSTGRESQL_DATABASE" > ~/postgresql-start/enable_${EXT}.sh
+

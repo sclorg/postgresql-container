@@ -1,0 +1,4 @@
+#!/bin/sh
+LIB=$1
+mkdir -p ~/postgresql-cfg
+echo "shared_preload_libraries='${LIB}'" > ~/postgresql-cfg/${LIB}.conf
