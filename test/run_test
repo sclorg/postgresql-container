@@ -28,7 +28,12 @@ run_s2i_enable_ssl_test
 run_upgrade_test
 run_migration_test
 run_pgaudit_test
+<<<<<<< HEAD
 run_logging_test
+||||||| parent of bcc9062 (Add support for extensions loading and creation.)
+=======
+run_new_pgaudit_test
+>>>>>>> bcc9062 (Add support for extensions loading and creation.)
 "
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
@@ -36,6 +41,8 @@ test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
 test -n "${VERSION-}" || false 'make sure $VERSION is defined'
 test -n "${OS-}" || false 'make sure $OS is defined'
 
+
+DOCKER_EXTRA_ARGS=
 
 volumes_to_clean=
 images_to_clean=()
@@ -897,7 +904,7 @@ run_pgaudit_test()
   # create a dir for config
   config_dir=$(mktemp -d --tmpdir pg-hook-volume.XXXXX)
   add_cleanup_command /bin/rm -rf "$config_dir"
-  cp -r "$test_dir"/examples/pgaudit/* "$config_dir"
+  $DOCKER_EXTRA_ARGS || cp -r "$test_dir"/examples/pgaudit/* "$config_dir"
   setfacl -R -m u:26:rwx "$config_dir"
 
   # create a dir for data
@@ -906,6 +913,7 @@ run_pgaudit_test()
 
   DOCKER_ARGS="
 -e POSTGRESQL_ADMIN_PASSWORD=password
+$DOCKER_EXTRA_ARGS
 -v ${config_dir}:/opt/app-root/src:Z
 -v ${data_dir}:/var/lib/pgsql/data:Z
   " create_container "$name"
@@ -917,7 +925,6 @@ run_pgaudit_test()
   # Deliberately moving heredoc into the container, otherwise it does not work
   # in podman 1.6.x due to https://bugzilla.redhat.com/show_bug.cgi?id=1827324
   docker exec -i $(get_cid "$name") bash -c "psql <<EOSQL
-CREATE EXTENSION pgaudit;
 SET pgaudit.log = 'read, ddl';
 CREATE DATABASE pgaudittest;
 EOSQL" || ret=2
@@ -981,6 +988,13 @@ run_logging_test()
   done
   echo "    PASS: the traditional log file under ${data_dir}/userdata/log/postgresql-*.log does not exist"
   echo "  Success!"
+}
+
+run_new_pgaudit_test() {
+    DOCKER_EXTRA_ARGS="
+-e POSTGRESQL_EXTENSIONS=pgaudit
+-e POSTGRESQL_LIBRARIES=pgaudit"
+    run_pgaudit_test
 }
 
 # configuration defaults
