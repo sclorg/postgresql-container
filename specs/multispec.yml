@@ -11,7 +11,7 @@ specs:
       openshift_tags: "database,postgresql,postgresql{{ spec.short }},rh-postgresql{{ spec.short }}"
       redhat_component: "rh-postgresql{{ spec.short }}-container"
       enabled_collection: "rh-postgresql{{ spec.short }}"
-      img_name: "quay.io/{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       pkgs: "rh-postgresql{{ spec.short }} rh-postgresql{{ spec.short }}-postgresql-contrib rh-postgresql{{ spec.short }}-syspaths rh-postgresql{{ spec.prev_short }}-postgresql-server"
       repo_enable_reason: ""
       environment_setup: yum install -y centos-release-scl-rh && \
@@ -74,7 +74,7 @@ specs:
       prev_short: "96"
       common_image_name: "{{ spec.org }}/postgresql-10-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-10-rhel7"
-      centos_image_name: "centos/postgresql-10-centos7"
+      centos_image_name: "centos7/postgresql-10-centos7"
       cccp_job: "postgresql-10-centos7"
       latest_fedora: "f29"
 
@@ -94,7 +94,7 @@ specs:
       prev_short: "10"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-{{ spec.short }}-rhel7"
-      centos_image_name: "centos/postgresql-{{ spec.short }}-centos7"
+      centos_image_name: "centos7/postgresql-{{ spec.short }}-centos7"
       cccp_job: "postgresql-{{ spec.short }}-centos7"
       latest_fedora: "f33"
 
