@@ -29,11 +29,11 @@ get_image_id ()
                 image=registry.redhat.io/$ns/postgresql-${version}-rhel7
                 ;;
             centos7)
-                ns=centos
+                ns=centos7
                 if test "$version" -eq 92; then
                     ns=openshift
                 fi
-                local image=docker.io/$ns/postgresql-${1//\./}-centos7
+                local image=quay.io/$ns/postgresql-${1//\./}-centos7
                 ;;
             rhel8)
                 ns=rhel8
