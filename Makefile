@@ -20,4 +20,6 @@ upgrade-tests: $(VERSIONS)
 	OS=$(OS) test/run_upgrade_test 9.2:remote 9.4:local 9.5:local 9.6:local 10:local
 
 build-serial: generate
+	# Version 10 reached EOL in RHEL do not test in openshift
+	touch 10/.exclude-openshift
 test-openshift-remote-cluster: generate
