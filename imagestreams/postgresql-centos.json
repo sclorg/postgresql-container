@@ -99,6 +99,42 @@
         }
       },
       {
+        "name": "10-el7",
+        "annotations": {
+          "openshift.io/display-name": "PostgreSQL 10 (CentOS 7)",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a PostgreSQL 10 database on CentOS 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
+          "iconClass": "icon-postgresql",
+          "tags": "database,postgresql",
+          "version": "10"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "quay.io/centos7/postgresql-10-centos7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      },
+      {
+        "name": "10",
+        "annotations": {
+          "openshift.io/display-name": "PostgreSQL 10",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a PostgreSQL 10 database on CentOS 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
+          "iconClass": "icon-postgresql",
+          "tags": "database,postgresql,hidden",
+          "version": "10"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "quay.io/centos7/postgresql-10-centos7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      },
+      {
         "name": "9.6-el8",
         "annotations": {
           "openshift.io/display-name": "PostgreSQL 9.6 (CentOS 8)",
