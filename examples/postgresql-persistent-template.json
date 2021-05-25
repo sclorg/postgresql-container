@@ -14,9 +14,10 @@
       "openshift.io/support-url": "https://access.redhat.com"
     }
   },
-  "message": "The following service(s) have been created in your project: ${DATABASE_SERVICE_NAME}.\n\n       Username: ${POSTGRESQL_USER}\n       Password: ${POSTGRESQL_PASSWORD}\n  Database Name: ${POSTGRESQL_DATABASE}\n Connection URL: postgresql://${DATABASE_SERVICE_NAME}:5432/\n\nFor more information about using this template, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/.",
+  "message": "The following service(s) have been created in your project: ${DATABASE_SERVICE_NAME}.\n\n       Username: ${POSTGRESQL_USER}\n       Password: ${POSTGRESQL_PASSWORD}\n      Administrator Password: ${POSTGRESQL_ADMIN_PASSWORD}\n  Database Name: ${POSTGRESQL_DATABASE}\n Connection URL: postgresql://${DATABASE_SERVICE_NAME}:5432/\n\nFor more information about using this template, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/.",
   "labels": {
-    "template": "postgresql-persistent-template"
+    "template": "postgresql-persistent-template",
+    "app.openshift.io/runtime": "postgresql"
   },
   "objects": [
     {
@@ -27,12 +28,14 @@
         "annotations": {
           "template.openshift.io/expose-username": "{.data['database-user']}",
           "template.openshift.io/expose-password": "{.data['database-password']}",
+          "template.openshift.io/expose-postgres_password": "{.data['database-postgres-password']}",
           "template.openshift.io/expose-database_name": "{.data['database-name']}"
         }
       },
       "stringData" : {
         "database-user" : "${POSTGRESQL_USER}",
         "database-password" : "${POSTGRESQL_PASSWORD}",
+        "database-postgres-password" : "${POSTGRESQL_ADMIN_PASSWORD}",
         "database-name" : "${POSTGRESQL_DATABASE}"
       }
     },
@@ -170,6 +173,15 @@
                     }
                   },
                   {
+                    "name": "POSTGRESQL_ADMIN_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef" : {
+                        "name" : "${DATABASE_SERVICE_NAME}",
+                        "key" : "database-postgres-password"
+                      }
+                    }
+                  },
+                  {
                     "name": "POSTGRESQL_DATABASE",
                     "valueFrom": {
                       "secretKeyRef" : {
@@ -253,6 +265,14 @@
       "required": true
     },
     {
+      "name": "POSTGRESQL_ADMIN_PASSWORD",
+      "displayName": "PostgreSQL Admin Connection Password",
+      "description": "Password for the PostgreSQL postgres user.",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{16}",
+      "required": true
+    },
+    {
       "name": "POSTGRESQL_DATABASE",
       "displayName": "PostgreSQL Database Name",
       "description": "Name of the PostgreSQL database accessed.",
@@ -269,8 +289,8 @@
     {
       "name": "POSTGRESQL_VERSION",
       "displayName": "Version of PostgreSQL Image",
-      "description": "Version of PostgreSQL image to be used (10-el7, 10-el8, or latest).",
-      "value": "10-el8",
+      "description": "Version of PostgreSQL image to be used (10-el7, 10-el8, 12-el8 or latest).",
+      "value": "12-el8",
       "required": true
     }
   ]
