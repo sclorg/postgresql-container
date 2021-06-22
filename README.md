@@ -20,6 +20,7 @@ Versions
 PostgreSQL versions currently supported are:
 * [postgresql-10](https://github.com/sclorg/postgresql-container/tree/generated/10)
 * [postgresql-12](https://github.com/sclorg/postgresql-container/tree/generated/12)
+* [postgresql-13](https://github.com/sclorg/postgresql-container/tree/generated/13)
 
 RHEL versions currently supported are:
 * RHEL7
@@ -34,10 +35,10 @@ Choose either the CentOS7 or RHEL7 based image:
 
 *  **RHEL7 based image**
 
-    These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/postgresql-12-rhel7).
+    These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/postgresql-13-rhel7).
     To download it run:
     ```
-    podman pull registry.redhat.io/rhscl/postgresql-12-rhel7
+    podman pull registry.redhat.io/rhscl/postgresql-13-rhel7
     ```
 
     To build a RHEL7 based image, you need to run Docker build on a properly
@@ -46,7 +47,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
-    $ make build TARGET=rhel7 VERSIONS=12
+    $ make build TARGET=rhel7 VERSIONS=13
     ```
 
 *  **CentOS7 based image**
@@ -54,7 +55,7 @@ Choose either the CentOS7 or RHEL7 based image:
     These images are available on DockerHub. To download it run:
 
     ```
-    $ podman pull centos/postgresql-12-centos7
+    $ podman pull centos/postgresql-13-centos7
     ```
 
     To build a PostgreSQL image from scratch run:
@@ -62,7 +63,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
-    $ make build TARGET=centos7 VERSIONS=12
+    $ make build TARGET=centos7 VERSIONS=13
     ```
 
 Note: while the installation steps are calling `podman`, you can replace any such calls by `docker` with the same arguments.
@@ -83,6 +84,9 @@ see [usage documentation](https://github.com/sclorg/postgresql-container/tree/ge
 
 For information about usage of Dockerfile for PostgreSQL 12,
 see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/12).
+
+For information about usage of Dockerfile for PostgreSQL 13,
+see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/13).
 
 For versions which are not supported anymore:
 
@@ -105,19 +109,19 @@ Users can choose between testing PostgreSQL based on a RHEL or CentOS image.
 
     ```
     $ cd postgresql
-    $ make test TARGET=rhel7 VERSIONS=12
+    $ make test TARGET=rhel7 VERSIONS=13
     ```
 
 *  **CentOS based image**
 
     ```
     $ cd postgresql
-    $ make test TARGET=centos7 VERSIONS=12
+    $ make test TARGET=centos7 VERSIONS=13
     ```
 +By using the `TESTS` parameter you can choose a test case subset to be run against the image, eg:
 
     $ cd postgresql
-    $ make test VERSIONS=12 TESTS="run_general_tests run_replication_test"
+    $ make test VERSIONS=13 TESTS="run_general_tests run_replication_test"
 
 
 **Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
