@@ -20,6 +20,10 @@ DISTGEN_RULES="
 
     src=src/root/usr/share/container-scripts/postgresql/openshift-custom-recovery.conf.template
     dest=root/usr/share/container-scripts/postgresql/openshift-custom-recovery.conf.template;
+
+    src=src/root/usr/share/container-scripts/postgresql/openshift-custom-postgresql-replication.conf.template
+    dest=root/usr/share/container-scripts/postgresql/openshift-custom-postgresql-replication.conf.template;
+
 "
 
 # Files containing distgen directives, which are used for each
@@ -58,9 +62,6 @@ COPY_RULES="
 
     src=src/content_sets.yml
     dest=content_sets.yml;
-
-    src=src/root/usr/share/container-scripts/postgresql/openshift-custom-postgresql-replication.conf.template
-    dest=root/usr/share/container-scripts/postgresql/openshift-custom-postgresql-replication.conf.template;
 
     src=src/root/usr/share/container-scripts/postgresql/openshift-custom-postgresql.conf.template
     dest=root/usr/share/container-scripts/postgresql/openshift-custom-postgresql.conf.template;

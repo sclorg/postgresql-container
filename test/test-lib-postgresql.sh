@@ -33,8 +33,11 @@ function test_postgresql_imagestream() {
     rhel7|centos7) ;;
     *) echo "Imagestream testing not supported for $OS environment." ; return 0 ;;
   esac
-
-  ct_os_test_image_stream_template "${THISDIR}/../imagestreams/postgresql-${OS%[0-9]*}.json" "${THISDIR}/../examples/postgresql-ephemeral-template.json" postgresql "-p POSTGRESQL_VERSION=${VERSION}"
+  local tag="-el7"
+  if [ x"${OS}" == "rhel8" ]; then
+    tag="-el8"
+  fi
+  ct_os_test_image_stream_template "${THISDIR}/../imagestreams/postgresql-${OS%[0-9]*}.json" "${THISDIR}/../examples/postgresql-ephemeral-template.json" postgresql "-p POSTGRESQL_VERSION=${VERSION}${tag}"
 }
 
 # vim: set tabstop=2:shiftwidth=2:expandtab:
