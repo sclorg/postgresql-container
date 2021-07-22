@@ -67,7 +67,7 @@ jobs:
             "test": {"fmf": {
               "url": "https://gitlab.cee.redhat.com/platform-eng-core-services/sclorg-tmt-plans",
               "ref": "master",
-              "name": "rhel8"
+              "name": "rhel8-docker"
             }},
             "environments": [{
               "arch": "x86_64",
