@@ -7,11 +7,11 @@ on:
 jobs:
   build:
     # This job only runs for '[test]' pull request comments by owner, member
-    name: Schedule test on Testing Farm service for CentOS7 - Openshift
+    name: Schedule test on Testing Farm service for CentOS7 - OpenShift 3
     runs-on: ubuntu-20.04
     if: |
       github.event.issue.pull_request
-      && github.event.comment.body == '[test]'
+      && contains(github.event.comment.body, '[test-openshift]')
       && contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association)
     outputs:
       REQ_ID: ${{steps.sched_test.outputs.REQ_ID}}
@@ -31,6 +31,7 @@ jobs:
       - name: Get sha
         id: sha
         run: |
+          # Store SHA into outputs
           echo "::set-output name=SHA::$(git rev-parse HEAD)"
 
       - name: Create status check to pending
@@ -38,6 +39,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Create a JSON file for Testing Farm in order to schedule a CI testing job
           cat << EOF > pending.json
           {
             "sha": "${{steps.sha.outputs.SHA}}",
@@ -47,6 +49,8 @@ jobs:
           }
           EOF
           echo "https://api.github.com/repos/$GITHUB_REPOSITORY/statuses/${{steps.sha.outputs.SHA}}"
+          # GITHUB_TOKEN is used for updating pull request status.
+          # It is provided by GitHub https://docs.github.com/en/actions/reference/authentication-in-a-workflow#about-the-github_token-secret
           curl -X POST -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/$GITHUB_REPOSITORY/statuses/${{steps.sha.outputs.SHA}} \
             --data @pending.json
@@ -55,6 +59,7 @@ jobs:
       - name: Schedule a test on Testing Farm forn CentOS7 - OpenShift 3
         id: sched_test
         run: |
+          # Update ubuntu-20.04 in order to install curl and jq
           apt update && apt -y install curl jq
           cat << EOF > request.json
           {
@@ -77,20 +82,8 @@ jobs:
           }
           EOF
           curl ${{ secrets.TF_ENDPOINT }}/requests --data @request.json --header "Content-Type: application/json" --output response.json
+          # Store REQ_ID into outputs for later on usage
           echo "::set-output name=REQ_ID::$(jq -r .id response.json)"
-
-#      - name: Add comment with Testing Farm request/result
-#        # This step adds a new comment to the pull request with a link to the test.
-#        # TODO: This is a temporary workaround until a proper way to set a commit status is implemented.
-#        id: comment
-#        uses: peter-evans/create-or-update-comment@v1
-#        if: always()
-#        with:
-#          issue-number: ${{ steps.pr_nr.outputs.PR_NR }}
-#          body: |
-#            Testing Farm - CentOS 7 [request](${{ secrets.TF_ENDPOINT }}/requests/${{ steps.sched_test.outputs.req_id }})
-#            for CentOS 7 test was created. Once finished, results should be available [here](http://artifacts.dev.testing-farm.io/${{ steps.sched_test.outputs.req_id }}/)
-#            [Full pipeline log](http://artifacts.dev.testing-farm.io/${{ steps.sched_test.outputs.req_id }}/pipeline.log)
 
   running:
     needs: build
@@ -104,13 +97,17 @@ jobs:
       - name: Check if REQ_ID and SHA exists
         id: req_sha
         run: |
+          # Update ubuntu-20.04 in order to install curl and jq
+          # each job is separate machine
           apt update && apt -y install curl jq
+          # Propagate REQ_ID and SHA into the finish section
           echo "::set-output name=REQ_ID::${{needs.build.outputs.REQ_ID}}"
           echo "::set-output name=SHA::${{needs.build.outputs.SHA}}"
 
       - name: Switch to running state of Testing Farm request
         id: running
         run: |
+          # Create running.json file for query, whether job is finished or not.
           cat << EOF > running.json
           {
             "sha": "${{needs.build.outputs.SHA}}",
@@ -120,6 +117,7 @@ jobs:
             "target_url": "http://artifacts.dev.testing-farm.io/${{ needs.build.outputs.REQ_ID }}/"
           }
           EOF
+          # Update GitHub status description to 'Build started'
           curl -X POST -H "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/$GITHUB_REPOSITORY/statuses/${{needs.build.outputs.SHA}} \
             --data @running.json
@@ -130,7 +128,9 @@ jobs:
           CMD=${{ secrets.TF_ENDPOINT }}/requests/${{needs.build.outputs.REQ_ID}}
           curl $CMD > job.json
           state=$(jq -r .state job.json)
+          # Wait till job is not finished. As soon as state is complete or failure then go to the finish action
           while [ "$state" == "running" ] || [ "$state" == "new" ] || [ "$state" == "pending" ] || [ "$state" == "queued" ]; do
+            # Wait 30s. We do not need to query Testing Farm each second
             sleep 30
             curl $CMD > job.json
             state=$(jq -r .state job.json)
@@ -150,6 +150,8 @@ jobs:
       - name: Get final state of Testing Farm request
         id: final_state
         run: |
+          # Update ubuntu-20.04 in order to install curl and jq
+          # each job is separate machine
           apt update && apt -y install curl jq
           curl ${{ secrets.TF_ENDPOINT }}/requests/${{needs.running.outputs.REQ_ID}} > job.json
           cat job.json
@@ -163,6 +165,7 @@ jobs:
               new_state="failure"
             fi
           else
+            # Mark job in case of infrastructure issues. Report to Testing Farm team
             infra_error=" - Infra problems"
             new_state="failure"
           fi
@@ -183,6 +186,7 @@ jobs:
           }
           EOF
           cat final.json
+          # Switch Github status to proper state
           curl -X POST -H "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/$GITHUB_REPOSITORY/statuses/${{needs.running.outputs.SHA}} \
             --data @final.json
