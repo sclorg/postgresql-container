@@ -451,7 +451,7 @@ function run_latest_imagestreams_test() {
   local result=1
   # Switch to root directory of a container
   echo "Testing the latest version in imagestreams"
-  pushd "${test_dir}/.." >/dev/null || return 1
+  pushd "${THISDIR}/.." >/dev/null || return 1
   ct_check_latest_imagestreams
   result=$?
   popd >/dev/null || return 1
