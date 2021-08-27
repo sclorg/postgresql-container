@@ -7,7 +7,7 @@ This repository contains Dockerfiles for PostgreSQL images for OpenShift.
 Users can choose between RHEL, Fedora and CentOS based images.
 
 For more information about using these images with OpenShift, please see the
-official [OpenShift Documentation](https://docs.okd.io/latest/using_images/db_images/postgresql.html).
+official [OpenShift Documentation](https://docs.okd.io/latest/openshift_images/using-templates.html).
 
 For more information about contributing, see
 [the Contribution Guidelines](https://github.com/sclorg/welcome/blob/master/contribution.md).
