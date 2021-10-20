@@ -699,8 +699,8 @@ run_doc_test() {
   for f in help.1 ; do
     docker run --rm ${IMAGE_NAME} /bin/bash -c "cat /${f}" >${tmpdir}/$(basename ${f})
     # Check whether the files include some important information
-    for term in "POSTGRESQL\_ADMIN\_PASSWORD" volume 5432 ; do
-      if ! cat ${tmpdir}/$(basename ${f}) | grep -F -q -e "${term}" ; then
+    for term in 'POSTGRESQL\\?_ADMIN\\?_PASSWORD' volume 5432 ; do
+      if ! cat ${tmpdir}/$(basename ${f}) | grep -E -q -e "${term}" ; then
         echo "ERROR: File /${f} does not include '${term}'."
         return 1
       fi
