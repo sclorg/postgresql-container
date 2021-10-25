@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-20.04
     if: |
       github.event.issue.pull_request
-      && contains(github.event.comment.body, '[test-openshift]')
+      && (contains(github.event.comment.body, '[test-openshift]') || contains(github.event.comment.body, '[test-all]'))
       && contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association)
     outputs:
       REQ_ID: ${{steps.sched_test.outputs.REQ_ID}}
