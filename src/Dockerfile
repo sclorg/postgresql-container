@@ -2,7 +2,7 @@ FROM {{ spec.s2i_base }}
 
 # PostgreSQL image for OpenShift.
 # Volumes:
-#  * /var/lib/psql/data   - Database cluster for PostgreSQL
+#  * /var/lib/pgsql/data   - Database cluster for PostgreSQL
 # Environment:
 #  * $POSTGRESQL_USER     - Database user name
 #  * $POSTGRESQL_PASSWORD - User's password
