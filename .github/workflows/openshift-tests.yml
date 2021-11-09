@@ -15,7 +15,7 @@ jobs:
         include:
           - tmt_plan: "centos7"
             os_test: "centos7"
-            context: "CentOS7 - OpenShift3"
+            context: "CentOS7 - OpenShift 3"
             compose: "CentOS-7"
             tmt_url: "http://artifacts.dev.testing-farm.io/"
             tmt_repo: "https://github.com/sclorg/sclorg-testing-farm"
