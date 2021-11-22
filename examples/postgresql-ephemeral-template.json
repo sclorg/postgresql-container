@@ -1,6 +1,6 @@
 {
   "kind": "Template",
-  "apiVersion": "v1",
+  "apiVersion": "template.openshift.io/v1",
   "metadata": {
     "name": "postgresql-ephemeral",
     "annotations": {
@@ -67,7 +67,7 @@
     },
     {
       "kind": "DeploymentConfig",
-      "apiVersion": "v1",
+      "apiVersion": "apps.openshift.io/v1",
       "metadata": {
         "name": "${DATABASE_SERVICE_NAME}",
         "annotations": {
