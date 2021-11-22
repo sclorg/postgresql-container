@@ -79,24 +79,6 @@
         "referencePolicy": {
           "type": "Local"
         }
-      },
-      {
-        "name": "9.6-el8",
-        "annotations": {
-          "openshift.io/display-name": "PostgreSQL 9.6 (RHEL 8)",
-          "openshift.io/provider-display-name": "Red Hat, Inc.",
-          "description": "Provides a PostgreSQL 9.6 database on RHEL 8. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
-          "iconClass": "icon-postgresql",
-          "tags": "database,postgresql",
-          "version": "9.6"
-        },
-        "from": {
-          "kind": "DockerImage",
-          "name": "registry.redhat.io/rhel8/postgresql-96:latest"
-        },
-        "referencePolicy": {
-          "type": "Local"
-        }
       }
     ]
   }
