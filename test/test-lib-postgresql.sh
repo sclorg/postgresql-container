@@ -34,7 +34,7 @@ function test_postgresql_imagestream() {
     *) echo "Imagestream testing not supported for $OS environment." ; return 0 ;;
   esac
   local tag="-el7"
-  if [ x"${OS}" == "rhel8" ]; then
+  if [ "${OS}" == "rhel8" ]; then
     tag="-el8"
   fi
   ct_os_test_image_stream_template "${THISDIR}/../imagestreams/postgresql-${OS%[0-9]*}.json" "${THISDIR}/../examples/postgresql-ephemeral-template.json" postgresql "-p POSTGRESQL_VERSION=${VERSION}${tag}"
