@@ -2,8 +2,19 @@
 export POSTGRESQL_MAX_CONNECTIONS=${POSTGRESQL_MAX_CONNECTIONS:-100}
 export POSTGRESQL_MAX_PREPARED_TRANSACTIONS=${POSTGRESQL_MAX_PREPARED_TRANSACTIONS:-0}
 
-# Perform auto-tuning based on the container cgroups limits (only when the
-# limits are set).
+# Set MEMORY_LIMIT_IN_BYTES based on the container cgroups memory limits
+# (only when the limits are set).
+if [[ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]]; then
+    MEMORY_LIMIT_IN_BYTES=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+elif [[ -f /sys/fs/cgroup/memory.max ]]; then
+    # CGroups v2
+    MEMORY_LIMIT_IN_BYTES=$(cat /sys/fs/cgroup/memory.max)
+    if [[ "${MEMORY_LIMIT_IN_BYTES}" == "max" ]]; then
+        unset MEMORY_LIMIT_IN_BYTES
+    fi
+fi
+
+# Perform auto-tuning based on MEMORY_LIMIT_IN_BYTES.
 # Users can still override this by setting the POSTGRESQL_SHARED_BUFFERS
 # and POSTGRESQL_EFFECTIVE_CACHE_SIZE variables.
 if [[ "${NO_MEMORY_LIMIT:-}" == "true" || -z "${MEMORY_LIMIT_IN_BYTES:-}" ]]; then
