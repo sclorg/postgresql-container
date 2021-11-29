@@ -16,6 +16,7 @@ shopt -s nullglob
 . test/pg-test-lib.sh
 
 TEST_LIST="\
+ct_test_distgen_generated_files
 run_container_creation_tests
 run_general_tests
 run_change_password_test
