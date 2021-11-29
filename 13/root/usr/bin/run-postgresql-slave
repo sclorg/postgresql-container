@@ -1,0 +1,39 @@
+#!/bin/bash
+
+export ENABLE_REPLICATION=true
+
+set -eu
+export_vars=$(cgroup-limits) ; export $export_vars
+
+source "$CONTAINER_SCRIPTS_PATH"/common.sh
+
+set_pgdata
+
+function initialize_replica() {
+  echo "Initializing PostgreSQL slave ..."
+  # TODO: Validate and reuse existing data?
+  rm -rf $PGDATA
+  PGPASSWORD="${POSTGRESQL_MASTER_PASSWORD}" pg_basebackup -X fetch --no-password --pgdata ${PGDATA} --host=${MASTER_FQDN} --port=5432 -U "${POSTGRESQL_MASTER_USER}"
+
+  # PostgreSQL recovery configuration.
+  generate_postgresql_recovery_config
+  cat >> "$PGDATA/postgresql.auto.conf" <<EOF
+
+# Custom OpenShift recovery configuration:
+include '${POSTGRESQL_RECOVERY_FILE}'
+EOF
+  # activate standby mode
+  touch "$PGDATA/standby.signal"
+}
+
+check_env_vars
+generate_passwd_file
+generate_postgresql_config
+
+wait_for_postgresql_master
+export MASTER_FQDN=$(postgresql_master_addr)
+initialize_replica
+
+unset_env_vars
+echo "Starting server..."
+exec postgres "$@"
