@@ -18,7 +18,6 @@ For more information about concepts used in these container images, see the
 Versions
 ---------------
 PostgreSQL versions currently supported are:
-* [postgresql-9.6](https://github.com/sclorg/postgresql-container/tree/generated/9.6)
 * [postgresql-10](https://github.com/sclorg/postgresql-container/tree/generated/10)
 * [postgresql-12](https://github.com/sclorg/postgresql-container/tree/generated/12)
 * [postgresql-13](https://github.com/sclorg/postgresql-container/tree/generated/13)
@@ -80,9 +79,6 @@ In this repository [distgen](https://github.com/devexp-db/distgen/) is used for 
 
 Usage
 ---------------------------------
-
-For information about usage of Dockerfile for PostgreSQL 9.6,
-see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/9.6).
 
 For information about usage of Dockerfile for PostgreSQL 10,
 see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/10).
