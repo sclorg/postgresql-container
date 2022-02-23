@@ -8,12 +8,39 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        version: ["9.6", 10, 11, 12, 13]
+        include:
+          - version: "9.6"
+            dockerfile: "Dockerfile"
+            registry_namespace: "centos7"
+            tag: "centos7"
+          - version: "10"
+            dockerfile: "Dockerfile"
+            registry_namespace: "centos7"
+            tag: "centos7"
+          - version: "11"
+            dockerfile: "Dockerfile"
+            registry_namespace: "centos7"
+            tag: "centos7"
+          - version: "12"
+            dockerfile: "Dockerfile"
+            registry_namespace: "centos7"
+            tag: "centos7"
+          - version: "13"
+            dockerfile: "Dockerfile"
+            registry_namespace: "centos7"
+            tag: "centos7"
+          - version: "13"
+            dockerfile: "Dockerfile.c9s"
+            registry_namespace: "sclorg"
+            tag: "c9s"
+
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          submodules: true
 
       - name: Get base image name
         id: base-image-name
@@ -24,9 +51,14 @@ jobs:
           BASE_IMAGE_ROW=${row/BASE_IMAGE_NAME = /}
           echo ::set-output name=image_name::$BASE_IMAGE_ROW
 
-      - name: Checkout into generated section
+      - name: Install python3 packages needed by distgen
         run: |
-          git checkout --progress --force -B generated refs/remotes/origin/generated
+          sudo apt-get update -y && sudo apt-get install -y python3 python3-pip
+
+      - name: Install dist-gen package from PyPi
+        id: dist-gen-install
+        run: |
+          pip3 -v install distgen
 
       - name: Get short version
         id: short_version
@@ -34,41 +66,70 @@ jobs:
           ver="${{ matrix.version }}"
           echo "::set-output name=SHORT_VER::${ver//./}"
 
-      - name: Check if dockerfile is present in version directory
+      - name: Generate source by dist-gen
+        id: generate
+        run: |
+          DG=$HOME/.local/bin/dg make generate-all
+
+      - name: Login to Quay.io private registry
+        if: ${{ matrix.tag == 'c9s' }}
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_IMAGE_SCLORG_BUILDER_USERNAME }}
+          password: ${{ secrets.QUAY_IMAGE_SCLORG_BUILDER_TOKEN }}
+
+      - name: Check if ${{ matrix.dockerfile }} is present in version directory
         id: check_dockerfile_file
         # https://github.com/marketplace/actions/file-existence
         uses: andstor/file-existence-action@v1
         with:
-          files: "${{ matrix.version }}/Dockerfile"
+          files: "${{ matrix.version }}/${{ matrix.dockerfile }}"
 
-      - name: Check if .exclude-centos7 is present in version directory
-        id: check_exclude_centos7_file
+      - name: Check if .exclude-${{ matrix.tag }} is present in version directory
+        id: check_exclude_file
         # https://github.com/marketplace/actions/file-existence
         uses: andstor/file-existence-action@v1
         with:
-          files: "${{ matrix.version }}/.exclude-centos7"
+          files: "${{ matrix.version }}/.exclude-${{ matrix.tag }}"
 
-      - name: Build CentOS7 image
-        if: steps.check_exclude_centos7_file.outputs.files_exists == 'false' && steps.check_dockerfile_file.outputs.files_exists == 'true'
+      - name: Build image
+        if: steps.check_exclude_file.outputs.files_exists == 'false' && steps.check_dockerfile_file.outputs.files_exists == 'true'
         id: build-image
         # https://github.com/marketplace/actions/buildah-build
         uses: redhat-actions/buildah-build@v2
         with:
-          dockerfiles: ${{ matrix.version }}/Dockerfile
-          image: ${{ steps.base-image-name.outputs.image_name}}-${{ steps.short_version.outputs.SHORT_VER }}-centos7
+          dockerfiles: ${{ matrix.version }}/${{ matrix.dockerfile }}
+          image: ${{ steps.base-image-name.outputs.image_name}}-${{ steps.short_version.outputs.SHORT_VER }}-${{ matrix.tag }}
           context: ${{ matrix.version }}
-          tags: latest 1 ${{ github.sha }}
+          tags: latest ${{ matrix.tag }} ${{ github.sha }}
 
-      - name: Push CentOS7 image to Quay.io
-        if: steps.check_exclude_centos7_file.outputs.files_exists == 'false' && steps.check_dockerfile_file.outputs.files_exists == 'true'
-        id: push-to-quay
+      - name: Push CentOS 7 image to Quay.io
+        if: ${{ steps.check_exclude_file.outputs.files_exists == 'false' && steps.check_dockerfile_file.outputs.files_exists == 'true' && matrix.tag == 'centos7' }}
+        id: push-to-quay-centos7
         uses: redhat-actions/push-to-registry@v2.2
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: quay.io/centos7
+          registry: quay.io/${{ matrix.registry_namespace }}
           username: ${{ secrets.QUAY_IMAGE_BUILDER_USERNAME }}
           password: ${{ secrets.QUAY_IMAGE_BUILDER_TOKEN }}
 
+      - name: Push CentOS Stream 9 image to Quay.io
+        if: ${{ steps.check_exclude_file.outputs.files_exists == 'false' && steps.check_dockerfile_file.outputs.files_exists == 'true' && matrix.tag == 'c9s' }}
+        id: push-to-quay-sclorg
+        uses: redhat-actions/push-to-registry@v2.2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: quay.io/${{ matrix.registry_namespace }}
+          username: ${{ secrets.QUAY_IMAGE_SCLORG_BUILDER_USERNAME }}
+          password: ${{ secrets.QUAY_IMAGE_SCLORG_BUILDER_TOKEN }}
+
       - name: Print image url
-        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
+        if: ${{ matrix.tag == 'centos7' }}
+        run: echo "Image pushed to ${{ steps.push-to-quay-centos7.outputs.registry-paths }}"
+
+      - name: Print image url
+        if: ${{ matrix.tag == 'c9s' }}
+        run: echo "Image pushed to ${{ steps.push-to-quay-sclorg.outputs.registry-paths }}"

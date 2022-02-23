@@ -73,7 +73,7 @@ RUN {{ spec.environment_setup }}
 {% if spec.version not in ["9.6", "10", "11"] %}
     {% if spec.prod == 'rhel7' or spec.prod == 'centos7' %}
     INSTALL_PKGS="$INSTALL_PKGS rh-postgresql{{ spec.short }}-pgaudit" && \
-    {% elif spec.prod == 'rhel8' %}
+    {% elif spec.prod == 'rhel8' or spec.prod == 'c9s' %}
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     {% endif %}
 {% endif %}
