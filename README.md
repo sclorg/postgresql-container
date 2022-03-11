@@ -53,10 +53,10 @@ Choose either the CentOS7 or RHEL7 based image:
 
 *  **CentOS7 based image**
 
-    These images are available on DockerHub. To download it run:
+    These images are available on Quay.io. To download it run:
 
     ```
-    $ podman pull centos/postgresql-13-centos7
+    $ podman pull quay.io/centos7/postgresql-13-centos7
     ```
 
     To build a PostgreSQL image from scratch run:
