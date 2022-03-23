@@ -14,12 +14,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - dockerfile_path: "9.6"
-            dockerfile: "Dockerfile"
-            registry_namespace: "centos7"
-            tag: "centos7"
-            quayio_username: "QUAY_IMAGE_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_BUILDER_TOKEN"
           - dockerfile_path: "10"
             dockerfile: "Dockerfile"
             registry_namespace: "centos7"
