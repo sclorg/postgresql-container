@@ -62,7 +62,6 @@ jobs:
 
       # https://github.com/sclorg/testing-farm-as-github-action
       - name: Schedule tests on external Testing Farm by Testing-Farm-as-github-action
-        id: github_action
         uses: sclorg/testing-farm-as-github-action@v1
         with:
           api_key: ${{ secrets[matrix.api_key] }}
