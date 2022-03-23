@@ -6,8 +6,6 @@ on:
 
 jobs:
   build-and-push:
-    # To not run in forks
-    if: github.repository_owner == 'sclorg'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
