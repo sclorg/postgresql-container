@@ -50,6 +50,13 @@ jobs:
             api_key: "TF_PUBLIC_API_KEY"
             branch: "main"
             tmt_repo: "https://github.com/sclorg/sclorg-testing-farm"
+          - tmt_plan: "c8s"
+            os_test: "c8s"
+            context: "CentOS Stream 8"
+            compose: "CentOS-Stream-8"
+            api_key: "TF_PUBLIC_API_KEY"
+            branch: "main"
+            tmt_repo: "https://github.com/sclorg/sclorg-testing-farm"
     if: |
       github.event.issue.pull_request
       && (contains(github.event.comment.body, '[test]') || contains(github.event.comment.body, '[test-all]'))
