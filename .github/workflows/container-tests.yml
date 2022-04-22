@@ -16,7 +16,7 @@ jobs:
           - tmt_plan: "fedora"
             os_test: "fedora"
             context: "Fedora"
-            compose: "CentOS-7"
+            compose: "Fedora-latest"
             api_key: "TF_PUBLIC_API_KEY"
             branch: "main"
             tmt_repo: "https://github.com/sclorg/sclorg-testing-farm"
