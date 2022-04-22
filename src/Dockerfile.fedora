@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/{{ spec.latest_fedora }}/s2i-core:latest
+FROM quay.io/fedora/s2i-core:35
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -33,9 +33,9 @@ LABEL summary="$SUMMARY" \
       io.openshift.tags="database,postgresql,postgresql{{ spec.short }}" \
       com.redhat.component="$NAME" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>" \
-      name="$FGC/$NAME" \
+      name="fedora/$NAME-{{ spec.short }}" \
       version="0" \
-      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 $FGC/$NAME"
+      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 quay.io/fedora/$NAME-{{ spec.short }}"
 
 EXPOSE 5432
 
