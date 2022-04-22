@@ -18,30 +18,52 @@ jobs:
             dockerfile: "Dockerfile"
             registry_namespace: "centos7"
             tag: "centos7"
+            suffix: "centos7"
             quayio_username: "QUAY_IMAGE_BUILDER_USERNAME"
             quayio_token: "QUAY_IMAGE_BUILDER_TOKEN"
           - dockerfile_path: "12"
             dockerfile: "Dockerfile"
             registry_namespace: "centos7"
             tag: "centos7"
+            suffix: "centos7"
             quayio_username: "QUAY_IMAGE_BUILDER_USERNAME"
             quayio_token: "QUAY_IMAGE_BUILDER_TOKEN"
           - dockerfile_path: "13"
             dockerfile: "Dockerfile"
             registry_namespace: "centos7"
             tag: "centos7"
+            suffix: "centos7"
             quayio_username: "QUAY_IMAGE_BUILDER_USERNAME"
             quayio_token: "QUAY_IMAGE_BUILDER_TOKEN"
           - dockerfile_path: "13"
             dockerfile: "Dockerfile.c9s"
             registry_namespace: "sclorg"
             tag: "c9s"
+            suffix: "c8s"
             quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
             quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
+          - dockerfile_path: "11"
+            dockerfile: "Dockerfile.fedora"
+            registry_namespace: "fedora"
+            tag: "11"
+            quayio_username: "QUAY_IMAGE_FEDORA_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
+          - dockerfile_path: "12"
+            dockerfile: "Dockerfile.fedora"
+            registry_namespace: "fedora"
+            tag: "12"
+            quayio_username: "QUAY_IMAGE_FEDORA_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
+          - dockerfile_path: "13"
+            dockerfile: "Dockerfile.fedora"
+            registry_namespace: "fedora"
+            tag: "13"
+            quayio_username: "QUAY_IMAGE_FEDORA_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
 
     steps:
       - name: Build and push to quay.io registry
-        uses: sclorg/build-and-push-action@v1
+        uses: sclorg/build-and-push-action@v2
         with:
           registry: "quay.io"
           registry_namespace: ${{ matrix.registry_namespace }}
@@ -52,3 +74,4 @@ jobs:
           dockerfile_path: ${{ matrix.dockerfile_path }}
           tag: ${{ matrix.tag }}
           use_distgen: "true"
+          suffix: ${{ matrix.suffix }}
