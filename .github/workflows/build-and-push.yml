@@ -39,7 +39,7 @@ jobs:
             dockerfile: "Dockerfile.c9s"
             registry_namespace: "sclorg"
             tag: "c9s"
-            suffix: "c8s"
+            suffix: "c9s"
             quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
             quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
           - dockerfile_path: "11"
