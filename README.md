@@ -1,7 +1,7 @@
 PostgreSQL container images
 ========================
 
-PostgreSQL 10 status:[![Docker Repository on Quay](https://quay.io/repository/centos7/postgresql-10-centos7/status "Docker Repository on Quay")](https://quay.io/repository/centos7/postgresql-10-centos7), PostgreSQL 12 status:[![Docker Repository on Quay](https://quay.io/repository/centos7/postgresql-12-centos7/status "Docker Repository on Quay")](https://quay.io/repository/centos7/postgresql-12-centos7)
+[![Build and push images to Quay.io registry](https://github.com/sclorg/postgresql-container/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/sclorg/postgresql-container/actions/workflows/build-and-push.yml)
 
 This repository contains Dockerfiles for PostgreSQL images for OpenShift.
 Users can choose between RHEL, Fedora and CentOS based images.

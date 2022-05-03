@@ -63,6 +63,20 @@ specs:
       pkgs: "postgresql-server postgresql-contrib"
       environment_setup: >-4
           yum -y install postgresql && \
+    c8s:
+      distros:
+        - centos-stream-8-x86_64
+      s2i_base: quay.io/sclorg/s2i-core-c8s:c8s
+      org: "sclorg"
+      prod: "c8s"
+      openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+      redhat_component: "postgresql-{{ spec.short }}-container"
+      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      pkgs: "postgresql-server postgresql-contrib"
+      environment_setup: >-4
+          yum -y module enable postgresql:{{ spec.version }} && \
+      post_install: >-4
+          yum -y reinstall tzdata && \
 
     fedora:
       distros:
@@ -133,6 +147,7 @@ matrix:
         - rhel-7-x86_64
         - centos-7-x86_64
         - rhel-8-x86_64
+        - centos-stream-8-x86_64
         - centos-stream-9-x86_64
       version: "9.6"
     - distros:
@@ -145,11 +160,13 @@ matrix:
         - rhel-8-x86_64
         - centos-7-x86_64
         - fedora-34-x86_64
+        - centos-stream-8-x86_64
         - centos-stream-9-x86_64
       version: "11"
     - distros:
         - rhel-8-x86_64
         - fedora-34-x86_64
+        - centos-stream-8-x86_64
         - centos-stream-9-x86_64
       version: "12"
     - distros:
