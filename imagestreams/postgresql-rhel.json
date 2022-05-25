@@ -27,6 +27,24 @@
         }
       },
       {
+        "name": "13-el9",
+        "annotations": {
+          "openshift.io/display-name": "PostgreSQL 13 (RHEL 9)",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a PostgreSQL 13 database on RHEL 9. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
+          "iconClass": "icon-postgresql",
+          "tags": "database,postgresql",
+          "version": "13"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "registry.redhat.io/rhel9/postgresql-13:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      },
+      {
         "name": "13-el8",
         "annotations": {
           "openshift.io/display-name": "PostgreSQL 13 (RHEL 8)",
