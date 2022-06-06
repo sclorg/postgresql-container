@@ -13,10 +13,9 @@ source "${THISDIR}"/test-lib-openshift.sh
 source "${THISDIR}"/test-lib-remote-openshift.sh
 
 function test_postgresql_integration() {
-  local image_name=$1
   local service_name=postgresql
   ct_os_template_exists postgresql-ephemeral && t=postgresql-ephemeral || t=postgresql-persistent
-  ct_os_test_template_app_func "${image_name}" \
+  ct_os_test_template_app_func "${IMAGE_NAME}" \
                                "${t}" \
                                "${service_name}" \
                                "ct_os_check_cmd_internal '<SAME_IMAGE>' '${service_name}-testing' 'PGPASSWORD=testp pg_isready -t 15 -h <IP> -U testu -d testdb' 'accepting connections' 120" \

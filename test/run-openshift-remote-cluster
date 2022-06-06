@@ -11,8 +11,12 @@
 THISDIR=$(dirname ${BASH_SOURCE[0]})
 
 source ${THISDIR}/test-lib-postgresql.sh
+TEST_LIST="\
+test_postgresql_integration
+test_postgresql_imagestream
+"
 
-set -eo nounset
+set -u
 
 trap ct_os_cleanup EXIT SIGINT
 
@@ -25,13 +29,8 @@ oc status || false "It looks like oc is not properly logged in."
 # For testing on OpenShift 4 we use internal registry
 export CT_OCP4_TEST=true
 
-# Check the template
-test_postgresql_integration "${IMAGE_NAME}"
-
-# Check the imagestream
-test_postgresql_imagestream
-
-OS_TESTSUITE_RESULT=0
+TEST_SUMMARY=''
+TEST_SET=${TESTS:-$TEST_LIST} ct_run_tests_from_testset "openshift-remote-cluster"
 
 # vim: set tabstop=2:shiftwidth=2:expandtab:
 
