@@ -16,15 +16,15 @@ test_postgresql_integration
 test_postgresql_imagestream
 "
 
-set -u
-
 trap ct_os_cleanup EXIT SIGINT
 
 ct_os_set_ocp4
 
 ct_os_check_compulsory_vars
 
-oc status || false "It looks like oc is not properly logged in."
+ct_os_check_login || exit 1
+
+set -u
 
 # For testing on OpenShift 4 we use internal registry
 export CT_OCP4_TEST=true
