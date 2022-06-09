@@ -95,10 +95,10 @@ The following environment variables influence the PostgreSQL configuration file.
 **`POSTGRESQL_MAX_PREPARED_TRANSACTIONS (default: 0)`**  
        Sets the maximum number of transactions that can be in the "prepared" state. If you are using prepared transactions, you will probably want this to be at least as large as max_connections
 
-**`POSTGRESQL_SHARED_BUFFERS (default: 32M)`**  
+**`POSTGRESQL_SHARED_BUFFERS (default: 1/4 of memory limit or 32M)`**
        Sets how much memory is dedicated to PostgreSQL to use for caching data
 
-**`POSTGRESQL_EFFECTIVE_CACHE_SIZE (default: 128M)`**  
+**`POSTGRESQL_EFFECTIVE_CACHE_SIZE (default: 1/2 of memory limit or 128M)`**
        Set to an estimate of how much memory is available for disk caching by the operating system and within the database itself
 
 
