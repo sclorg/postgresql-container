@@ -11,6 +11,7 @@ FROM ubi8/s2i-core
 #                           PostgreSQL administrative account
 
 ENV POSTGRESQL_VERSION=13 \
+    POSTGRESQL_PREV_VERSION=12 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
