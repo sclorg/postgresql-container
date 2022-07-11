@@ -181,10 +181,8 @@ matrix:
         - centos-stream-9-x86_64
       version: "11"
     - distros:
-        - rhel-8-x86_64
         - rhel-9-x86_64
         - fedora-34-x86_64
-        - centos-stream-8-x86_64
         - centos-stream-9-x86_64
       version: "12"
     - distros:
