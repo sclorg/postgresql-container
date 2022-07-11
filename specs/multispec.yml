@@ -51,6 +51,20 @@ specs:
            yum -y module enable postgresql:{{ spec.version }} && \
        post_install: >-4
            yum -y reinstall tzdata && \
+    rhel9:
+       distros:
+         - rhel-9-x86_64
+       s2i_base: ubi9/s2i-core
+       org: "rhel9"
+       prod: "rhel9"
+       openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+       redhat_component: "postgresql-{{ spec.short }}-container"
+       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}"
+       pkgs: "postgresql-server postgresql-contrib"
+       environment_setup: >-4
+           yum -y install postgresql && \
+       post_install: >-4
+           yum -y reinstall tzdata && \
     c9s:
       distros:
         - centos-stream-9-x86_64
@@ -147,17 +161,20 @@ matrix:
         - rhel-7-x86_64
         - centos-7-x86_64
         - rhel-8-x86_64
+        - rhel-9-x86_64
         - centos-stream-8-x86_64
         - centos-stream-9-x86_64
       version: "9.6"
     - distros:
         - fedora-31-x86_64
         - fedora-34-x86_64
+        - rhel-9-x86_64
         - centos-stream-9-x86_64
       version: "10"
     - distros:
         - rhel-7-x86_64
         - rhel-8-x86_64
+        - rhel-9-x86_64
         - centos-7-x86_64
         - fedora-34-x86_64
         - centos-stream-8-x86_64
@@ -165,6 +182,7 @@ matrix:
       version: "11"
     - distros:
         - rhel-8-x86_64
+        - rhel-9-x86_64
         - fedora-34-x86_64
         - centos-stream-8-x86_64
         - centos-stream-9-x86_64

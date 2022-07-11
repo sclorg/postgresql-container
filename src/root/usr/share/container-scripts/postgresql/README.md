@@ -5,7 +5,7 @@ This container image includes PostgreSQL {{ spec.version }} SQL database server 
 Users can choose between RHEL, CentOS and Fedora based images.
 The RHEL images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/),
 the CentOS images are available on [Quay.io](https://quay.io/organization/centos7),
-and the Fedora images are available in [Fedora Registry](https://registry.fedoraproject.org/).
+and the Fedora images are available in [Quay.io](https://quay.io/organization/fedora).
 The resulting image can be run using [podman](https://github.com/containers/libpod).
 
 Note: while the examples in this README are calling `podman`, you can replace any such calls by `docker` with the same arguments
@@ -327,4 +327,5 @@ Dockerfile and other sources for this container image are available on
 https://github.com/sclorg/postgresql-container.
 In that repository, the Dockerfile for CentOS is called Dockerfile, the Dockerfile
 for RHEL7 is called Dockerfile.rhel7, the Dockerfile for RHEL8 is called Dockerfile.rhel8,
+the Dockerfile for RHEL9 is called Dockerfile.rhel9,
 and the Dockerfile for Fedora is called Dockerfile.fedora.

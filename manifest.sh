@@ -39,6 +39,9 @@ DISTGEN_MULTI_RULES="
     dest=Dockerfile.rhel8;
 
     src=src/Dockerfile
+    dest=Dockerfile.rhel9;
+
+    src=src/Dockerfile
     dest=Dockerfile.c9s;
 
     src=src/Dockerfile
