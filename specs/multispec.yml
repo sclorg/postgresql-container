@@ -62,7 +62,7 @@ specs:
        img_name: "{{ spec.org }}/postgresql-{{ spec.short }}"
        pkgs: "postgresql-server postgresql-contrib"
        environment_setup: >-4
-           yum -y install postgresql && \
+           { yum -y module enable postgresql:{{ spec.version }} || :; } && \
        post_install: >-4
            yum -y reinstall tzdata && \
     c9s:
@@ -76,7 +76,7 @@ specs:
       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       pkgs: "postgresql-server postgresql-contrib"
       environment_setup: >-4
-          yum -y install postgresql && \
+           { yum -y module enable postgresql:{{ spec.version }} || :; } && \
     c8s:
       distros:
         - centos-stream-8-x86_64
