@@ -652,7 +652,7 @@ run_upgrade_test ()
 {
     # Do not run on Fedora or RHEL8 until the upgrade script
     # is fixed for non-SCL use cases
-    { [ "${OS}" == "fedora" ] } && return 0
+    { [ "${OS}" == "fedora" ]; } && return 0
 
     local upgrade_path="none 9.2 9.4 9.5 9.6 10 12 13 none" prev= act=
     for act in $upgrade_path; do
