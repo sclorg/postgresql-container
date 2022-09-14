@@ -1,4 +1,4 @@
-PostgreSQL container images
+PostgreSQL container images - testing
 ========================
 
 [![Build and push images to Quay.io registry](https://github.com/sclorg/postgresql-container/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/sclorg/postgresql-container/actions/workflows/build-and-push.yml)
