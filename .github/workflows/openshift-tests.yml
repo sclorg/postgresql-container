@@ -84,16 +84,10 @@ jobs:
         with:
           files: "${{ matrix.version }}/${{ steps.vars.outputs.DOCKERFILE_NAME }}"
 
-      - name: Check that .exclude-${{ matrix.os_test }} file is not present
-        id: check_exclude_file
-        uses: andstor/file-existence-action@v1
-        with:
-          files: "${{ matrix.version }}/.exclude-${{ matrix.os_test }}"
-
       # https://github.com/sclorg/testing-farm-as-github-action
       - name: Schedule tests for ${{ matrix.version }} - ${{ matrix.context }}
         id: github_action
-        if: ${{ steps.check_exclude_file.outputs.files_exists == 'false' && steps.check_dockerfile.outputs.files_exists == 'true' }}
+        if: steps.check_dockerfile.outputs.files_exists == 'true'
         uses: sclorg/testing-farm-as-github-action@v1
         with:
           api_key: ${{ secrets[matrix.api_key] }}
