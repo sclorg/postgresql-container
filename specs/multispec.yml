@@ -92,11 +92,6 @@ specs:
       post_install: >-4
           yum -y reinstall tzdata && \
 
-    fedora:
-      distros:
-        - fedora-31-x86_64
-        - fedora-34-x86_64
-
   version:
     "9.6":
       version: "9.6"
@@ -156,8 +151,6 @@ specs:
 matrix:
   exclude:
     - distros:
-        - fedora-31-x86_64
-        - fedora-34-x86_64
         - rhel-7-x86_64
         - centos-7-x86_64
         - rhel-8-x86_64
@@ -166,8 +159,6 @@ matrix:
         - centos-stream-9-x86_64
       version: "9.6"
     - distros:
-        - fedora-31-x86_64
-        - fedora-34-x86_64
         - rhel-9-x86_64
         - centos-stream-9-x86_64
       version: "10"
@@ -176,15 +167,14 @@ matrix:
         - rhel-8-x86_64
         - rhel-9-x86_64
         - centos-7-x86_64
-        - fedora-34-x86_64
         - centos-stream-8-x86_64
         - centos-stream-9-x86_64
       version: "11"
     - distros:
+        - centos-7-x86_64
         - rhel-9-x86_64
-        - fedora-34-x86_64
         - centos-stream-9-x86_64
       version: "12"
     - distros:
-        - fedora-31-x86_64
+        - centos-7-x86_64
       version: "13"
