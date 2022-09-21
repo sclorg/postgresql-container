@@ -6,7 +6,7 @@
 # The image has to be available before this script is executed.
 #
 
-set -exo nounset
+set -xo nounset
 shopt -s nullglob
 
 # library from container-common-scripts
@@ -36,14 +36,12 @@ test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
 test -n "${VERSION-}" || false 'make sure $VERSION is defined'
 test -n "${OS-}" || false 'make sure $OS is defined'
 
-CIDFILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
+CID_FILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
 
 volumes_to_clean=
 images_to_clean=()
 files_to_clean=
 test_dir="$(readlink -f "$(dirname "$0")")"
-test_short_summary=''
-TESTSUITE_RESULT=1
 
 _cleanup_commands_space=
 _cleanup_commands=
@@ -63,22 +61,6 @@ function cleanup() {
   # Print a big fat separator to find the error easier
   echo "=================================== Cleanup begins here ============================="
 
-  for cidfile in $CIDFILE_DIR/* ; do
-    CONTAINER=$(cat $cidfile)
-
-    echo "Stopping and removing container $CONTAINER..."
-    docker stop $CONTAINER
-    exit_status=$(docker inspect -f '{{.State.ExitCode}}' $CONTAINER)
-    if [ "$exit_status" != "0" ]; then
-      echo "Dumping logs for $CONTAINER"
-      docker logs $CONTAINER
-    fi
-    docker rm $CONTAINER
-    rm $cidfile
-    echo "Done."
-  done
-  rmdir $CIDFILE_DIR
-
   ct_path_foreach "$volumes_to_clean" cleanup_volume_dir
 
   if test -n "${images_to_clean-}"; then
@@ -94,16 +76,8 @@ function cleanup() {
   echo "$_cleanup_commands" | while read -r line; do
     eval "$line"
   done
-
-  echo "$test_short_summary"
-
-  if [ $TESTSUITE_RESULT -eq 0 ] ; then
-    echo "Tests for ${IMAGE_NAME} succeeded."
-  else
-    echo "Tests for ${IMAGE_NAME} failed."
-  fi
+  echo "================== postgresql-container-specific cleanup ends here ====================="
 }
-trap cleanup EXIT
 
 cleanup_volume_dir ()
 {
@@ -120,7 +94,7 @@ cleanup_volume_dir ()
 
 function get_cid() {
   local id="$1" ; shift || return 1
-  echo $(cat "$CIDFILE_DIR/$id")
+  echo $(cat "$CID_FILE_DIR/$id")
 }
 
 function get_container_ip() {
@@ -182,7 +156,7 @@ function create_container() {
   # TODO: fix all create_container() invocations so that we don't need this,
   # e.g. multiline DOCKER_ARGS var should end by trailing backslashes
   cargs=$(echo "$cargs" | tr  '\n' ' ')
-  cidfile="$CIDFILE_DIR/$name"
+  cidfile="$CID_FILE_DIR/$name"
   # create container with a cidfile in a directory for cleanup
   eval "docker run $cargs --cidfile \$cidfile -d \$IMAGE_NAME \"\$@\""
   echo "Created container $(cat $cidfile)"
@@ -288,8 +262,6 @@ assert_container_creation_succeeds ()
   if test -n "$ADMIN_PASS"; then
     PGUSER=postgres PASS=$ADMIN_PASS DB=$DB test_connection "$name"
   fi
-
-  docker stop "$(get_cid "$name")"
 }
 
 
@@ -439,14 +411,14 @@ function run_tests() {
 function run_slave() {
   local suffix="$1"; shift
   docker run $cluster_args -e POSTGRESQL_MASTER_IP=${master_hostname} \
-    -d --cidfile ${CIDFILE_DIR}/slave-${suffix}.cid $IMAGE_NAME run-postgresql-slave
+    -d --cidfile ${CID_FILE_DIR}/slave-${suffix}.cid $IMAGE_NAME run-postgresql-slave
 }
 
 function run_master() {
   local suffix="$1"; shift
   master_args=${master_args-}
   docker run $cluster_args $master_args \
-    -d --cidfile ${CIDFILE_DIR}/master-${suffix}.cid $IMAGE_NAME run-postgresql-master >/dev/null
+    -d --cidfile ${CID_FILE_DIR}/master-${suffix}.cid $IMAGE_NAME run-postgresql-master >/dev/null
 }
 
 function test_slave_visibility() {
@@ -544,7 +516,7 @@ function run_master_restart_test() {
   test_slave_visibility
 
   echo "Kill the master and create a new one"
-  local cidfile=$CIDFILE_DIR/master-$cid_suffix.cid
+  local cidfile=$CID_FILE_DIR/master-$cid_suffix.cid
   docker kill $(cat $cidfile)
   # Don't forget to remove its .cid file
   rm $cidfile
@@ -621,7 +593,6 @@ $volume_options
 
   echo "  Changing passwords"
 
-  docker stop $(get_cid ${name})
   DOCKER_ARGS="
 -e POSTGRESQL_DATABASE=${database}
 -e POSTGRESQL_USER=${user}
@@ -735,8 +706,6 @@ ${mount_opts}
   # need this to wait for the container to start up
   PGUSER=user     PASS=password           test_connection "$container_name"
   PGUSER=backuser PASS=pass     DB=backup test_connection "$container_name"
-
-  docker stop "$(get_cid $container_name)" >/dev/null
 }
 
 run_s2i_test() {
@@ -822,8 +791,6 @@ run_s2i_enable_ssl_test()
 
   docker run --rm -e PGPASSWORD="password" "$IMAGE_NAME" psql "postgresql://postgres@$CONTAINER_IP:5432/postgres?sslmode=require" || \
     false "FAIL: Did not manage to connect using SSL only."
-
-  docker stop "$(get_cid "$container_name")"
 }
 
 run_s2i_bake_data_test ()
@@ -841,8 +808,6 @@ run_s2i_bake_data_test ()
 
   test "hello world" == "$(docker exec "$(get_cid "$container_name")" \
                            bash -c "psql -tA -c 'SELECT * FROM test;'")"
-
-  docker stop "$(get_cid "$container_name")"
 }
 
 run_pgaudit_test()
@@ -898,20 +863,11 @@ EOSQL"
   grep -E 'AUDIT: SESSION,.*,.*,READ,SELECT,,,SELECT' "${data_dir}"/userdata/log/postgresql-*.log
 }
 
-function run_all_tests() {
-  for test_case in $TEST_LIST; do
-    : "Running test $test_case"
-    $test_case
-  done;
-}
-
 # configuration defaults
 POSTGRESQL_MAX_CONNECTIONS=100
 POSTGRESQL_MAX_PREPARED_TRANSACTIONS=0
 POSTGRESQL_SHARED_BUFFERS=32MB
 
-# Run the chosen tests
-TEST_LIST=${TESTS:-$TEST_LIST} run_all_tests
-
-TESTSUITE_RESULT=0
-echo "All tests passed."
+ct_enable_cleanup
+TEST_SUMMARY=''
+TEST_SET=${TESTS:-$TEST_LIST} ct_run_tests_from_testset 'postgresql-container_tests'
