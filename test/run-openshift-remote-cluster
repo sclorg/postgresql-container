@@ -10,7 +10,9 @@
 
 THISDIR=$(dirname ${BASH_SOURCE[0]})
 
-source ${THISDIR}/test-lib-postgresql.sh
+source "${THISDIR}/test-lib-postgresql.sh"
+source "${THISDIR}/test-lib-remote-openshift.sh"
+
 TEST_LIST="\
 test_postgresql_integration
 test_postgresql_imagestream
@@ -23,6 +25,8 @@ ct_os_set_ocp4
 ct_os_check_compulsory_vars
 
 ct_os_check_login || exit 1
+
+ct_os_tag_image_for_cvp "postgresql"
 
 set -u
 
