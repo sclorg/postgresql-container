@@ -3,9 +3,6 @@
 
 # Files containing distgen directives
 DISTGEN_RULES:
-  - src: src/cccp.yml
-    dest: cccp.yml
-
   - src: src/root/usr/share/container-scripts/postgresql/README.md
     dest: root/usr/share/container-scripts/postgresql/README.md
 

@@ -101,7 +101,6 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-96-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-96-rhel7"
       centos_image_name: "centos/postgresql-96-centos7"
-      cccp_job: "postgresql-96-centos7"
       latest_fedora: "f27"
 
     "10":
@@ -112,7 +111,6 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-10-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-10-rhel7"
       centos_image_name: "centos7/postgresql-10-centos7"
-      cccp_job: "postgresql-10-centos7"
       latest_fedora: "f29"
 
     "11":
@@ -121,7 +119,6 @@ specs:
       short: "11"
       prev_short: "10"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      cccp_job: "postgresql-{{ spec.short }}-centos7"
       latest_fedora: "f31"
 
     "12":
@@ -132,7 +129,6 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-{{ spec.short }}-rhel7"
       centos_image_name: "centos7/postgresql-{{ spec.short }}-centos7"
-      cccp_job: "postgresql-{{ spec.short }}-centos7"
       latest_fedora: "f33"
 
     "13":
@@ -144,7 +140,6 @@ specs:
       rhel_image_name: "rhscl/postgresql-{{ spec.short }}-rhel7"
       centos_image_name: "centos7/postgresql-{{ spec.short }}-centos7"
       c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
-      cccp_job: "postgresql-{{ spec.short }}-centos7"
       latest_fedora: "f34"
 
 
