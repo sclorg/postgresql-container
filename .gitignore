@@ -2,5 +2,3 @@
 help.1
 /pagila*.rpm
 /postgresql-container-pagila.sql
-/9.[456]
-/10
