@@ -1,0 +1,27 @@
+#! /bin/sh
+
+# Try whether the PostgreSQL in container accepts connections.
+#
+# With --live, be tolerant to starting PG server.  If the /bin/postgres binary
+# has not been executed yet (the shell script is initializing the container),
+# wait for it (this script might run forever, we expect that the timeout is
+# maintained externally).
+
+test -z "$ENABLED_COLLECTIONS" || . scl_source enable $ENABLED_COLLECTIONS
+
+if test x"$1" = "x--live"; then
+    # Since livenessProbe is about to detect container deadlocks, and we
+    # so far don't know about real deadlocks to be detected -- we keep
+    # liveness probe to report that container is always ready (as long as
+    # we are able to execute shell, enable collections, etc., which is
+    # good for container sanity testing anyways).
+    exit 0
+fi
+
+# Readiness check follows, the --timeout is set to "infinite" because it
+# is handled externally (readinessProbe.timeoutSeconds).
+pg_isready -q \
+    -h 127.0.0.1 \
+    ${POSTGRESQL_USER+-U "$POSTGRESQL_USER"} \
+    ${POSTGRESQL_DATABASE+-d "$POSTGRESQL_DATABASE"} \
+    --timeout 0
