@@ -178,10 +178,6 @@ matrix:
         - centos-stream-9-x86_64
       version: "11"
     - distros:
-        - centos-7-x86_64
         - rhel-9-x86_64
         - centos-stream-9-x86_64
       version: "12"
-    - distros:
-        - centos-7-x86_64
-      version: "13"
