@@ -96,6 +96,9 @@ COPY_RULES:
 # This section is the last one on purpose because the generator.py
 # does not allow dead symlinks.
 SYMLINK_RULES:
+  - src: ./Dockerfile.centos7
+    dest: Dockerfile
+
   - src: root/usr/share/container-scripts/postgresql/README.md
     dest: README.md
 
