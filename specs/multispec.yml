@@ -2,6 +2,18 @@ version: 1
 
 specs:
   distroinfo:
+    fedora:
+      distros:
+        - fedora-35-x86_64
+      s2i_base: quay.io/fedora/s2i-core
+      org: "fedora"
+      prod: "fedora"
+      openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+      redhat_component: "postgresql-{{ spec.short }}-container"
+      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      pkgs: "postgresql-server postgresql-contrib"
+      environment_setup: >-4
+           { yum -y module enable postgresql:{{ spec.version }} || :; } && \
     centos:
       distros:
         - centos-7-x86_64
