@@ -105,16 +105,6 @@ specs:
           yum -y reinstall tzdata && \
 
   version:
-    "9.6":
-      version: "9.6"
-      prev_version: "9.5"
-      short: "96"
-      prev_short: "95"
-      common_image_name: "{{ spec.org }}/postgresql-96-{{ spec.prod }}"
-      rhel_image_name: "rhscl/postgresql-96-rhel7"
-      centos_image_name: "centos/postgresql-96-centos7"
-      latest_fedora: "f27"
-
     "10":
       version: "10"
       prev_version: "9.6"
@@ -123,15 +113,7 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-10-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-10-rhel7"
       centos_image_name: "centos7/postgresql-10-centos7"
-      latest_fedora: "f29"
-
-    "11":
-      version: "11"
-      prev_version: "10"
-      short: "11"
-      prev_short: "10"
-      common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      latest_fedora: "f31"
+      latest_fedora: "f34"
 
     "12":
       version: "12"
@@ -141,7 +123,7 @@ specs:
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       rhel_image_name: "rhscl/postgresql-{{ spec.short }}-rhel7"
       centos_image_name: "centos7/postgresql-{{ spec.short }}-centos7"
-      latest_fedora: "f33"
+      latest_fedora: "f35"
 
     "13":
       version: "13"
@@ -152,31 +134,16 @@ specs:
       rhel_image_name: "rhscl/postgresql-{{ spec.short }}-rhel7"
       centos_image_name: "centos7/postgresql-{{ spec.short }}-centos7"
       c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
-      latest_fedora: "f34"
+      latest_fedora: "f35"
 
 
 matrix:
   exclude:
     - distros:
-        - rhel-7-x86_64
-        - centos-7-x86_64
-        - rhel-8-x86_64
-        - rhel-9-x86_64
-        - centos-stream-8-x86_64
-        - centos-stream-9-x86_64
-      version: "9.6"
-    - distros:
         - rhel-9-x86_64
         - centos-stream-9-x86_64
+        - fedora-35-x86_64
       version: "10"
-    - distros:
-        - rhel-7-x86_64
-        - rhel-8-x86_64
-        - rhel-9-x86_64
-        - centos-7-x86_64
-        - centos-stream-8-x86_64
-        - centos-stream-9-x86_64
-      version: "11"
     - distros:
         - rhel-9-x86_64
         - centos-stream-9-x86_64
