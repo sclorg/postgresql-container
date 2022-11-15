@@ -52,6 +52,7 @@ RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-cont
     dnf -y module enable postgresql:{{ spec.version }} && \
     dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
+    postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
     dnf clean all && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     mkdir -p /var/lib/pgsql/data && \
