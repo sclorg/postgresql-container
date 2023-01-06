@@ -36,7 +36,6 @@ test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
 test -n "${VERSION-}" || false 'make sure $VERSION is defined'
 test -n "${OS-}" || false 'make sure $OS is defined'
 
-CID_FILE_DIR=$(mktemp --suffix=postgresql_test_cidfiles -d)
 
 volumes_to_clean=
 images_to_clean=()
@@ -868,6 +867,5 @@ POSTGRESQL_MAX_CONNECTIONS=100
 POSTGRESQL_MAX_PREPARED_TRANSACTIONS=0
 POSTGRESQL_SHARED_BUFFERS=32MB
 
-ct_enable_cleanup
-TEST_SUMMARY=''
+ct_init
 TEST_SET=${TESTS:-$TEST_LIST} ct_run_tests_from_testset 'postgresql-container_tests'
