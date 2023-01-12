@@ -3,7 +3,52 @@ on:
     types:
       - created
 jobs:
+  distgen-check:
+    name: "Check distgen generated files"
+    runs-on: ubuntu-20.04
+    if: |
+      github.event.issue.pull_request
+      && (contains(github.event.comment.body, '[test]') || contains(github.event.comment.body, '[test-all]'))
+      && contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association)
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          ref: "refs/pull/${{ github.event.issue.number }}/head"
+          submodules: true
+
+      - name: Check distgen generated files
+        id: check
+        shell: bash
+        run: |
+          sha=$(git rev-parse HEAD)
+          sudo apt update && sudo apt -y install python3-pip
+          pip3 install distgen
+          result="success"
+          ./common/tests/check_distgen_generated_files.sh || result="failure"
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Set final commit status
+        uses: myrotvorets/set-commit-status-action@1.1.5
+        with:
+          status: ${{ steps.check.outputs.result }}
+          context: "Distgen check"
+          sha: ${{ steps.check.outputs.sha }}
+
+      - name: Exit on ERR
+        shell: bash
+        run: |
+          _result=${{ steps.check.outputs.result }}
+          if [ "$_result" == failure ]; then
+            echo "Distgen-generated files are not regenerated properly."
+            echo "Please regenerate them with:"
+            echo "'make clean-versions'"
+            echo "'make generate-all'"
+            exit 1
+          fi
   container-tests:
+    needs: distgen-check
     # This job only runs for '[test]' pull request comments by owner, member
     runs-on: ubuntu-20.04
     name: "Container tests: ${{ matrix.version }} - ${{ matrix.context }}"
