@@ -517,6 +517,7 @@ function run_master_restart_test() {
   echo "Kill the master and create a new one"
   local cidfile=$CID_FILE_DIR/master-$cid_suffix.cid
   docker kill $(cat $cidfile)
+  docker rm -f $(cat $cidfile)
   # Don't forget to remove its .cid file
   rm $cidfile
 
