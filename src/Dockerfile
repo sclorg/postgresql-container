@@ -11,7 +11,7 @@ FROM {{ spec.s2i_base }}
 #                           PostgreSQL administrative account
 
 ENV POSTGRESQL_VERSION={{ spec.version }} \
-    {% if spec.prod != "rhel8" or spec.prod != "rhel9" or spec.version == "10" %}
+    {% if spec.prod != "rhel8" or spec.prod != "rhel9" or spec.version == "10" or spec.version == "13" %}
     POSTGRESQL_PREV_VERSION={{ spec.prev_version }} \
     {% endif %}
     HOME=/var/lib/pgsql \
