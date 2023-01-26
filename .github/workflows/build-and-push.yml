@@ -70,6 +70,13 @@ jobs:
             quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
             image_name: "postgresql-13"
             docker_context: 13
+          - dockerfile: "15/Dockerfile.fedora"
+            registry_namespace: "fedora"
+            tag: "15"
+            quayio_username: "QUAY_IMAGE_FEDORA_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
+            image_name: "postgresql-15"
+            docker_context: 15
 
     steps:
       - name: Build and push to quay.io registry
