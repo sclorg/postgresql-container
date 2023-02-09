@@ -1,0 +1,58 @@
+#!/bin/bash
+
+export ENABLE_REPLICATION=${ENABLE_REPLICATION:-false}
+
+set -eu
+export_vars=$(cgroup-limits) ; export $export_vars
+
+source "${CONTAINER_SCRIPTS_PATH}/common.sh"
+
+set_pgdata
+
+process_extending_files \
+        "${APP_DATA}/src/postgresql-pre-start" \
+        "${CONTAINER_SCRIPTS_PATH}/pre-start"
+
+check_env_vars
+generate_passwd_file
+generate_postgresql_config
+
+# Is this brand new data volume?
+PG_INITIALIZED=false
+
+if [ ! -f "$PGDATA/postgresql.conf" ]; then
+  initialize_database
+  PG_INITIALIZED=:
+else
+  try_pgupgrade
+fi
+
+# Use insanely large timeout (24h) to ensure that the potential recovery has
+# enough time here to happen (unless liveness probe kills us).  Note that in
+# case of server failure this command still exists immediately.
+pg_ctl start -w --timeout 86400 -o "-h ''"
+
+# This is just a pedantic safety measure (the timeout above is unlikely to
+# happen), but `pt_ctl -w` is not reliable prior to PostgreSQL v10 where it
+# returns exit_status=0 even if the server is still starting.  For more info
+# see the issue#297 and
+# https://www.postgresql.org/message-id/CAB7nPqSJs85wK9aknm%3D_jmS6GnH3SQBhpzKcqs8Qo2LhEg2etw%40mail.gmail.com
+pg_isready
+
+if $PG_INITIALIZED ; then
+    process_extending_files \
+        "${APP_DATA}/src/postgresql-init" \
+        "${CONTAINER_SCRIPTS_PATH}/init"
+    migrate_db
+    create_users
+fi
+
+process_extending_files \
+    "${APP_DATA}/src/postgresql-start" \
+    "${CONTAINER_SCRIPTS_PATH}/start"
+
+pg_ctl stop
+
+unset_env_vars
+echo "Starting server..."
+exec postgres "$@"

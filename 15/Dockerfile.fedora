@@ -14,8 +14,8 @@ ENV NAME=postgresql \
     VERSION=0 \
     ARCH=x86_64 \
     \
-    POSTGRESQL_VERSION={{ spec.version }} \
-    POSTGRESQL_PREV_VERSION={{ spec.prev_version }} \
+    POSTGRESQL_VERSION=15 \
+    POSTGRESQL_PREV_VERSION=13 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
@@ -28,14 +28,14 @@ create, run, maintain and access a PostgreSQL DBMS server."
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="PostgreSQL {{ spec.version }}" \
+      io.k8s.display-name="PostgreSQL 15" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql{{ spec.short }}" \
+      io.openshift.tags="database,postgresql,postgresql15" \
       com.redhat.component="$NAME" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>" \
-      name="fedora/$NAME-{{ spec.short }}" \
+      name="fedora/$NAME-15" \
       version="0" \
-      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 quay.io/fedora/$NAME-{{ spec.short }}"
+      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 quay.io/fedora/$NAME-15"
 
 EXPOSE 5432
 
@@ -46,13 +46,10 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # to make sure of that.
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
     INSTALL_PKGS+="findutils xz" && \
-{% if spec.version not in ["9.6", "10", "11"] %}
     INSTALL_PKGS+=" pgaudit" && \
-{% endif %}
-    dnf -y module enable postgresql:{{ spec.version }} && \
+    dnf -y module enable postgresql:15 && \
     dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
-    postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
     dnf clean all && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     mkdir -p /var/lib/pgsql/data && \
