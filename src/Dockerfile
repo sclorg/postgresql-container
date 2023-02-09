@@ -79,6 +79,7 @@ RUN {{ spec.environment_setup }}
 {% endif %}
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
+    postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
     {% if spec.post_install %}
     {{ spec.post_install }}
     {% endif %}
