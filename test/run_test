@@ -482,7 +482,7 @@ function test_value_replication() {
   # Setup the replication data
   local value
   value=24
-  postgresql_cmd -c "CREATE TABLE $table_name (a integer); INSERT INTO $table_name VALUES ($value);"
+  postgresql_cmd -c "BREAKING TESTS CREATE TABLE $table_name (a integer); INSERT INTO $table_name VALUES ($value);"
 
   # Read value from slaves and check whether it is expected
   for slave in $slave_cids; do
