@@ -415,7 +415,8 @@ function run_tests() {
   assert_login_access "${PGUSER:-}"     "${PASS-}"            "$user_login" || ret=3
   assert_login_access "${PGUSER:-}"     "${PASS-}_foo"        false || ret=4
 
-  assert_login_access postgres          "${ADMIN_PASS-}"      "$admin_login" || ret=5  assert_login_access postgres          "${ADMIN_PASS-}_foo"  false || ret=6
+  assert_login_access postgres          "${ADMIN_PASS-}"      "$admin_login" || ret=5
+  assert_login_access postgres          "${ADMIN_PASS-}_foo"  false || ret=6
 
   assert_local_access $name || ret=7
   run_configuration_tests $name || ret=8
