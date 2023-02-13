@@ -133,7 +133,7 @@ $ podman run -d --name postgresql_database \
     -e POSTGRESQL_MIGRATION_REMOTE_HOST=172.17.0.2 \
     -e POSTGRESQL_MIGRATION_ADMIN_PASSWORD=remoteAdminP@ssword \
     [ OPTIONAL_CONFIGURATION_VARIABLES ]
-    openshift/postgresql-92-centos7
+    rhel8/postgresql-13
 ```
 
 The migration is done the **dump and restore** way (running `pg_dumpall` against
@@ -147,7 +147,7 @@ result of scripted, unattended migration. In most common cases, successful
 migration is expected (but not guaranteed!), given you migrate from
 a previous version of PostgreSQL server container, that is created using
 the same principles as this one (e.g. migration from
-`openshift/postgresql-92-centos7` to `centos/postgresql-95-centos7`).
+`rhel8/postgresql-12` to `rhel8/postgresql-13`).
 Migration from a different kind of PostgreSQL container can likely fail.
 
 If this **all** or **nothing** principle is inadequate for you, and you know

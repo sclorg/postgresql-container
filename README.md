@@ -9,10 +9,13 @@ Images available on Quay are:
 * CentOS 7 [postgresql-13](https://quay.io/repository/centos7/postgresql-13-centos7)
 * CentOS Stream 8 [postgresql-10](https://quay.io/repository/sclorg/postgresql-10-c8s)
 * CentOS Stream 8 [postgresql-13](https://quay.io/repository/sclorg/postgresql-13-c8s)
+* CentOS Stream 8 [postgresql-15](https://quay.io/repository/sclorg/postgresql-15-c8s)
 * CentOS Stream 9 [postgresql-13](https://quay.io/repository/sclorg/postgresql-13-c9s)
+* CentOS Stream 9 [postgresql-15](https://quay.io/repository/sclorg/postgresql-15-c9s)
 * Fedora [postgresql-11](https://quay.io/repository/fedora/postgresql-11)
 * Fedora [postgresql-12](https://quay.io/repository/fedora/postgresql-12)
 * Fedora [postgresql-13](https://quay.io/repository/fedora/postgresql-13)
+* Fedora [postgresql-15](https://quay.io/repository/fedora/postgresql-15)
 
 This repository contains Dockerfiles for PostgreSQL images for OpenShift.
 Users can choose between RHEL, Fedora and CentOS based images.
@@ -32,6 +35,7 @@ PostgreSQL versions currently supported are:
 * [postgresql-10](https://github.com/sclorg/postgresql-container/tree/generated/10)
 * [postgresql-12](https://github.com/sclorg/postgresql-container/tree/generated/12)
 * [postgresql-13](https://github.com/sclorg/postgresql-container/tree/generated/13)
+* [postgresql-15](https://github.com/sclorg/postgresql-container/tree/generated/15)
 
 RHEL versions currently supported are:
 * RHEL7
@@ -46,31 +50,31 @@ CentOS versions currently supported are:
 
 Installation
 ----------------------
-Choose either the CentOS7 or RHEL7 based image:
+Choose either the CentOS Stream 9 or RHEL9 based image:
 
-*  **RHEL7 based image**
+*  **RHEL9 based image**
 
-    These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/postgresql-13-rhel7).
+    These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhel9/postgresql-13).
     To download it run:
     ```
-    podman pull registry.redhat.io/rhscl/postgresql-13-rhel7
+    podman pull registry.redhat.io/rhel9/postgresql-13
     ```
 
-    To build a RHEL7 based image, you need to run Docker build on a properly
+    To build a RHEL9 based image, you need to run Docker build on a properly
     subscribed RHEL machine.
 
     ```
     $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
-    $ make build TARGET=rhel7 VERSIONS=13
+    $ make build TARGET=rhel9 VERSIONS=13
     ```
 
-*  **CentOS7 based image**
+*  **CentOS Stream 9 based image**
 
     These images are available on Quay.io. To download it run:
 
     ```
-    $ podman pull quay.io/centos7/postgresql-13-centos7
+    $ podman pull https://quay.io/repository/sclorg/postgresql-13-c9s
     ```
 
     To build a PostgreSQL image from scratch run:
@@ -78,7 +82,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/postgresql-container.git
     $ cd postgresql
-    $ make build TARGET=centos7 VERSIONS=13
+    $ make build TARGET=c9s VERSIONS=13
     ```
 
 Note: while the installation steps are calling `podman`, you can replace any such calls by `docker` with the same arguments.
@@ -103,6 +107,9 @@ see [usage documentation](https://github.com/sclorg/postgresql-container/tree/ge
 For information about usage of Dockerfile for PostgreSQL 13,
 see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/13).
 
+For information about usage of Dockerfile for PostgreSQL 15,
+see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/15).
+
 For versions which are not supported anymore:
 
 * [PostgreSQL 9.2](https://github.com/sclorg/postgresql-container/blob/f213e5d0/9.2)
@@ -114,23 +121,23 @@ Test
 This repository also provides a test framework, which checks basic functionality
 of the PostgreSQL image.
 
-Users can choose between testing PostgreSQL based on a RHEL or CentOS image.
+Users can choose between testing PostgreSQL based on a RHEL or CentOS Stream image.
 
 *  **RHEL based image**
 
-    To test a RHEL7 based PostgreSQL image, you need to run the test on a properly
+    To test a RHEL9 based PostgreSQL image, you need to run the test on a properly
     subscribed RHEL machine.
 
     ```
     $ cd postgresql
-    $ make test TARGET=rhel7 VERSIONS=13
+    $ make test TARGET=rhel9 VERSIONS=13
     ```
 
-*  **CentOS based image**
+*  **CentOS Stream based image**
 
     ```
     $ cd postgresql
-    $ make test TARGET=centos7 VERSIONS=13
+    $ make test TARGET=c9s VERSIONS=13
     ```
 +By using the `TESTS` parameter you can choose a test case subset to be run against the image, eg:
 
