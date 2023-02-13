@@ -208,6 +208,7 @@ container starts it will reset the passwords to the values stored in the
 environment variables.
 
 
+{% if spec.prod == 'rhel7' or spec.prod == 'centos7' %}
 Upgrading database (by switching to newer PostgreSQL image version)
 -------------------------------------------------------------------
 
@@ -244,6 +245,7 @@ what type of upgrade you'll do by setting `$POSTGRESQL_UPGRADE` appropriately:
 Note that because we copy data directory, you need to make sure that you have
 enough space for the copy;  upgrade failure because of not enough space might
 lead to data loss.
+{% endif %}
 
 
 Extending image

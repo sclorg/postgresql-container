@@ -663,11 +663,11 @@ $volume_options
 run_upgrade_test ()
 {
   local ret=0
-    # Do not run on Fedora or RHEL8 until the upgrade script
+    # Do not run on Fedora or RHEL8+ until the upgrade script
     # is fixed for non-SCL use cases
-    { [ "${OS}" == "fedora" ] || [ "${OS}" == "rhel8" ]; } && return 0
+    { [ "${OS}" != "centos7" ] && [ "${OS}" != "rhel7" ]; } && return 0
 
-    local upgrade_path="none 9.2 9.4 9.5 9.6 10 12 13 15 none" prev= act=
+    local upgrade_path="none 9.2 9.4 9.5 9.6 10 12 13 none" prev= act=
     for act in $upgrade_path; do
         if test "$act" = $VERSION; then
             break
