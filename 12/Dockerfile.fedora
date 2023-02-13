@@ -1,4 +1,4 @@
-FROM quay.io/fedora/s2i-core:37
+FROM quay.io/fedora/s2i-core:35
 
 # PostgreSQL image for OpenShift.
 # Volumes:
