@@ -42,7 +42,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-ADD http://git.app.eng.bos.redhat.com/git/RH_Software_Collections.git/plain/Containers/osbs-repos-signed-pkgs/rolling-rhel-9-devel.repo /etc/yum.repos.d/rolling-rhel-8-devel.repo
+ADD http://git.app.eng.bos.redhat.com/git/RH_Software_Collections.git/plain/Containers/osbs-repos-signed-pkgs/rolling-rhel-8-devel.repo /etc/yum.repos.d/rolling-rhel-8-devel.repo
 RUN yum -y module enable postgresql:15 && \
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper postgresql-server postgresql-contrib" && \
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
