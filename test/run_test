@@ -207,7 +207,7 @@ function assert_login_access() {
     fi
   fi
   echo "    $PGUSER($PASS) login assertion failed"
-  exit 1
+  return 1
 }
 
 function assert_local_access() {
