@@ -59,6 +59,7 @@ specs:
        redhat_component: "postgresql-{{ spec.short }}-container"
        img_name: "{{ spec.org }}/postgresql-{{ spec.short }}"
        pkgs: "postgresql-server postgresql-contrib"
+       repo_enable_reason: "ADD http://git.app.eng.bos.redhat.com/git/RH_Software_Collections.git/plain/Containers/osbs-repos-signed-pkgs/rolling-rhel-9-devel.repo /etc/yum.repos.d/rolling-rhel-8-devel.repo"
        environment_setup: >-4
            yum -y module enable postgresql:{{ spec.version }} && \
        post_install: >-4
@@ -73,6 +74,7 @@ specs:
        redhat_component: "postgresql-{{ spec.short }}-container"
        img_name: "{{ spec.org }}/postgresql-{{ spec.short }}"
        pkgs: "postgresql-server postgresql-contrib"
+       repo_enable_reason: "ADD http://git.app.eng.bos.redhat.com/git/RH_Software_Collections.git/plain/Containers/osbs-repos-signed-pkgs/rolling-rhel-9-devel.repo /etc/yum.repos.d/rolling-rhel-9-devel.repo"
        environment_setup: >-4
            { yum -y module enable postgresql:{{ spec.version }} || :; } && \
        post_install: >-4

@@ -52,7 +52,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-{% if spec.repo_enable_reason %}
+{% if spec.repo_enable_reason and spec.version == "15" %}
 {{ spec.repo_enable_reason }}
 {% endif %}
 RUN {{ spec.environment_setup }}
