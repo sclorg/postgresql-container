@@ -32,10 +32,10 @@ For more information about concepts used in these container images, see the
 Versions
 ---------------
 PostgreSQL versions currently supported are:
-* [postgresql-10](https://github.com/sclorg/postgresql-container/tree/generated/10)
-* [postgresql-12](https://github.com/sclorg/postgresql-container/tree/generated/12)
-* [postgresql-13](https://github.com/sclorg/postgresql-container/tree/generated/13)
-* [postgresql-15](https://github.com/sclorg/postgresql-container/tree/generated/15)
+* [postgresql-10](https://github.com/sclorg/postgresql-container/tree/master/10)
+* [postgresql-12](https://github.com/sclorg/postgresql-container/tree/master/12)
+* [postgresql-13](https://github.com/sclorg/postgresql-container/tree/master/13)
+* [postgresql-15](https://github.com/sclorg/postgresql-container/tree/master/15)
 
 RHEL versions currently supported are:
 * RHEL7
@@ -99,16 +99,16 @@ Usage
 ---------------------------------
 
 For information about usage of Dockerfile for PostgreSQL 10,
-see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/10).
+see [usage documentation](https://github.com/sclorg/postgresql-container/tree/master/10).
 
 For information about usage of Dockerfile for PostgreSQL 12,
-see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/12).
+see [usage documentation](https://github.com/sclorg/postgresql-container/tree/master/12).
 
 For information about usage of Dockerfile for PostgreSQL 13,
-see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/13).
+see [usage documentation](https://github.com/sclorg/postgresql-container/tree/master/13).
 
 For information about usage of Dockerfile for PostgreSQL 15,
-see [usage documentation](https://github.com/sclorg/postgresql-container/tree/generated/15).
+see [usage documentation](https://github.com/sclorg/postgresql-container/tree/master/15).
 
 For versions which are not supported anymore:
 
