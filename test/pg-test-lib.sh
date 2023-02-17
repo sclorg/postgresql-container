@@ -39,6 +39,18 @@ get_image_id ()
                 ns=rhel8
                 local image=registry.redhat.io/$ns/postgresql-${version}
                 ;;
+            rhel9)
+                ns=rhel9
+                local image=registry.redhat.io/$ns/postgresql-${version}
+                ;;
+            c8s)
+                ns=c8s
+                local image=quay.io/sclorg/postgresql-${version}-$ns
+                ;;
+            c9s)
+                ns=c9s
+                local image=quay.io/sclorg/postgresql-${version}-$ns
+                ;;
             esac
             docker pull "$image" >/dev/null
             echo "$image"

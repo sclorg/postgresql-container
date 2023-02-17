@@ -6,7 +6,7 @@
 # The image has to be available before this script is executed.
 #
 
-set -xo nounset
+set -o nounset
 shopt -s nullglob
 
 # library from container-common-scripts
@@ -118,7 +118,6 @@ function test_connection() {
   local sleep_time=2
   for i in $(seq $max_attempts); do
     echo "    Trying to connect..."
-    set +e
     # Don't let the code come here if neither user nor admin is able to
     # connect.
     if [ -v PGUSER ] && [ -v PASS ]; then
@@ -127,7 +126,6 @@ function test_connection() {
       PGUSER=postgres PASS=$ADMIN_PASS CONTAINER_IP=$ip DB=postgres postgresql_cmd <<< "SELECT 1;"
     fi
     status=$?
-    set -e
     if [ $status -eq 0 ]; then
       echo "  Success!"
       return 0
@@ -138,26 +136,38 @@ function test_connection() {
 }
 
 function test_postgresql() {
+  local ret=0
   echo "  Testing PostgreSQL"
-  postgresql_cmd <<< "CREATE EXTENSION 'uuid-ossp';" # to test contrib package
-  postgresql_cmd <<< "CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));"
-  postgresql_cmd <<< "INSERT INTO tbl VALUES ('foo1', 'bar1');"
-  postgresql_cmd <<< "INSERT INTO tbl VALUES ('foo2', 'bar2');"
-  postgresql_cmd <<< "INSERT INTO tbl VALUES ('foo3', 'bar3');"
-  postgresql_cmd <<< "SELECT * FROM tbl;"
+  postgresql_cmd <<< "CREATE EXTENSION 'uuid-ossp';" || ret=1 # to test contrib package
+  postgresql_cmd <<< "CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));" || ret=2
+  postgresql_cmd <<< "INSERT INTO tbl VALUES ('foo1', 'bar1');" || ret=3
+  postgresql_cmd <<< "INSERT INTO tbl VALUES ('foo2', 'bar2');" || ret=4
+  postgresql_cmd <<< "INSERT INTO tbl VALUES ('foo3', 'bar3');" || ret=5
+  postgresql_cmd <<< "SELECT * FROM tbl;" || ret=6
   #postgresql_cmd <<< "DROP TABLE tbl;"
-  echo "  Success!"
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 function create_container() {
   local name=$1 ; shift
   local cargs=${DOCKER_ARGS:-}
+  local ret=0
   # TODO: fix all create_container() invocations so that we don't need this,
   # e.g. multiline DOCKER_ARGS var should end by trailing backslashes
   cargs=$(echo "$cargs" | tr  '\n' ' ')
   cidfile="$CID_FILE_DIR/$name"
   # create container with a cidfile in a directory for cleanup
   eval "docker run $cargs --cidfile \$cidfile -d \$IMAGE_NAME \"\$@\""
+  ret=$?
+
+  if [ $ret -ne 0 ]; then
+    echo "ERROR: Creation of container didn't succeed"
+    return 1
+  fi
+
   echo "Created container $(cat $cidfile)"
 }
 
@@ -197,7 +207,7 @@ function assert_login_access() {
     fi
   fi
   echo "    $PGUSER($PASS) login assertion failed"
-  exit 1
+  return 1
 }
 
 function assert_local_access() {
@@ -208,14 +218,13 @@ function assert_local_access() {
 
 # Make sure the invocation of docker run fails.
 function assert_container_creation_fails() {
+  local ret=0
 
   # Time the docker run command. It should fail. If it doesn't fail,
   # postgresql will keep running so we kill it with SIGKILL to make sure
   # timeout returns a non-zero value.
-  set +e
   timeout -s 9 --preserve-status 60s docker run --rm "$@" $IMAGE_NAME
   ret=$?
-  set -e
 
   # Timeout will exit with a high number.
   if [ $ret -gt 30 ]; then
@@ -234,6 +243,7 @@ assert_container_creation_succeeds ()
   local name=pg-success-"$(ct_random_string)"
   local PGUSER='' PGPASS=''  DB=''  ADMIN_PASS=
   local docker_args=
+  local ret=0
 
   for arg; do
     docker_args+=" $(printf "%q" "$arg")"
@@ -252,40 +262,49 @@ assert_container_creation_succeeds ()
     fi
   done
 
-  DOCKER_ARGS=$docker_args create_container "$name"
+  DOCKER_ARGS=$docker_args create_container "$name" || ret=1
 
   if test -n "$PGUSER" && test -n "$PGPASS"; then
-    PGUSER=$PGUSER PASS=$PGPASS DB=$DB test_connection "$name"
+    PGUSER=$PGUSER PASS=$PGPASS DB=$DB test_connection "$name" || ret=2
   fi
 
   if test -n "$ADMIN_PASS"; then
-    PGUSER=postgres PASS=$ADMIN_PASS DB=$DB test_connection "$name"
+    PGUSER=postgres PASS=$ADMIN_PASS DB=$DB test_connection "$name" || ret=3
   fi
+
+  return $ret
 }
 
 
 function try_image_invalid_combinations() {
-  assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass "$@"
-  assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_DATABASE=db "$@"
-  assert_container_creation_fails -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db "$@"
+  local ret=0
+  assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass "$@" || ret=1
+  assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_DATABASE=db "$@" || ret=2
+  assert_container_creation_fails -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db "$@" || ret=3
+  return $ret
 }
 
 function run_container_creation_tests() {
+  local ret=0
   echo "  Testing image entrypoint usage"
-  try_image_invalid_combinations
-  try_image_invalid_combinations  -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
+  try_image_invalid_combinations || ret=1
+  try_image_invalid_combinations  -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=2
 
-  VERY_LONG_IDENTIFIER="very_long_identifier_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  assert_container_creation_fails -e POSTGRESQL_USER= -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
-  assert_container_creation_fails -e POSTGRESQL_USER=$VERY_LONG_IDENTIFIER -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
-  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD="\"" -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
-  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=9invalid -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
-  assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=$VERY_LONG_IDENTIFIER -e POSTGRESQL_ADMIN_PASSWORD=admin_pass
-  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD="\""
-  echo "  Success!"
+VERY_LONG_IDENTIFIER="very_long_identifier_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  assert_container_creation_fails -e POSTGRESQL_USER= -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=3
+  assert_container_creation_fails -e POSTGRESQL_USER=$VERY_LONG_IDENTIFIER -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=4
+  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD="\"" -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=5
+  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=9invalid -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=6
+  assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=$VERY_LONG_IDENTIFIER -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=7
+  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD="\"" || ret=8
 
-  assert_container_creation_succeeds -e POSTGRESQL_ADMIN_PASSWORD="the @password"
-  assert_container_creation_succeeds -e POSTGRESQL_PASSWORD="the pass" -e POSTGRESQL_USER="the user" -e POSTGRESQL_DATABASE="the db"
+  assert_container_creation_succeeds -e POSTGRESQL_ADMIN_PASSWORD="the @password" || ret=9
+  assert_container_creation_succeeds -e POSTGRESQL_PASSWORD="the pass" -e POSTGRESQL_USER="the user" -e POSTGRESQL_DATABASE="the db" || ret=10
+
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 function test_config_option() {
@@ -321,11 +340,15 @@ assert_runtime_option ()
 
 function run_configuration_tests() {
   local name=$1 ; shift
+  local ret=0
   echo "  Testing image configuration settings"
-  test_config_option ${name} max_connections ${POSTGRESQL_MAX_CONNECTIONS}
-  test_config_option ${name} max_prepared_transactions ${POSTGRESQL_MAX_PREPARED_TRANSACTIONS}
-  test_config_option ${name} shared_buffers ${POSTGRESQL_SHARED_BUFFERS}
-  echo "  Success!"
+  test_config_option ${name} max_connections ${POSTGRESQL_MAX_CONNECTIONS} || ret=1
+  test_config_option ${name} max_prepared_transactions ${POSTGRESQL_MAX_PREPARED_TRANSACTIONS} || ret=2
+  test_config_option ${name} shared_buffers ${POSTGRESQL_SHARED_BUFFERS} || ret=3
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 test_scl_usage() {
@@ -355,6 +378,7 @@ test_scl_usage() {
 function run_tests() {
   echo "  Testing general usage (run_tests) with '$1' as argument"
   local name=$1 ; shift
+  local ret=0
 
   user_login=false
   admin_login=false
@@ -383,28 +407,31 @@ function run_tests() {
   fi
   DOCKER_ARGS="${DOCKER_ARGS:-} $envs" create_container $name
   CONTAINER_IP=$(get_container_ip $name)
-  test_connection $name
+  test_connection $name || ret=1
   echo "  Testing scl usage"
-  test_scl_usage $name 'psql --version' "$VERSION"
+  test_scl_usage $name 'psql --version' "$VERSION" || ret=2
 
   echo "  Testing login accesses"
-  assert_login_access "${PGUSER:-}"     "${PASS-}"            "$user_login"
-  assert_login_access "${PGUSER:-}"     "${PASS-}_foo"        false
+  assert_login_access "${PGUSER:-}"     "${PASS-}"            "$user_login" || ret=3
+  assert_login_access "${PGUSER:-}"     "${PASS-}_foo"        false || ret=4
 
-  assert_login_access postgres          "${ADMIN_PASS-}"      "$admin_login"
-  assert_login_access postgres          "${ADMIN_PASS-}_foo"  false
+  assert_login_access postgres          "${ADMIN_PASS-}"      "$admin_login" || ret=5
+  assert_login_access postgres          "${ADMIN_PASS-}_foo"  false || ret=6
 
-  assert_local_access $name
-  run_configuration_tests $name
-  echo "  Success!"
+  assert_local_access $name || ret=7
+  run_configuration_tests $name || ret=8
 
   if $user_login; then
-    test_postgresql $name
+    test_postgresql $name || ret=9
   fi
 
   if $admin_login; then
-    DB=postgres PGUSER=postgres PASS=$ADMIN_PASS test_postgresql $name
+    DB=postgres PGUSER=postgres PASS=$ADMIN_PASS test_postgresql $name || ret=10
   fi
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 function run_slave() {
@@ -503,6 +530,7 @@ function run_master_restart_test() {
   local table_name="t1"
   local master_ip=
   local slave_cids=
+  local ret=0
 
   create_volume_dir
   local master_args="-v ${volume_dir}:/var/lib/pgsql/data:Z"
@@ -526,20 +554,25 @@ function run_master_restart_test() {
 
   # Update master_ip in slaves
   for slave in $slave_cids; do
-    docker exec -u 0 $slave bash -c "sed \"s/$master_ip/$CONTAINER_IP/g\" /etc/hosts >/tmp/hosts && cp /tmp/hosts /etc/hosts"
+    docker exec -u 0 $slave bash -c "sed \"s/$master_ip/$CONTAINER_IP/g\" /etc/hosts >/tmp/hosts && cp /tmp/hosts /etc/hosts" || ret=1
   done
   master_ip=$CONTAINER_IP
   # Check if the new master sees existing slaves
-  test_slave_visibility
+  test_slave_visibility || ret=2
 
   # Check if the replication works
-  table_name="t1" test_value_replication
+  table_name="t1" test_value_replication || ret=3
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 function run_replication_test() {
   local DB=postgres
   local PGUSER=master
   local PASS=master
+  local ret=0
 
   echo "Testing master-slave replication"
   local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
@@ -548,14 +581,18 @@ function run_replication_test() {
   local slave_cids=
 
   # Setup the cluster
-  setup_replication_cluster
+  setup_replication_cluster || ret=1
 
   # Check if the master knows about the slaves
   CONTAINER_IP=$master_ip
-  test_slave_visibility
+  test_slave_visibility || ret=2
 
   # Do some real work to test replication in practice
-  table_name="t1" test_value_replication
+  table_name="t1" test_value_replication || ret=3
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 function run_change_password_test() {
@@ -566,8 +603,9 @@ function run_change_password_test() {
   local user='user'
   local password='password'
   local admin_password='adminPassword'
+  local ret=0
 
-  create_volume_dir
+  create_volume_dir || ret=1
   local volume_options="-v ${volume_dir}:/var/lib/pgsql/data:Z"
 
   DOCKER_ARGS="
@@ -576,7 +614,7 @@ function run_change_password_test() {
 -e POSTGRESQL_PASSWORD=${password}
 -e POSTGRESQL_ADMIN_PASSWORD=${admin_password}
 $volume_options
-" create_container ${name}
+" create_container ${name} || ret=2
 
   # need to set these because `postgresql_cmd` relies on global variables
   PGUSER=${user}
@@ -584,12 +622,12 @@ $volume_options
 
   # need this to wait for the container to start up
   CONTAINER_IP=$(get_container_ip ${name})
-  test_connection ${name}
+  test_connection ${name} || ret=3
 
   echo "  Testing login"
 
-  assert_login_access ${user} ${password} true
-  assert_login_access 'postgres' ${admin_password} true
+  assert_login_access ${user} ${password} true || ret=4
+  assert_login_access 'postgres' ${admin_password} true || ret=5
 
   echo "  Changing passwords"
 
@@ -599,31 +637,35 @@ $volume_options
 -e POSTGRESQL_PASSWORD=NEW_${password}
 -e POSTGRESQL_ADMIN_PASSWORD=NEW_${admin_password}
 $volume_options
-" create_container "${name}_NEW"
+" create_container "${name}_NEW" || ret=6
 
   # need to set this because `postgresql_cmd` relies on global variables
   PASS="NEW_${password}"
 
   # need this to wait for the container to start up
   CONTAINER_IP=$(get_container_ip "${name}_NEW")
-  test_connection "${name}_NEW"
+  test_connection "${name}_NEW" || ret=7
 
   echo "  Testing login with new passwords"
 
-  assert_login_access ${user} "NEW_${password}" true
-  assert_login_access ${user} ${password} false
+  assert_login_access ${user} "NEW_${password}" true || ret=8
+  assert_login_access ${user} ${password} false || ret=9
 
-  assert_login_access 'postgres' "NEW_${admin_password}" true
-  assert_login_access 'postgres' ${admin_password} false
+  assert_login_access 'postgres' "NEW_${admin_password}" true || ret=10
+  assert_login_access 'postgres' ${admin_password} false || ret=11
 
-  echo "  Success!"
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 run_upgrade_test ()
 {
-    # Do not run on Fedora or RHEL8 until the upgrade script
+  local ret=0
+    # Do not run on Fedora or RHEL8+ until the upgrade script
     # is fixed for non-SCL use cases
-    { [ "${OS}" == "fedora" ] || [ "${OS}" == "rhel8" ]; } && return 0
+    { [ "${OS}" != "centos7" ] && [ "${OS}" != "rhel7" ]; } && return 0
 
     local upgrade_path="none 9.2 9.4 9.5 9.6 10 12 13 none" prev= act=
     for act in $upgrade_path; do
@@ -637,19 +679,24 @@ run_upgrade_test ()
     docker pull "$(get_image_id "$prev:remote")" || return 0
 
     # TODO: We run this script from $VERSION directory, through test/run symlink.
-    test/run_upgrade_test "$prev:remote" "$VERSION:local"
+    test/run_upgrade_test "$prev:remote" "$VERSION:local" || ret=1
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 run_migration_test ()
 {
+  local ret=0
     [ "${OS}" == "fedora" ] && return 0
 
     local from_version
     # Only test a subset of the migration path on non-intel hosts
     if [ "$(uname -i)" == "x86_64" ]; then
-        local upgrade_path="9.2 9.4 9.5 9.6 10 12 13"
+        local upgrade_path="9.2 9.4 9.5 9.6 10 12 13 15"
     else
-        local upgrade_path="10 12 13"
+        local upgrade_path="10 12 13 15"
     fi
 
     for from_version in $upgrade_path; do
@@ -658,8 +705,12 @@ run_migration_test ()
             || break
         # Skip if the previous image is not available in the registry
         docker pull "$(get_image_id "$from_version:remote")" || continue
-        test/run_migration_test $from_version:remote $VERSION:local
+        test/run_migration_test $from_version:remote $VERSION:local || ret=1
     done
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 run_doc_test() {
@@ -689,8 +740,9 @@ run_doc_test() {
 test_the_app_image () {
   local container_name=$1
   local mount_opts=$2
+  local ret=0
   echo "    Testing s2i app image with invalid configuration"
-  assert_container_creation_fails -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db
+  assert_container_creation_fails -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db || ret=1
   echo "    Testing s2i app image with correct configuration"
 
     DOCKER_ARGS="
@@ -701,25 +753,30 @@ test_the_app_image () {
 -e POSTGRESQL_BACKUP_USER=backuser
 -e POSTGRESQL_BACKUP_PASSWORD=pass
 ${mount_opts}
-" create_container "$container_name"
+" create_container "$container_name" || ret=2
 
   # need this to wait for the container to start up
-  PGUSER=user     PASS=password           test_connection "$container_name"
-  PGUSER=backuser PASS=pass     DB=backup test_connection "$container_name"
+  PGUSER=user     PASS=password           test_connection "$container_name" || ret=3
+  PGUSER=backuser PASS=pass     DB=backup test_connection "$container_name" || ret=4
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 run_s2i_test() {
   local temp_file
+  local ret=0
   echo "  Testing s2i usage"
-  ct_s2i_usage "${IMAGE_NAME}" --pull-policy=never 1>/dev/null
+  ct_s2i_usage "${IMAGE_NAME}" --pull-policy=never 1>/dev/null || ret=1
 
   echo "  Testing s2i build"
 
   local s2i_image_name=$IMAGE_NAME-testapp_$(ct_random_string)
   images_to_clean+=( "$s2i_image_name" )
 
-  ct_s2i_build_as_df "file://${test_dir}/test-app" "${IMAGE_NAME}" "$s2i_image_name" 1>/dev/null
-  IMAGE_NAME=$s2i_image_name test_the_app_image s2i_config_build ""
+  ct_s2i_build_as_df "file://${test_dir}/test-app" "${IMAGE_NAME}" "$s2i_image_name" 1>/dev/null || ret=2
+  IMAGE_NAME=$s2i_image_name test_the_app_image s2i_config_build "" || ret=3
 
   echo "  Testing s2i mount"
   create_temp_file
@@ -728,22 +785,31 @@ run_s2i_test() {
   # Test against original image, not the s2i one.  But even if so, we expect
   # user mouns the directory under "s2i" direcetory $APP_DATA/src.
   local mount_point=/opt/app-root/src/postgresql-init/add_backup_user.sh
-  test_the_app_image _s2i_test_mount "-v ${temp_file}:$mount_point:z,ro"
-  echo "  Success!"
+  test_the_app_image _s2i_test_mount "-v ${temp_file}:$mount_point:z,ro" || ret=4
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 function run_general_tests() {
-  PGUSER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_MAX_PREPARED_TRANSACTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin
-  PGUSER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin
-  DB=postgres ADMIN_PASS=r00t run_tests only_admin
+  local ret=0
+  PGUSER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_MAX_PREPARED_TRANSACTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin || ret=1
+  PGUSER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin || ret=2
+  DB=postgres ADMIN_PASS=r00t run_tests only_admin || ret=3
   # Test with arbitrary uid for the container
-  DOCKER_ARGS="-u 12345" PGUSER=user2 PASS=pass run_tests no_admin_altuid
-  DOCKER_ARGS="-u 12345" PGUSER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid
-  DB=postgres DOCKER_ARGS="-u 12345" ADMIN_PASS=rOOt run_tests only_admin_altuid
+  DOCKER_ARGS="-u 12345" PGUSER=user2 PASS=pass run_tests no_admin_altuid || ret=4
+  DOCKER_ARGS="-u 12345" PGUSER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid || ret=5
+  DB=postgres DOCKER_ARGS="-u 12345" ADMIN_PASS=rOOt run_tests only_admin_altuid || ret=6
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 run_test_cfg_hook()
 {
+  local ret=0
   local volume_dir name=pg-test-cfg-dir
   volume_dir=$(mktemp -d --tmpdir pg-hook-volume.XXXXX)
   add_cleanup_command /bin/rm -rf "$volume_dir"
@@ -755,14 +821,14 @@ run_test_cfg_hook()
 -e POSTGRESQL_ADMIN_PASSWORD=password
 -v $volume_dir:/opt/app-root/src:Z
   " create_container "$name"
-  assert_runtime_option "$name" shared_buffers 111MB
+  assert_runtime_option "$name" shared_buffers 111MB || ret=1
 
   # Check that POSTGRESQL_SHARED_BUFFERS has effect.
   DOCKER_ARGS="
 -e POSTGRESQL_ADMIN_PASSWORD=password
 -e POSTGRESQL_SHARED_BUFFERS=113MB
   " create_container "$name-2"
-  assert_runtime_option "$name-2" shared_buffers 113MB
+  assert_runtime_option "$name-2" shared_buffers 113MB || ret=2
 
   # Check that volume has priority over POSTGRESQL_SHARED_BUFFERS.
   DOCKER_ARGS="
@@ -770,7 +836,11 @@ run_test_cfg_hook()
 -e POSTGRESQL_SHARED_BUFFERS=113MB
 -v $volume_dir:/opt/app-root/src:Z
   " create_container "$name-3"
-  assert_runtime_option "$name-3" shared_buffers 111MB
+  assert_runtime_option "$name-3" shared_buffers 111MB || ret=3
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 run_s2i_enable_ssl_test()
@@ -812,6 +882,7 @@ run_s2i_bake_data_test ()
 
 run_pgaudit_test()
 {
+  local ret=0
   # extension pgaudit is not available for older versions
   case ${VERSION} in
     9.6|10|11) echo "pgaudit not expected, test skipped."; return ;;
@@ -836,7 +907,7 @@ run_pgaudit_test()
 -v ${data_dir}:/var/lib/pgsql/data:Z
   " create_container "$name"
 
-  assert_runtime_option "$name" shared_preload_libraries pgaudit
+  assert_runtime_option "$name" shared_preload_libraries pgaudit || ret=1
   wait_ready "$name"
 
   # enable the pgaudit extension
@@ -846,7 +917,7 @@ run_pgaudit_test()
 CREATE EXTENSION pgaudit;
 SET pgaudit.log = 'read, ddl';
 CREATE DATABASE pgaudittest;
-EOSQL"
+EOSQL" || ret=2
 
   # simulate some trafic that should be audited
   docker exec -i $(get_cid "$name") bash -c "psql pgaudittest <<EOSQL
@@ -854,13 +925,17 @@ SET pgaudit.log = 'read, ddl';
 CREATE TABLE account (id int, name text, password text, description text);
 INSERT INTO account (id, name, password, description) VALUES (1, 'user1', 'HASH1', 'blah, blah');
 SELECT * FROM account;
-EOSQL"
+EOSQL" || ret=3
 
   # give server some time for write all audit messages
   sleep 1
 
-  grep -E 'AUDIT: SESSION,.*,.*,DDL,CREATE DATABASE,,,CREATE DATABASE pgaudittest' "${data_dir}"/userdata/log/postgresql-*.log
-  grep -E 'AUDIT: SESSION,.*,.*,READ,SELECT,,,SELECT' "${data_dir}"/userdata/log/postgresql-*.log
+  grep -E 'AUDIT: SESSION,.*,.*,DDL,CREATE DATABASE,,,CREATE DATABASE pgaudittest' "${data_dir}"/userdata/log/postgresql-*.log || ret=4
+  grep -E 'AUDIT: SESSION,.*,.*,READ,SELECT,,,SELECT' "${data_dir}"/userdata/log/postgresql-*.log || ret=5
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
 }
 
 # configuration defaults

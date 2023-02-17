@@ -1,7 +1,7 @@
-PostgreSQL {{ spec.version }} SQL Database Server container image
+PostgreSQL 15 SQL Database Server container image
 ===============================================
 
-This container image includes PostgreSQL {{ spec.version }} SQL database server for OpenShift and general usage.
+This container image includes PostgreSQL 15 SQL database server for OpenShift and general usage.
 Users can choose between RHEL, CentOS and Fedora based images.
 The RHEL images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/),
 the CentOS images are available on [Quay.io](https://quay.io/organization/centos7),
@@ -24,12 +24,12 @@ You can find more information on the PostgreSQL project from the project Web sit
 Usage
 -----
 
-For this, we will assume that you are using the `{{ spec.rhel_image_name }}` image, available via `postgresql:{{ spec.version }}` imagestream tag in Openshift.
+For this, we will assume that you are using the `` image, available via `postgresql:15` imagestream tag in Openshift.
 If you want to set only the mandatory environment variables and not store the database
 in a host directory, execute the following command:
 
 ```
-$ podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 {{ spec.rhel_image_name }}
+$ podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 
 ```
 
 This will create a container named `postgresql_database` running PostgreSQL with
@@ -44,13 +44,13 @@ below). This will be the PostgreSQL database cluster directory.
 The same can be achieved in an Openshift instance using templates provided by Openshift or available in [examples](https://github.com/sclorg/postgresql-container/tree/master/examples):
 
 ```
-$ oc process -f examples/postgresql-ephemeral-template.json -p POSTGRESQL_VERSION={{ spec.version }} -p POSTGRESQL_USER=user -p POSTGRESQL_PASSWORD=pass -p POSTGRESQL_DATABASE=db | oc create -f -
+$ oc process -f examples/postgresql-ephemeral-template.json -p POSTGRESQL_VERSION=15 -p POSTGRESQL_USER=user -p POSTGRESQL_PASSWORD=pass -p POSTGRESQL_DATABASE=db | oc create -f -
 ```
 
 If the database cluster directory is not initialized, the entrypoint script will
-first run [`initdb`](http://www.postgresql.org/docs/{{ spec.version }}/static/app-initdb.html)
+first run [`initdb`](http://www.postgresql.org/docs/15/static/app-initdb.html)
 and setup necessary database users and passwords. After the database is initialized,
-or if it was already present, [`postgres`](http://www.postgresql.org/docs/{{ spec.version }}/static/app-postgres.html)
+or if it was already present, [`postgres`](http://www.postgresql.org/docs/15/static/app-postgres.html)
 is executed and will run as PID 1. You can stop the detached container by running
 `podman stop postgresql_database`.
 
@@ -208,44 +208,6 @@ container starts it will reset the passwords to the values stored in the
 environment variables.
 
 
-{% if spec.prod == 'rhel7' or spec.prod == 'centos7' %}
-Upgrading database (by switching to newer PostgreSQL image version)
--------------------------------------------------------------------
-
-** Warning! Please, before you decide to do the data directory upgrade, always
-ensure that you've carefully backed up all your data and that you are OK with
-potential manual rollback! **
-
-This image supports automatic upgrade of data directory created by
-the PostgreSQL server version {{ spec.prev_version }} (and _only_ this version) - provided by sclorg
-image.  The upgrade process is designed so that you should be able to just
-switch from *image A* to *image B*, and set the `$POSTGRESQL_UPGRADE` variable
-appropriately to explicitly request the database data transformation.
-
-The upgrade process is internally implemented via `pg_upgrade` binary, and for
-that purpose the container needs to contain two versions of PostgreSQL server
-(have a look at `man pg_upgrade` for more info).
-
-For the `pg_upgrade` process - and the new server version, we need to initialize
-a brand new data directory.  That's data directory is created automatically by
-container tooling under /var/lib/pgsql/data, which is usually external
-bind-mountpoint.  The `pg_upgrade` execution is then similar to dump&restore
-approach -- it starts both old and new PostgreSQL servers (within container) and
-"dumps" the old datadir while and at the same time it "restores" it into new
-datadir.  This operation requires a lot of data files copying, so you can decide
-what type of upgrade you'll do by setting `$POSTGRESQL_UPGRADE` appropriately:
-
-**`copy`**  
-       The data files are copied from old datadir to new datadir.  This option has low risk of data loss in case of some upgrade failure.
-
-**`hardlink`**  
-       Data files are hard-linked from old to the new data directory, which brings performance optimization - but the old directory becomes unusable, even in case of failure.
-
-
-Note that because we copy data directory, you need to make sure that you have
-enough space for the copy;  upgrade failure because of not enough space might
-lead to data loss.
-{% endif %}
 
 
 Extending image
@@ -253,14 +215,14 @@ Extending image
 
 This image can be extended in Openshift using the `Source` build strategy or via the standalone
 [source-to-image](https://github.com/openshift/source-to-image) application (where available).
-For this, we will assume that you are using the `{{ spec.rhel_image_name }}` image,
-available via `postgresql:{{ spec.version }}` imagestream tag in Openshift.
+For this, we will assume that you are using the `` image,
+available via `postgresql:15` imagestream tag in Openshift.
 
 For example to build customized image `new-postgresql`
 with configuration from `https://github.com/sclorg/postgresql-container/tree/master/examples/extending-image` run:
 
 ```
-$ oc new-app postgresql:{{ spec.version }}~https://github.com/sclorg/postgresql-container.git \
+$ oc new-app postgresql:15~https://github.com/sclorg/postgresql-container.git \
   --name new-postgresql \
   --context-dir examples/extending-image/ \
   -e POSTGRESQL_USER=user \
@@ -271,7 +233,7 @@ $ oc new-app postgresql:{{ spec.version }}~https://github.com/sclorg/postgresql-
 or via `s2i`:
 
 ```
-$ s2i build --context-dir examples/extending-image/ https://github.com/sclorg/postgresql-container.git {{ spec.rhel_image_name }} new-postgresql
+$ s2i build --context-dir examples/extending-image/ https://github.com/sclorg/postgresql-container.git  new-postgresql
 ```
 
 The directory passed to Openshift should contain one or more of the

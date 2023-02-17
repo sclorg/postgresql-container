@@ -62,7 +62,7 @@ specs:
        environment_setup: >-4
            yum -y module enable postgresql:{{ spec.version }} && \
        post_install: >-4
-           yum -y reinstall tzdata && \
+           (yum -y reinstall tzdata || yum -y update tzdata ) && \
     rhel9:
        distros:
          - rhel-9-x86_64
@@ -76,7 +76,7 @@ specs:
        environment_setup: >-4
            { yum -y module enable postgresql:{{ spec.version }} || :; } && \
        post_install: >-4
-           yum -y reinstall tzdata && \
+           (yum -y reinstall tzdata || yum -y update tzdata ) && \
     c9s:
       distros:
         - centos-stream-9-x86_64
@@ -136,6 +136,15 @@ specs:
       c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
       latest_fedora: "f35"
 
+    "15":
+      version: "15"
+      prev_version: "13"
+      short: "15"
+      prev_short: "13"
+      common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
+      latest_fedora: "f37"
+
 
 matrix:
   exclude:
@@ -148,3 +157,7 @@ matrix:
         - rhel-9-x86_64
         - centos-stream-9-x86_64
       version: "12"
+    - distros:
+        - rhel-7-x86_64
+        - centos-7-x86_64
+      version: "15"

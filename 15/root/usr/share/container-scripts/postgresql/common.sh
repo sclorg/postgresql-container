@@ -188,7 +188,7 @@ initdb_wrapper ()
 {
   # Initialize the database cluster with utf8 support enabled by default.
   # This might affect performance, see:
-  # http://www.postgresql.org/docs/13/static/locale.html
+  # http://www.postgresql.org/docs/15/static/locale.html
   LANG=${LANG:-en_US.utf8} "$@"
 }
 

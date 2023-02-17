@@ -227,6 +227,8 @@ function create_users() {
 
   if [ -v POSTGRESQL_MASTER_USER ]; then
     createuser "$POSTGRESQL_MASTER_USER"
+    echo "ALTER DATABASE postgres OWNER TO $POSTGRESQL_MASTER_USER;" | psql
+    echo "GRANT ALL PRIVILEGES on DATABASE postgres TO $POSTGRESQL_MASTER_USER;" | psql
   fi
 }
 

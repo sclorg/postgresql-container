@@ -133,7 +133,7 @@ $ podman run -d --name postgresql_database \
     -e POSTGRESQL_MIGRATION_REMOTE_HOST=172.17.0.2 \
     -e POSTGRESQL_MIGRATION_ADMIN_PASSWORD=remoteAdminP@ssword \
     [ OPTIONAL_CONFIGURATION_VARIABLES ]
-    openshift/postgresql-92-centos7
+    rhel8/postgresql-13
 ```
 
 The migration is done the **dump and restore** way (running `pg_dumpall` against
@@ -147,7 +147,7 @@ result of scripted, unattended migration. In most common cases, successful
 migration is expected (but not guaranteed!), given you migrate from
 a previous version of PostgreSQL server container, that is created using
 the same principles as this one (e.g. migration from
-`openshift/postgresql-92-centos7` to `centos/postgresql-95-centos7`).
+`rhel8/postgresql-12` to `rhel8/postgresql-13`).
 Migration from a different kind of PostgreSQL container can likely fail.
 
 If this **all** or **nothing** principle is inadequate for you, and you know
@@ -208,42 +208,6 @@ container starts it will reset the passwords to the values stored in the
 environment variables.
 
 
-Upgrading database (by switching to newer PostgreSQL image version)
--------------------------------------------------------------------
-
-** Warning! Please, before you decide to do the data directory upgrade, always
-ensure that you've carefully backed up all your data and that you are OK with
-potential manual rollback! **
-
-This image supports automatic upgrade of data directory created by
-the PostgreSQL server version 9.6 (and _only_ this version) - provided by sclorg
-image.  The upgrade process is designed so that you should be able to just
-switch from *image A* to *image B*, and set the `$POSTGRESQL_UPGRADE` variable
-appropriately to explicitly request the database data transformation.
-
-The upgrade process is internally implemented via `pg_upgrade` binary, and for
-that purpose the container needs to contain two versions of PostgreSQL server
-(have a look at `man pg_upgrade` for more info).
-
-For the `pg_upgrade` process - and the new server version, we need to initialize
-a brand new data directory.  That's data directory is created automatically by
-container tooling under /var/lib/pgsql/data, which is usually external
-bind-mountpoint.  The `pg_upgrade` execution is then similar to dump&restore
-approach -- it starts both old and new PostgreSQL servers (within container) and
-"dumps" the old datadir while and at the same time it "restores" it into new
-datadir.  This operation requires a lot of data files copying, so you can decide
-what type of upgrade you'll do by setting `$POSTGRESQL_UPGRADE` appropriately:
-
-**`copy`**  
-       The data files are copied from old datadir to new datadir.  This option has low risk of data loss in case of some upgrade failure.
-
-**`hardlink`**  
-       Data files are hard-linked from old to the new data directory, which brings performance optimization - but the old directory becomes unusable, even in case of failure.
-
-
-Note that because we copy data directory, you need to make sure that you have
-enough space for the copy;  upgrade failure because of not enough space might
-lead to data loss.
 
 
 Extending image
