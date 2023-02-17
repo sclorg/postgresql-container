@@ -693,7 +693,7 @@ run_migration_test ()
 
     local from_version
     # Only test a subset of the migration path on non-intel hosts
-    if [ "$(uname -i)" == "x86_64" ]; then
+    if [ "$(uname -m)" == "x86_64" ]; then
         local upgrade_path="9.2 9.4 9.5 9.6 10 12 13 15"
     else
         local upgrade_path="10 12 13 15"
