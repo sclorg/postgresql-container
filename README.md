@@ -15,6 +15,7 @@ Images available on Quay are:
 * Fedora [postgresql-11](https://quay.io/repository/fedora/postgresql-11)
 * Fedora [postgresql-12](https://quay.io/repository/fedora/postgresql-12)
 * Fedora [postgresql-13](https://quay.io/repository/fedora/postgresql-13)
+* Fedora [postgresql-14](https://quay.io/repository/fedora/postgresql-14)
 * Fedora [postgresql-15](https://quay.io/repository/fedora/postgresql-15)
 
 This repository contains Dockerfiles for PostgreSQL images for OpenShift.
@@ -35,6 +36,7 @@ PostgreSQL versions currently supported are:
 * [postgresql-10](https://github.com/sclorg/postgresql-container/tree/master/10)
 * [postgresql-12](https://github.com/sclorg/postgresql-container/tree/master/12)
 * [postgresql-13](https://github.com/sclorg/postgresql-container/tree/master/13)
+* [postgresql-14](https://github.com/sclorg/postgresql-container/tree/master/14)
 * [postgresql-15](https://github.com/sclorg/postgresql-container/tree/master/15)
 
 RHEL versions currently supported are:
@@ -106,6 +108,9 @@ see [usage documentation](https://github.com/sclorg/postgresql-container/tree/ma
 
 For information about usage of Dockerfile for PostgreSQL 13,
 see [usage documentation](https://github.com/sclorg/postgresql-container/tree/master/13).
+
+For information about usage of Dockerfile for PostgreSQL 14,
+see [usage documentation](https://github.com/sclorg/postgresql-container/tree/master/14).
 
 For information about usage of Dockerfile for PostgreSQL 15,
 see [usage documentation](https://github.com/sclorg/postgresql-container/tree/master/15).
