@@ -74,6 +74,15 @@ Set to an estimate of how much memory is available for disk caching by the opera
 **`POSTGRESQL_LOG_DESTINATION (default: /var/lib/pgsql/data/userdata/log/postgresql-*.log)`**  
  Where to log errors, the default is `/var/lib/pgsql/data/userdata/log/postgresql-*.log` and this file is rotated; it can be changed to `/dev/stderr` to make debugging easier
 
+The following environment variables deal with extensions. They are all optional, and if not set, no extensions will be enabled.
+
+**`POSTGRESQL_LIBRARIES`**
+       A comma-separated list of libraries that Postgres will preload using shared_preload_libraries.
+
+**`POSTGRESQL_EXTENSIONS`**
+       A space-separated list of extensions to create when the server start. Once created, the extensions will stay even if the variable is cleared.
+
+
 You can also set the following mount points by passing the `-v /host/dir:/container/dir:Z` flag to Docker.
 
 **`/var/lib/pgsql/data`**  
