@@ -131,7 +131,7 @@ version2number ()
 # These cases are: non-intel architectures, and version higher or equal 12.0, 10.7, 9.6.12
 # Return value 0 means the hack is needed.
 function should_hack_data_sync_retry() {
-  [ "$(uname -p)" == 'x86_64' ] && return 1
+  [ "$(uname -m)" == 'x86_64' ] && return 1
   local version_number=$(version2number "$(pg_ctl -V | sed -e 's/^pg_ctl (PostgreSQL) //')")
   # this matches all 12.x and versions of 10.x where we need the hack
   [ "$version_number" -ge 100700 ] && return 0
