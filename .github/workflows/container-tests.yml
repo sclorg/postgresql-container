@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ "10", "11", "12", "13", "15" ]
+        version: [ "10", "11", "12", "13", "14", "15" ]
         os_test: [ "fedora", "centos7", "rhel7", "rhel8", "rhel9", "c9s", "c8s"]
         include:
           - tmt_plan: "fedora"
@@ -75,7 +75,7 @@ jobs:
           - tmt_plan: "rhel7-docker"
             os_test: "rhel7"
             context: "RHEL7"
-            compose: "RHEL-7.9-Released"
+            compose: "RHEL-7-LatestUpdated"
             api_key: "TF_INTERNAL_API_KEY"
             branch: "master"
             tmt_repo: "https://gitlab.cee.redhat.com/platform-eng-core-services/sclorg-tmt-plans"
