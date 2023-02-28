@@ -37,6 +37,13 @@ function test_postgresql_imagestream() {
   elif [ "${OS}" == "rhel9" ]; then
     tag="-el9"
   fi
+  # TODO
+  # Delete this as soon as postgresql image reached GA
+  if [ "${VERSION}" == "15" ]; then
+    echo "WARNING: Version ${VERSION} does not reach GA."
+    echo "WARNING: Remove this condition as soon as it will be available."
+    return 0
+  fi
   ct_os_test_image_stream_template "${THISDIR}/imagestreams/postgresql-${OS%[0-9]*}.json" "${THISDIR}/examples/postgresql-ephemeral-template.json" postgresql "-p POSTGRESQL_VERSION=${VERSION}${tag}"
 }
 
