@@ -18,7 +18,7 @@ function test_postgresql_integration() {
   postgresql-persistent-template.json"
   for template in $TEMPLATES; do
     ct_os_test_template_app_func "${IMAGE_NAME}" \
-                                 "${THISDIR}/${template}" \
+                                 "${THISDIR}/examples/${template}" \
                                  "${service_name}" \
                                  "ct_os_check_cmd_internal '<SAME_IMAGE>' '${service_name}-testing' 'PGPASSWORD=testp pg_isready -t 15 -h <IP> -U testu -d testdb' 'accepting connections' 120" \
                                  "-p POSTGRESQL_VERSION=${VERSION} \
