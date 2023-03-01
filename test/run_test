@@ -956,23 +956,29 @@ run_logging_test()
   assert_runtime_option "$name" log_destination logging_collector log_directory log_filename
   wait_ready "$name"
 
-  # enable the pgaudit extension
+  # try loggin in as a user that does not exist to trigger an error log message
   echo 'psql -U nonexistent' | docker exec -i $(get_cid "$name") bash || :
 
   # give server some time for write all audit messages
   sleep 1
 
   # check whether we have a correct output in the container log
-  if ! docker logs $(get_cid "$name") 2>&1 | grep -q 'FATAL:  role "nonexistent" does not exist' ; then
+  if docker logs $(get_cid "$name") 2>&1 | grep -q 'FATAL:  role "nonexistent" does not exist' ; then
+    echo "    PASS: the container log does include expected error message"
+  else
     echo "ERROR: the container log does not include expected error message"
     return 1
   fi
 
   # the traditional log file should not exist
-  while f in "${data_dir}"/userdata/log/postgresql-*.log ] ; do
-    echo "ERROR: the traditional log file $f should not exist"
-    return 1
+  for f in "${data_dir}"/userdata/log/postgresql-*.log ; do
+    if test -f "$f" ; then
+      echo "ERROR: the traditional log file $f should not exist"
+      return 1
+    fi
   done
+  echo "    PASS: the traditional log file under ${data_dir}/userdata/log/postgresql-*.log does not exist"
+  echo "  Success!"
 }
 
 # configuration defaults
