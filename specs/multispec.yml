@@ -136,6 +136,17 @@ specs:
       c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
       latest_fedora: "f35"
 
+    "14":
+      version: "14"
+      prev_version: "13"
+      short: "14"
+      prev_short: "13"
+      common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      rhel_image_name: "rhscl/postgresql-{{ spec.short }}-rhel7"
+      centos_image_name: "centos7/postgresql-{{ spec.short }}-centos7"
+      c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
+      latest_fedora: "f37"
+
     "15":
       version: "15"
       prev_version: "13"
@@ -157,6 +168,14 @@ matrix:
         - rhel-9-x86_64
         - centos-stream-9-x86_64
       version: "12"
+    - distros:
+        - centos-7-x86_64
+        - rhel-7-x86_64
+        - centos-stream-8-x86_64
+        - rhel-8-x86_64
+        - centos-stream-9-x86_64
+        - rhel-9-x86_64
+      version: "14"
     - distros:
         - rhel-7-x86_64
         - centos-7-x86_64
