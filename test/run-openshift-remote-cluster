@@ -16,6 +16,7 @@ source "${THISDIR}/test-lib-remote-openshift.sh"
 TEST_LIST="\
 test_postgresql_integration
 test_postgresql_imagestream
+run_latest_imagestreams_test
 "
 
 trap ct_os_cleanup EXIT SIGINT
