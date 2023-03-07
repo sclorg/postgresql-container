@@ -41,10 +41,10 @@ jobs:
         run: |
           _result=${{ steps.check.outputs.result }}
           if [ "$_result" == failure ]; then
-            echo "Distgen-generated files are not regenerated properly."
-            echo "Please regenerate them with:"
-            echo "'make clean-versions'"
-            echo "'make generate-all'"
+            echo "::error::Distgen-generated files are not regenerated properly."
+            echo "::warning::Please regenerate them with:"
+            echo "::warning::'make clean-versions'"
+            echo "::warning::'make generate-all'"
             exit 1
           fi
   container-tests:
