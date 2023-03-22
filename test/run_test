@@ -958,16 +958,19 @@ run_logging_test()
 -e POSTGRESQL_LOG_DESTINATION=/dev/stderr
 -v ${data_dir}:/var/lib/pgsql/data:Z
   " create_container "$name"
+  echo "DEBUG: container created"
 
   assert_runtime_option "$name" log_destination logging_collector log_directory log_filename
   wait_ready "$name"
 
   # try loggin in as a user that does not exist to trigger an error log message
+  echo "DEBUG: sending psql command"
   echo 'psql -U nonexistent' | docker exec -i $(get_cid "$name") bash || :
 
   # give server some time for write all audit messages
   sleep 1
-
+ echo "DEBUG: after wait - check output log:"
+docker logs $(get_cid "$name")
   # check whether we have a correct output in the container log
   if docker logs $(get_cid "$name") 2>&1 | grep -q 'FATAL:  role "nonexistent" does not exist' ; then
     echo "    PASS: the container log does include expected error message"
