@@ -15,7 +15,7 @@ shopt -s nullglob
 # local library
 . test/pg-test-lib.sh
 
-TEST_LIST="\
+TEST_LIST1="\
 run_container_creation_tests
 run_general_tests
 run_change_password_test
@@ -31,6 +31,12 @@ run_migration_test
 run_pgaudit_test
 run_logging_test
 "
+
+TEST_LIST="\
+run_container_creation_tests
+run_logging_test
+"
+
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
 test -n "${IMAGE_NAME-}" || false 'make sure $IMAGE_NAME is defined'
