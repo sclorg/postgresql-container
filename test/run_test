@@ -338,6 +338,7 @@ wait_ready ()
 # ----------------------------------
 assert_runtime_option ()
 {
+  podman -v
   local name=$1 option=$2 value=$3
   wait_ready "$name"
   echo "DEBUG: running docker exec in assert_runtime_option with set"
