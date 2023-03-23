@@ -340,7 +340,12 @@ assert_runtime_option ()
 {
   local name=$1 option=$2 value=$3
   wait_ready "$name"
+  echo "DEBUG: running docker exec in assert_runtime_option with set"
   set -- $(docker exec "$(get_cid "$name")" bash -c "psql -tA -c 'SHOW $option;'")
+  echo $?
+  echo "DEBUG: running docker exec in asaert_runtime_option without set"
+  docker exec "$(get_cid "$name")" bash -c "psql -tA -c 'SHOW $option;'"
+  echo $?
   test "$value" = "$1"
 }
 
