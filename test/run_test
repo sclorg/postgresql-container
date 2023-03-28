@@ -29,6 +29,7 @@ run_s2i_enable_ssl_test
 run_upgrade_test
 run_migration_test
 run_pgaudit_test
+run_logging_test
 "
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
@@ -936,6 +937,48 @@ EOSQL" || ret=3
     echo "  Success!"
   fi
   return $ret
+}
+
+run_logging_test()
+{
+  local data_dir name=pg-test-logging
+
+  # create a dir for data
+  create_volume_dir
+  data_dir="${volume_dir}"
+
+  DOCKER_ARGS="
+-e POSTGRESQL_ADMIN_PASSWORD=password
+-e POSTGRESQL_LOG_DESTINATION=/dev/stderr
+-v ${data_dir}:/var/lib/pgsql/data:Z
+  " create_container "$name"
+
+  assert_runtime_option "$name" log_destination logging_collector log_directory log_filename
+  wait_ready "$name"
+
+  # try loggin in as a user that does not exist to trigger an error log message
+  echo 'psql -U nonexistent' | docker exec -i $(get_cid "$name") bash || :
+
+  # give server some time for write all audit messages
+  sleep 1
+
+  # check whether we have a correct output in the container log
+  if docker logs $(get_cid "$name") 2>&1 | grep -q 'FATAL:  role "nonexistent" does not exist' ; then
+    echo "    PASS: the container log does include expected error message"
+  else
+    echo "ERROR: the container log does not include expected error message"
+    return 1
+  fi
+
+  # the traditional log file should not exist
+  for f in "${data_dir}"/userdata/log/postgresql-*.log ; do
+    if test -f "$f" ; then
+      echo "ERROR: the traditional log file $f should not exist"
+      return 1
+    fi
+  done
+  echo "    PASS: the traditional log file under ${data_dir}/userdata/log/postgresql-*.log does not exist"
+  echo "  Success!"
 }
 
 # configuration defaults
