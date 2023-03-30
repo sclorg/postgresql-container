@@ -340,6 +340,15 @@ run_pgupgrade ()
       ;;
   esac
 
+  # boot up data directory with old postgres once again to make sure
+  # it was shut down properly, otherwise the upgrade process fails
+  info_msg "Starting old postgresql once again for a clean shutdown..."
+  "${old_pgengine}/pg_ctl" start -w --timeout 86400 -o "-h ''"
+  info_msg "Waiting for postgresql to be ready for shutdown again..."
+  "${old_pgengine}/pg_isready"
+  info_msg "Shutting down old postgresql cleanly..."
+  "${old_pgengine}/pg_ctl" stop
+
   # Ensure $PGDATA_new doesn't exist yet, so we can immediately remove it if
   # there's some problem.
   test ! -e "$PGDATA_new"
