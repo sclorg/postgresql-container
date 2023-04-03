@@ -18,6 +18,8 @@ else
     export POSTGRESQL_EFFECTIVE_CACHE_SIZE=${POSTGRESQL_EFFECTIVE_CACHE_SIZE:-$effective_cache}
 fi
 
+export POSTGRESQL_LOG_DESTINATION=${POSTGRESQL_LOG_DESTINATION:-}
+
 export POSTGRESQL_RECOVERY_FILE=$HOME/openshift-custom-recovery.conf
 export POSTGRESQL_CONFIG_FILE=$HOME/openshift-custom-postgresql.conf
 
@@ -159,6 +161,16 @@ function generate_postgresql_config() {
     echo "data_sync_retry = on" >>"${POSTGRESQL_CONFIG_FILE}"
   fi
 
+  # For easier debugging, allow users to log to stderr (will be visible
+  # in the pod logs) using a single variable
+  # https://github.com/sclorg/postgresql-container/issues/353
+  if [ -n "${POSTGRESQL_LOG_DESTINATION:-}" ] ; then
+    echo "log_destination = 'stderr'" >>"${POSTGRESQL_CONFIG_FILE}"
+    echo "logging_collector = on" >>"${POSTGRESQL_CONFIG_FILE}"
+    echo "log_directory = '$(dirname "${POSTGRESQL_LOG_DESTINATION}")'" >>"${POSTGRESQL_CONFIG_FILE}"
+    echo "log_filename = '$(basename "${POSTGRESQL_LOG_DESTINATION}")'" >>"${POSTGRESQL_CONFIG_FILE}"
+  fi
+
   (
   shopt -s nullglob
   for conf in "${APP_DATA}"/src/postgresql-cfg/*.conf; do
@@ -177,7 +189,7 @@ function generate_postgresql_recovery_config() {
 function generate_passwd_file() {
   export USER_ID=$(id -u)
   export GROUP_ID=$(id -g)
-  grep -v -e ^postgres -e ^$USER_ID /etc/passwd > "$HOME/passwd"
+  grep -v -e ^postgres -e ^$USER_ID -e ^$(id -un) /etc/passwd > "$HOME/passwd"
   echo "postgres:x:${USER_ID}:${GROUP_ID}:PostgreSQL Server:${HOME}:/bin/bash" >> "$HOME/passwd"
   export LD_PRELOAD=libnss_wrapper.so
   export NSS_WRAPPER_PASSWD=${HOME}/passwd
@@ -327,6 +339,15 @@ run_pgupgrade ()
       false
       ;;
   esac
+
+  # boot up data directory with old postgres once again to make sure
+  # it was shut down properly, otherwise the upgrade process fails
+  info_msg "Starting old postgresql once again for a clean shutdown..."
+  "${old_pgengine}/pg_ctl" start -w --timeout 86400 -o "-h ''"
+  info_msg "Waiting for postgresql to be ready for shutdown again..."
+  "${old_pgengine}/pg_isready"
+  info_msg "Shutting down old postgresql cleanly..."
+  "${old_pgengine}/pg_ctl" stop
 
   # Ensure $PGDATA_new doesn't exist yet, so we can immediately remove it if
   # there's some problem.
