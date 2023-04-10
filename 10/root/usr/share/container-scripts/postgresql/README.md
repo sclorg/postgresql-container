@@ -1,115 +1,83 @@
-PostgreSQL 10 SQL Database Server container image
-===============================================
+# PostgreSQL 10 SQL Database Server Container Image
 
-This container image includes PostgreSQL 10 SQL database server for OpenShift and general usage.
-Users can choose between RHEL, CentOS and Fedora based images.
-The RHEL images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/),
-the CentOS images are available on [Quay.io](https://quay.io/organization/centos7),
-and the Fedora images are available in [Quay.io](https://quay.io/organization/fedora).
-The resulting image can be run using [podman](https://github.com/containers/libpod).
+This container image features the PostgreSQL 10 SQL database server, suitable for OpenShift and general applications. Users have the option to select from RHEL, CentOS, and Fedora-based images. RHEL images can be found in the [Red Hat Container Catalog](https://access.redhat.com/containers/), while CentOS images are available on [Quay.io](https://quay.io/organization/centos7), and Fedora images can be accessed in [Quay.io](https://quay.io/organization/fedora). The resulting image can be executed using [podman](https://github.com/containers/libpod).
 
-Note: while the examples in this README are calling `podman`, you can replace any such calls by `docker` with the same arguments
+Please note that while the examples provided in this README utilize `podman`, it is possible to substitute any instance of `podman` with `docker` and the same arguments. `podman` can be installed with on Fedora with command `dnf install podman-docker`.
 
+## Overview
 
-Description
------------
+This container image offers a containerized version of the PostgreSQL postgres daemon and client application. The postgres server daemon accepts client connections and grants access to PostgreSQL database content on behalf of said clients. For more information regarding the PostgreSQL project, please visit the official project website (https://www.postgresql.org/).
 
-This container image provides a containerized packaging of the PostgreSQL postgres daemon
-and client application. The postgres server daemon accepts connections from clients
-and provides access to content from PostgreSQL databases on behalf of the clients.
-You can find more information on the PostgreSQL project from the project Web site
-(https://www.postgresql.org/).
+## Usage
 
+Assuming you are utilizing the `rhscl/postgresql-10-rhel7` image, which is accessible via the `postgresql:10` imagestream tag in Openshift, the following steps outline usage. To set only the mandatory environment variables without storing the database in a host directory, execute this command:
 
-Usage
------
-
-For this, we will assume that you are using the `rhscl/postgresql-10-rhel7` image, available via `postgresql:10` imagestream tag in Openshift.
-If you want to set only the mandatory environment variables and not store the database
-in a host directory, execute the following command:
-
-```
+```bash
 $ podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhscl/postgresql-10-rhel7
 ```
 
-This will create a container named `postgresql_database` running PostgreSQL with
-database `db` and user with credentials `user:pass`. 
-> Note: user `postgres` is reserved for internal usage
+This command creates a container named `postgresql_database` running PostgreSQL with the database `db` and a user with the credentials `user:pass`.
 
-Port 5432 will be exposed
-and mapped to the host. If you want your database to be persistent across container
-executions, also add a `-v /host/db/path:/var/lib/pgsql/data` argument (see
-below). This will be the PostgreSQL database cluster directory.
+> Note: The user `postgres` is reserved for internal usage
 
-The same can be achieved in an Openshift instance using templates provided by Openshift or available in [examples](https://github.com/sclorg/postgresql-container/tree/master/examples):
+Port 5432 will be exposed and mapped to the host. For persistent database storage across container executions, include the `-v /host/db/path:/var/lib/pgsql/data` argument (refer to the information below). This directory will serve as the PostgreSQL database cluster.
 
-```
+In an Openshift environment, the same can be achieved using templates provided by Openshift or found in [examples](https://github.com/sclorg/postgresql-container/tree/master/examples):
+
+```bash
 $ oc process -f examples/postgresql-ephemeral-template.json -p POSTGRESQL_VERSION=10 -p POSTGRESQL_USER=user -p POSTGRESQL_PASSWORD=pass -p POSTGRESQL_DATABASE=db | oc create -f -
 ```
 
-If the database cluster directory is not initialized, the entrypoint script will
-first run [`initdb`](http://www.postgresql.org/docs/10/static/app-initdb.html)
-and setup necessary database users and passwords. After the database is initialized,
-or if it was already present, [`postgres`](http://www.postgresql.org/docs/10/static/app-postgres.html)
-is executed and will run as PID 1. You can stop the detached container by running
-`podman stop postgresql_database`.
+If the database cluster directory has not been initialized, the entrypoint script will first run [`initdb`](http://www.postgresql.org/docs/10/static/app-initdb.html) to set up the necessary database users and passwords. Once the database has been initialized or if it was previously in place,[`postgres`](http://www.postgresql.org/docs/10/static/app-postgres.html) will be executed and run as PID 1. The detached container can be stopped using `podman stop postgresql_database`.
 
+## Environment Variables and Volumes
 
-
-Environment variables and volumes
----------------------------------
-
-The image recognizes the following environment variables that you can set during
-initialization by passing `-e VAR=VALUE` to the Docker run command.
+The image recognizes the following environment variables, which can be set during initialization by passing `-e VAR=VALUE` to the Docker run command.
 
 **`POSTGRESQL_USER`**  
-       User name for PostgreSQL account to be created
+ User name for PostgreSQL account to be created
 
 **`POSTGRESQL_PASSWORD`**  
-       Password for the user account
+ Password for the user account
 
 **`POSTGRESQL_DATABASE`**  
-       Database name
+ Database name
 
 **`POSTGRESQL_ADMIN_PASSWORD`**  
-       Password for the `postgres` admin account (optional)
-
+ Password for the `postgres` admin account (optional)
 
 Alternatively, the following options are related to migration scenario:
 
 **`POSTGRESQL_MIGRATION_REMOTE_HOST`**  
-       Hostname/IP to migrate from
+ Hostname/IP to migrate from
 
 **`POSTGRESQL_MIGRATION_ADMIN_PASSWORD`**  
-       Password for the remote 'postgres' admin user
+ Password for the remote 'postgres' admin user
 
 **`POSTGRESQL_MIGRATION_IGNORE_ERRORS (optional, default 'no')`**  
-       Set to 'yes' to ignore sql import errors
-
+ Set to 'yes' to ignore sql import errors
 
 The following environment variables influence the PostgreSQL configuration file. They are all optional.
 
 **`POSTGRESQL_MAX_CONNECTIONS (default: 100)`**  
-       The maximum number of client connections allowed
+ The maximum number of client connections allowed
 
 **`POSTGRESQL_MAX_PREPARED_TRANSACTIONS (default: 0)`**  
-       Sets the maximum number of transactions that can be in the "prepared" state. If you are using prepared transactions, you will probably want this to be at least as large as max_connections
+ Sets the maximum number of transactions that can be in the "prepared" state. If you are using prepared transactions, you will probably want this to be at least as large as max_connections
 
 **`POSTGRESQL_SHARED_BUFFERS (default: 1/4 of memory limit or 32M)`**
-       Sets how much memory is dedicated to PostgreSQL to use for caching data
+Sets how much memory is dedicated to PostgreSQL to use for caching data
 
 **`POSTGRESQL_EFFECTIVE_CACHE_SIZE (default: 1/2 of memory limit or 128M)`**
-       Set to an estimate of how much memory is available for disk caching by the operating system and within the database itself
+Set to an estimate of how much memory is available for disk caching by the operating system and within the database itself
 
 **`POSTGRESQL_LOG_DESTINATION (default: /var/lib/pgsql/data/userdata/log/postgresql-*.log)`**  
-       Where to log errors, the default is `/var/lib/pgsql/data/userdata/log/postgresql-*.log` and this file is rotated; it can be changed to `/dev/stderr` to make debugging easier
-
+ Where to log errors, the default is `/var/lib/pgsql/data/userdata/log/postgresql-*.log` and this file is rotated; it can be changed to `/dev/stderr` to make debugging easier
 
 You can also set the following mount points by passing the `-v /host/dir:/container/dir:Z` flag to Docker.
 
 **`/var/lib/pgsql/data`**  
-       PostgreSQL database cluster directory
-
+ PostgreSQL database cluster directory
 
 **Notice: When mouting a directory from the host into the container, ensure that the mounted
 directory has the appropriate permissions and that the owner and group of the directory
@@ -119,19 +87,16 @@ Typically (unless you use `podman run -u` option) processes in container
 run under UID 26, so -- on GNU/Linux -- you can fix the datadir permissions
 for example by:
 
-```
+```bash
 $ setfacl -m u:26:-wx /your/data/dir
 $ podman run <...> -v /your/data/dir:/var/lib/pgsql/data:Z <...>
 ```
 
+## Data Migration
 
-Data migration
---------------
+The PostgreSQL container supports data migration from a remote PostgreSQL server. Execute the following command to initiate the process:
 
-PostgreSQL container supports migration of data from remote PostgreSQL server.
-You can run it like:
-
-```
+```bash
 $ podman run -d --name postgresql_database \
     -e POSTGRESQL_MIGRATION_REMOTE_HOST=172.17.0.2 \
     -e POSTGRESQL_MIGRATION_ADMIN_PASSWORD=remoteAdminP@ssword \
@@ -139,92 +104,45 @@ $ podman run -d --name postgresql_database \
     rhel8/postgresql-13
 ```
 
-The migration is done the **dump and restore** way (running `pg_dumpall` against
-remote cluster and importing the dump locally by `psql`).  Because the process
-is streamed (unix pipeline), there are no intermediate dump files created during
-this process to not waste additional storage space.
+The migration is performed using the **dump and restore** method (running `pg_dumpall` against the remote cluster and importing the dump locally using `psql`). The process is streamed (via a Unix pipeline), eliminating the need for intermediate dump files and conserving storage space.
 
-If some SQL commands fail during applying, the default behavior
-of the migration script is to fail as well to ensure the **all** or **nothing**
-result of scripted, unattended migration. In most common cases, successful
-migration is expected (but not guaranteed!), given you migrate from
-a previous version of PostgreSQL server container, that is created using
-the same principles as this one (e.g. migration from
-`rhel8/postgresql-12` to `rhel8/postgresql-13`).
-Migration from a different kind of PostgreSQL container can likely fail.
+If some SQL commands fail during the application, the default behavior of the migration script is to fail, ensuring an **all** or **nothing** outcome for scripted, unattended migration. In most cases, successful migration is expected (but not guaranteed) when migrating from a previous version of the PostgreSQL server container created using the same principles as this one (e.g., migration from `rhel8/postgresql-12` to `rhel8/postgresql-13`).
+Migration from a different type of PostgreSQL container may likely fail.
 
-If this **all** or **nothing** principle is inadequate for you, and you know
-what you are doing, there's optional `POSTGRESQL_MIGRATION_IGNORE_ERRORS` option
-which does **best effort** migration (some data might be lost, it is up to user
-to review the standard error output and fix the issues manually in
-post-migration time).
+If the **all or nothing** principle is unsuitable for your needs and you are aware of the risks, the optional `POSTGRESQL_MIGRATION_IGNORE_ERRORS` option offers a **best effort** migration (some data may be lost; users must review the standard error output and address issues manually after migration).
 
-Please keep in mind that the container image provides help for users'
-convenience, but fully automatic migration is not guaranteed.  Thus, before you
-start proceeding with the database migration, get prepared to perform manual
-steps in order to get all your data migrated.
+Please note that the container image provides assistance for user convenience, but fully automatic migration is not guaranteed. Before starting the database migration, be prepared to perform manual steps to ensure all data is migrated.
 
-Note that you might not use variables like `POSTGRESQL_USER` in migration
-scenario, all the data (including info about databases, roles or passwords are
-copied from old cluster).  Ensure that you use the same
-`OPTIONAL_CONFIGURATION_VARIABLES` as you used for initialization of the old
-PostgreSQL container.  If some non-default configuration is done on remote
-cluster, you might need to copy the configuration files manually, too.
+Do not use variables like `POSTGRESQL_USER`in migration scenarios, as all data (including information about databases, roles, and passwords) is copied from the old cluster. Make sure to use the same `OPTIONAL_CONFIGURATION_VARIABLES`as you did when initializing the old PostgreSQL container. If the remote cluster has some non-default configurations, you may need to manually copy the configuration files.
 
-Security warning:  Note that the IP communication between old and new PostgreSQL
-clusters is not encrypted by default, it is up to user to configure SSL on
-remote cluster or ensure security via different means.
+**Security warning**: Be aware that IP communication between the old and new PostgreSQL clusters is not encrypted by default. Users must configure SSL on the remote cluster or ensure security through other means.
 
-PostgreSQL auto-tuning
-----------------------
+## PostgreSQL Auto-Tuning
 
-When the PostgreSQL image is run with the `--memory` parameter set and if there
-are no values provided for `POSTGRESQL_SHARED_BUFFERS` and
-`POSTGRESQL_EFFECTIVE_CACHE_SIZE` those values are automatically calculated
-based on the value provided in the `--memory` parameter.
+When running the PostgreSQL image with the `--memory` parameter set, and no values provided for `POSTGRESQL_SHARED_BUFFERS` and
+`POSTGRESQL_EFFECTIVE_CACHE_SIZE` these values are automatically calculated based on the `--memory` parameter value.
 
-The values are calculated based on the
-[upstream](https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server)
-formulas. For the `shared_buffers` we use 1/4 of given memory and for the
-`effective_cache_size` we set the value to 1/2 of the given memory.
+The values are determined using the [upstream](https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server) formulas. For `shared_buffers` 1/4 of the provided memory is used, and for `effective_cache_size`, 1/2 of the provided memory is set.
 
-PostgreSQL admin account
-------------------------
-The admin account `postgres` has no password set by default, only allowing local
-connections.  You can set it by setting the `POSTGRESQL_ADMIN_PASSWORD` environment
-variable when initializing your container. This will allow you to login to the
-`postgres` account remotely. Local connections will still not require a password.
+## PostgreSQL Admin Account
+
+By default, the admin account `postgres` has no password set, allowing only local connections. To set a password, define the `POSTGRESQL_ADMIN_PASSWORD` environment variable when initializing your container. This allows you to log in to the `postgres` account remotely, while local connections still do not require a password.
+
+## Changing Passwords
+
+As passwords are part of the image configuration, the only supported method for changing passwords for the database user (`POSTGRESQL_USER`) and `postgres`
+admin user is by changing the environment variables `POSTGRESQL_PASSWORD` and `POSTGRESQL_ADMIN_PASSWORD`, respectively.
+
+Changing database passwords through SQL statements or any other method than the environment variables mentioned above will cause a mismatch between the stored variable values and the actual passwords. When a database container starts, it will reset the passwords to the values stored in the environment variables.
 
 
-Changing passwords
-------------------
+## Extending Image
 
-Since passwords are part of the image configuration, the only supported method
-to change passwords for the database user (`POSTGRESQL_USER`) and `postgres`
-admin user is by changing the environment variables `POSTGRESQL_PASSWORD` and
-`POSTGRESQL_ADMIN_PASSWORD`, respectively.
+You can extend this image in Openshift using the `Source` build strategy or via the standalone [source-to-image](https://github.com/openshift/source-to-image) application (where available). For this example, assume that you are using the `rhscl/postgresql-10-rhel7` image, available via `postgresql:10` imagestream tag in Openshift.
 
-Changing database passwords through SQL statements or any way other than through
-the environment variables aforementioned will cause a mismatch between the
-values stored in the variables and the actual passwords. Whenever a database
-container starts it will reset the passwords to the values stored in the
-environment variables.
+To build a customized image `new-postgresql` with configuration from `https://github.com/sclorg/postgresql-container/tree/master/examples/extending-image`, run:
 
-
-
-
-Extending image
-----------------
-
-This image can be extended in Openshift using the `Source` build strategy or via the standalone
-[source-to-image](https://github.com/openshift/source-to-image) application (where available).
-For this, we will assume that you are using the `rhscl/postgresql-10-rhel7` image,
-available via `postgresql:10` imagestream tag in Openshift.
-
-For example to build customized image `new-postgresql`
-with configuration from `https://github.com/sclorg/postgresql-container/tree/master/examples/extending-image` run:
-
-```
+```bash
 $ oc new-app postgresql:10~https://github.com/sclorg/postgresql-container.git \
   --name new-postgresql \
   --context-dir examples/extending-image/ \
@@ -239,60 +157,39 @@ or via `s2i`:
 $ s2i build --context-dir examples/extending-image/ https://github.com/sclorg/postgresql-container.git rhscl/postgresql-10-rhel7 new-postgresql
 ```
 
-The directory passed to Openshift should contain one or more of the
-following directories:
-
+The directory passed to Openshift should contain one or more of the following directories:
 
 ##### `postgresql-pre-start/`
 
-Source all `*.sh` files from this directory during early start of the
-container.  There's no PostgreSQL daemon running on background.
-
+This directory should contain `*.sh` files that will be sourced during the early start of the container. At this point, there is no PostgreSQL daemon running in the background.
 
 ##### `postgresql-cfg/`
 
-Contained configuration files (`*.conf`) will be included at the end of image
-postgresql.conf file.
-
+Configuration files (`*.conf`) contained in this directory will be included at the end of the image's postgresql.conf file.
 
 ##### `postgresql-init/`
 
-Contained shell scripts (`*.sh`) are sourced when the database is freshly
-initialized (after successful initdb run which made the data directory
-non-empty).  At the time of sourcing these scripts, the local PostgreSQL
-server is running.  For re-deployments scenarios with persistent data
-directory, the scripts are not sourced (no-op).
-
+This directory should contain shell scripts (`*.sh`) that are sourced when the database is freshly initialized (after a successful initdb run, which makes the data directory non-empty). At the time of sourcing these scripts, the local PostgreSQL server is running. For re-deployment scenarios with a persistent data directory, the scripts are not sourced (no-op).
 
 ##### `postgresql-start/`
 
-Same sematics as `postgresql-init/`, except that these scripts are
-always sourced (after `postgresql-init/` scripts, if they exist).
+This directory has the same semantics as `postgresql-init/`, except that these scripts are always sourced (after `postgresql-init/` scripts, if they exist).
 
+---
 
-----------------------------------------------
+During the s2i build, all provided files are copied into the `/opt/app-root/src`
+directory in the new image. Only one file with the same name can be used for customization, and user-provided files take precedence over default files in `/usr/share/container-scripts/`. This means that it is possible to overwrite the default files.
 
-During the s2i build all provided files are copied into `/opt/app-root/src`
-directory in the new image. Only one
-file with the same name can be used for customization and user provided files
-are preferred over default files in `/usr/share/container-scripts/`-
-so it is possible to overwrite them.
+## Troubleshooting
 
+Initially, the postgres daemon logs are written to the standard output, making them accessible within the container log. To examine the log, execute the following command:
 
-Troubleshooting
----------------
-At first the postgres daemon writes its logs to the standard output, so these are available in the container log. The log can be examined by running:
+```bash
+podman logs <container>
+```
 
-    podman logs <container>
+Subsequently, log output is redirected to the logging collector process and will appear in the "pg_log" directory.
 
-Then log output is redirected to logging collector process and will appear in directory "pg_log".
+## Additional Resources
 
-
-See also
---------
-Dockerfile and other sources for this container image are available on
-https://github.com/sclorg/postgresql-container.
-In that repository, the Dockerfile for CentOS is called Dockerfile, the Dockerfile
-for RHEL7 is called Dockerfile.rhel7, the Dockerfile for RHEL8 is called Dockerfile.rhel8,
-the Dockerfile for RHEL9 is called Dockerfile.rhel9,
-and the Dockerfile for Fedora is called Dockerfile.fedora.
+The Dockerfile and other sources related to this container image can be found at https://github.com/sclorg/postgresql-container. In this repository, the CentOS Dockerfile is named Dockerfile, the RHEL7 Dockerfile is named Dockerfile.rhel7, the RHEL8 Dockerfile is named Dockerfile.rhel8, the RHEL9 Dockerfile is named Dockerfile.rhel9, and the Fedora Dockerfile is named Dockerfile.fedora.
