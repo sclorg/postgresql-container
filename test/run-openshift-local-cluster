@@ -122,7 +122,7 @@ function test_postgresql_pure_image() {
 
   ct_os_new_project
   # Create a specific imagestream tag for the image so that oc cannot use anything else
-  ct_os_upload_image "${image_name}" "$image_name_no_namespace"
+  ct_os_upload_image "v3" "${image_name}" "$image_name_no_namespace"
 
   ct_os_deploy_pure_image "$image_name_no_namespace" \
                           --name "${service_name}" \
@@ -141,7 +141,7 @@ function test_postgresql_template() {
   local service_name="${image_name_no_namespace%%:*}-testing"
 
   ct_os_new_project
-  ct_os_upload_image "${image_name}" "postgresql:$VERSION"
+  ct_os_upload_image "v3" "${image_name}" "postgresql:$VERSION"
 
   ct_os_deploy_template_image "$template" \
                               NAMESPACE="$(oc project -q)" \
@@ -189,7 +189,7 @@ function test_postgresql_update() {
 
 
   ct_os_new_project
-  ct_os_upload_image "$old_image" "postgresql:$VERSION"
+  ct_os_upload_image "v3" "$old_image" "postgresql:$VERSION"
   ct_os_deploy_template_image "$template" \
                               NAMESPACE="$(oc project -q)" \
                               POSTGRESQL_VERSION="$VERSION" \
@@ -204,7 +204,7 @@ function test_postgresql_update() {
   pod_ip=$(ct_os_get_service_ip "$service_name")
   insert_postgresql_data "$image_name" "$user" "$pass" "$db" "$pod_ip"
 
-  ct_os_upload_image "$image_name" "postgresql:$VERSION"
+  ct_os_upload_image "v3" "$image_name" "postgresql:$VERSION"
   : "Waiting for a few seconds while the pods get restarted"
   sleep 5
 
@@ -225,7 +225,7 @@ function test_postgresql_replication() {
   local master_name="" master_ip="" slave_name="" slave_ip=""
 
   ct_os_new_project
-  ct_os_upload_image "${image_name}" "$istag"
+  ct_os_upload_image "v3" "${image_name}" "$istag"
 
   ct_os_deploy_template_image "$TEMPLATES/replica/postgresql_replica.json" \
                               NAMESPACE="$(oc project -q)" \
@@ -293,7 +293,7 @@ function test_postgresql_persistent_redeploy() {
   local registry="" old_image="" pod_ip=""
 
   ct_os_new_project
-  ct_os_upload_image "$image_name" "postgresql:$VERSION"
+  ct_os_upload_image "v3" "$image_name" "postgresql:$VERSION"
 
   ct_os_deploy_template_image "$template" \
                               NAMESPACE="$(oc project -q)" \
@@ -331,7 +331,7 @@ function test_postgresql_ephemeral_redeploy() {
   local registry="" old_image="" pod_ip=""
 
   ct_os_new_project
-  ct_os_upload_image "$image_name" "postgresql:$VERSION"
+  ct_os_upload_image "v3" "$image_name" "postgresql:$VERSION"
 
   ct_os_deploy_template_image "$template" \
                               NAMESPACE="$(oc project -q)" \
@@ -370,7 +370,7 @@ function test_postgresql_configmap_start() {
   local test_string=""
 
   ct_os_new_project
-  ct_os_upload_image "$image_name" "postgresql:$VERSION"
+  ct_os_upload_image "v3" "$image_name" "postgresql:$VERSION"
 
   ct_os_deploy_template_image "$template" \
                               NAMESPACE="$(oc project -q)" \
