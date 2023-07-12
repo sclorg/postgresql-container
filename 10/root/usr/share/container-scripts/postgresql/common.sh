@@ -250,6 +250,7 @@ migrate_db ()
 
     # Migration path.
     (
+        set -o pipefail
         if [ ${POSTGRESQL_MIGRATION_IGNORE_ERRORS-no} = no ]; then
             echo '\set ON_ERROR_STOP on'
         fi
