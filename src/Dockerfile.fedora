@@ -1,8 +1,4 @@
-{% if spec.version == "14" or spec.version == "15" %}
-FROM quay.io/fedora/s2i-core:37
-{% else %}
-FROM quay.io/fedora/s2i-core:35
-{% endif %}
+FROM quay.io/fedora/s2i-core:38
 
 # PostgreSQL image for OpenShift.
 # Volumes:
