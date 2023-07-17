@@ -249,9 +249,9 @@ migrate_db ()
 {
     test "$postinitdb_actions" = ",migration" || return 0
 
+    set -o pipefail
     # Migration path.
     (
-        set -o pipefail
         if [ ${POSTGRESQL_MIGRATION_IGNORE_ERRORS-no} = no ]; then
             echo '\set ON_ERROR_STOP on'
         fi
