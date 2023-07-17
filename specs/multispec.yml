@@ -161,13 +161,18 @@ matrix:
   exclude:
     - distros:
         - rhel-9-x86_64
+        - centos-7-x86_64
         - centos-stream-9-x86_64
         - fedora-35-x86_64
       version: "10"
     - distros:
         - rhel-9-x86_64
+        - centos-7-x86_64
         - centos-stream-9-x86_64
       version: "12"
+    - distros:
+        - centos-7-x86_64
+      version: "13"
     - distros:
         - centos-7-x86_64
         - rhel-7-x86_64
