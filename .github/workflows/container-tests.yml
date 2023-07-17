@@ -55,7 +55,7 @@ jobs:
       fail-fast: false
       matrix:
         version: [ "10", "11", "12", "13", "14", "15" ]
-        os_test: [ "fedora", "centos7", "rhel7", "rhel8", "rhel9", "c9s", "c8s"]
+        os_test: [ "fedora", "rhel7", "rhel8", "rhel9", "c9s", "c8s"]
         test_case: [ "container" ]
 
     if: |

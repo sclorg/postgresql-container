@@ -1,4 +1,4 @@
-name: Build and push CentOS7 images to Quay.io registry
+name: Build and push images to Quay.io registry
 on:
   push:
     branches:
@@ -14,27 +14,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - dockerfile: "10/Dockerfile"
-            registry_namespace: "centos7"
-            tag: "centos7"
-            image_name: "postgresql-10-centos7"
-            quayio_username: "QUAY_IMAGE_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_BUILDER_TOKEN"
-            docker_context: 10
-          - dockerfile: "12/Dockerfile"
-            registry_namespace: "centos7"
-            tag: "centos7"
-            image_name: "postgresql-12-centos7"
-            quayio_username: "QUAY_IMAGE_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_BUILDER_TOKEN"
-            docker_context: 12
-          - dockerfile: "13/Dockerfile"
-            registry_namespace: "centos7"
-            tag: "centos7"
-            image_name: "postgresql-13-centos7"
-            quayio_username: "QUAY_IMAGE_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_BUILDER_TOKEN"
-            docker_context: 13
           - dockerfile: "13/Dockerfile.c9s"
             registry_namespace: "sclorg"
             tag: "c9s"
