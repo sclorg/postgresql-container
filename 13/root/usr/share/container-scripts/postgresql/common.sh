@@ -260,6 +260,7 @@ migrate_db ()
         pg_dumpall -h "$POSTGRESQL_MIGRATION_REMOTE_HOST" \
             | grep -v '^CREATE ROLE postgres;'
     ) | psql
+    set +o pipefail
 }
 
 function set_pgdata ()
