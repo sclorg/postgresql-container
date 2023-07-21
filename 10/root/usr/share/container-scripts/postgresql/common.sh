@@ -248,9 +248,9 @@ migrate_db ()
 {
     test "$postinitdb_actions" = ",migration" || return 0
 
+    set -o pipefail
     # Migration path.
     (
-        set -o pipefail
         if [ ${POSTGRESQL_MIGRATION_IGNORE_ERRORS-no} = no ]; then
             echo '\set ON_ERROR_STOP on'
         fi
@@ -260,6 +260,7 @@ migrate_db ()
         pg_dumpall -h "$POSTGRESQL_MIGRATION_REMOTE_HOST" \
             | grep -v '^CREATE ROLE postgres;'
     ) | psql
+    set +o pipefail
 }
 
 function set_pgdata ()
