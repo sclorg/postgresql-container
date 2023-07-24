@@ -53,4 +53,16 @@ assert_migration_succeeds ()
     container_from= container_to=
 }
 
+# test case suggested in https://github.com/sclorg/postgresql-container/pull/521
+assert_migration_fails()
+{
+    if docker run --rm -e POSTGRESQL_MIGRATION_REMOTE_HOST=invalid-host-name -e POSTGRESQL_MIGRATION_ADMIN_PASSWORD=password "$image_to" run-postgresql --version ; then
+      info "The image exited with 0 despite migration obviously did not work, that's a problem."
+      return 1
+    else
+      info "The image exited with non-zero exit code when migration obviously did not work, which is correct"
+    fi
+}
+
 assert_migration_succeeds pagila
+assert_migration_fails
