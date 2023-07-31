@@ -56,7 +56,7 @@
         },
         "from": {
           "kind": "DockerImage",
-          "name": "docker.io/sclorg/postgresql-13-c9s:latest"
+          "name": "quay.io/sclorg/postgresql-13-c9s:latest"
         },
         "referencePolicy": {
           "type": "Local"
