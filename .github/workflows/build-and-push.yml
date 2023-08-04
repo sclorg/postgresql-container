@@ -119,7 +119,7 @@ jobs:
           docker_context: ${{ matrix.docker_context }}
           tag: ${{ matrix.tag }}
           image_name: ${{ matrix.image_name }}
-          archs: amd64, s390x, ppc64le
+          archs: amd64, s390x, ppc64le, arm64
           
       - name: Check if Dockerfile is not c9s, then Build and push to quay.io registry
         if: matrix.dockerfile != '13/Dockerfile.c9s' && matrix.dockerfile != '15/Dockerfile.c9s'
