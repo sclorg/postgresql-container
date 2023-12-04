@@ -14,13 +14,18 @@ source "${THISDIR}"/test-lib-remote-openshift.sh
 
 function test_postgresql_integration() {
   local service_name=postgresql
+  if [ "${OS}" == "rhel7" ]; then
+    namespace_image="rhscl/postgresql-${VERSION}-rhel7"
+  else
+    namespace_image="${OS}/postgresql-${VERSION}"
+  fi
   TEMPLATES="postgresql-ephemeral-template.json
   postgresql-persistent-template.json"
   for template in $TEMPLATES; do
     ct_os_test_template_app_func "${IMAGE_NAME}" \
                                  "${THISDIR}/examples/${template}" \
                                  "${service_name}" \
-                                 "ct_os_check_cmd_internal 'registry.redhat.io/${OS}/postgresql-${VERSION}' '${service_name}-testing' 'PGPASSWORD=testp pg_isready -t 15 -h <IP> -U testu -d testdb' 'accepting connections' 120" \
+                                 "ct_os_check_cmd_internal 'registry.redhat.io/${namespace_image}' '${service_name}-testing' 'PGPASSWORD=testp pg_isready -t 15 -h <IP> -U testu -d testdb' 'accepting connections' 120" \
                                  "-p POSTGRESQL_VERSION=${VERSION} \
                                   -p DATABASE_SERVICE_NAME="${service_name}-testing" \
                                   -p POSTGRESQL_USER=testu \
