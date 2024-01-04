@@ -634,6 +634,13 @@ $volume_options
 
   echo "  Changing passwords"
 
+  echo "Kill the previous container and create a new one"
+  local cidfile=$CID_FILE_DIR/"${name}"
+  docker kill $(cat $cidfile)
+  docker rm -f $(cat $cidfile)
+  # Don't forget to remove its .cid file
+  rm $cidfile
+
   DOCKER_ARGS="
 -e POSTGRESQL_DATABASE=${database}
 -e POSTGRESQL_USER=${user}
