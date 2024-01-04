@@ -107,7 +107,7 @@ function get_ip_from_cid() {
 }
 
 function postgresql_cmd() {
-  docker run --rm -e PGPASSWORD="$PASS" "$IMAGE_NAME" psql "postgresql://$PGUSER@$CONTAINER_IP:5432/${DB-db}" "$@"
+  docker run --rm -e PGPASSWORD="$PASS" "$IMAGE_NAME" psql -v ON_ERROR_STOP=1 "postgresql://$PGUSER@$CONTAINER_IP:5432/${DB-db}" "$@"
 }
 
 function test_connection() {
@@ -121,9 +121,9 @@ function test_connection() {
     # Don't let the code come here if neither user nor admin is able to
     # connect.
     if [ -v PGUSER ] && [ -v PASS ]; then
-      CONTAINER_IP=$ip postgresql_cmd <<< "SELECT 1;"
+      CONTAINER_IP=$ip postgresql_cmd -At -c "SELECT 1;"
     else
-      PGUSER=postgres PASS=$ADMIN_PASS CONTAINER_IP=$ip DB=postgres postgresql_cmd <<< "SELECT 1;"
+      PGUSER=postgres PASS=$ADMIN_PASS CONTAINER_IP=$ip DB=postgres postgresql_cmd -At -c "SELECT 1;"
     fi
     status=$?
     if [ $status -eq 0 ]; then
@@ -137,14 +137,19 @@ function test_connection() {
 
 function test_postgresql() {
   local ret=0
+  local user=${1:-user}
   echo "  Testing PostgreSQL"
-  postgresql_cmd <<< "CREATE EXTENSION 'uuid-ossp';" || ret=1 # to test contrib package
-  postgresql_cmd <<< "CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));" || ret=2
-  postgresql_cmd <<< "INSERT INTO tbl VALUES ('foo1', 'bar1');" || ret=3
-  postgresql_cmd <<< "INSERT INTO tbl VALUES ('foo2', 'bar2');" || ret=4
-  postgresql_cmd <<< "INSERT INTO tbl VALUES ('foo3', 'bar3');" || ret=5
-  postgresql_cmd <<< "SELECT * FROM tbl;" || ret=6
-  #postgresql_cmd <<< "DROP TABLE tbl;"
+  # test contrib only when having admin privileges
+  if [ "$user" == "admin" ] ; then
+    postgresql_cmd -At -c "CREATE EXTENSION \"uuid-ossp\";" || ret=1 # to test contrib package
+  fi
+  postgresql_cmd -At -c "CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));" || ret=2
+  postgresql_cmd -At -c "INSERT INTO tbl VALUES ('foo1', 'bar1');" || ret=3
+  postgresql_cmd -At -c "INSERT INTO tbl VALUES ('foo2', 'bar2');" || ret=4
+  postgresql_cmd -At -c "INSERT INTO tbl VALUES ('foo3', 'bar3');" || ret=5
+  postgresql_cmd -At -c "SELECT * FROM tbl;" || ret=6
+  # not droping table, other tests depend on having it created after this function is run
+  #postgresql_cmd -At -c "DROP TABLE tbl;"
   if [ $ret -eq 0 ]; then
     echo "  Success!"
   fi
@@ -195,7 +200,7 @@ function assert_login_access() {
 
   echo "testing login as $PGUSER:$PASS; should_success=$success"
 
-  if postgresql_cmd <<<'SELECT 1;' ; then
+  if postgresql_cmd -At -c 'SELECT 1;' ; then
     if $success ; then
       echo "    $PGUSER($PASS) access granted as expected"
       return
@@ -422,11 +427,11 @@ function run_tests() {
   run_configuration_tests $name || ret=8
 
   if $user_login; then
-    test_postgresql $name || ret=9
+    test_postgresql || ret=9
   fi
 
   if $admin_login; then
-    DB=postgres PGUSER=postgres PASS=$ADMIN_PASS test_postgresql $name || ret=10
+    DB=postgres PGUSER=postgres PASS=$ADMIN_PASS test_postgresql admin || ret=10
   fi
   if [ $ret -eq 0 ]; then
     echo "  Success!"
@@ -631,6 +636,7 @@ $volume_options
 
   assert_login_access ${user} ${password} true || ret=4
   assert_login_access 'postgres' ${admin_password} true || ret=5
+  test_postgresql || ret 5
 
   echo "  Changing passwords"
 
@@ -661,6 +667,9 @@ $volume_options
 
   assert_login_access 'postgres' "NEW_${admin_password}" true || ret=10
   assert_login_access 'postgres' ${admin_password} false || ret=11
+
+  # check that we still work with the original volume
+  postgresql_cmd -At -c  "SELECT * FROM tbl;" | grep bar3 || ret=12
 
   if [ $ret -eq 0 ]; then
     echo "  Success!"
