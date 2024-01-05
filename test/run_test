@@ -91,16 +91,6 @@ cleanup_volume_dir ()
   rmdir "$1"
 }
 
-function get_cid() {
-  local id="$1" ; shift || return 1
-  echo $(cat "$CID_FILE_DIR/$id")
-}
-
-function get_container_ip() {
-  local id="$1" ; shift
-  docker inspect --format='{{.NetworkSettings.IPAddress}}' $(get_cid "$id")
-}
-
 function get_ip_from_cid() {
   local cid="$1"; shift
   docker inspect --format='{{.NetworkSettings.IPAddress}}' $cid
@@ -112,18 +102,19 @@ function postgresql_cmd() {
 
 function test_connection() {
   local name=$1 ; shift
-  ip=$(get_container_ip $name)
+  ip=$(ct_get_cip $name)
   echo "  Testing PostgreSQL connection to $ip..."
   local max_attempts=20
   local sleep_time=2
+  echo -n "    Trying to connect, waiting for 1: ..."
   for i in $(seq $max_attempts); do
-    echo "    Trying to connect..."
+    echo -n "."
     # Don't let the code come here if neither user nor admin is able to
     # connect.
     if [ -v PGUSER ] && [ -v PASS ]; then
-      CONTAINER_IP=$ip postgresql_cmd -At -c "SELECT 1;"
+      CONTAINER_IP=$ip postgresql_cmd -At -c "SELECT 1;" 2>/dev/null
     else
-      PGUSER=postgres PASS=$ADMIN_PASS CONTAINER_IP=$ip DB=postgres postgresql_cmd -At -c "SELECT 1;"
+      PGUSER=postgres PASS=$ADMIN_PASS CONTAINER_IP=$ip DB=postgres postgresql_cmd -At -c "SELECT 1;" 2>/dev/null
     fi
     status=$?
     if [ $status -eq 0 ]; then
@@ -132,6 +123,7 @@ function test_connection() {
     fi
     sleep $sleep_time
   done
+  echo "  Failure to connect to server $ip :("
   return 1
 }
 
@@ -200,7 +192,7 @@ function assert_login_access() {
 
   echo "testing login as $PGUSER:$PASS; should_success=$success"
 
-  if postgresql_cmd -At -c 'SELECT 1;' ; then
+  if postgresql_cmd -At -c 'SELECT 1;' 2>/dev/null ; then
     if $success ; then
       echo "    $PGUSER($PASS) access granted as expected"
       return
@@ -211,28 +203,31 @@ function assert_login_access() {
       return
     fi
   fi
-  echo "    $PGUSER($PASS) login assertion failed"
+  echo "    $PGUSER($PASS) login assertion failed (expected: $success)"
   return 1
 }
 
 function assert_local_access() {
   local id="$1" ; shift
-  docker exec -i $(get_cid "$id") bash -c psql <<< "SELECT 1;"
+  docker exec -i $(ct_get_cid "$id") bash -c psql <<< "SELECT 1;"
 }
 
 
 # Make sure the invocation of docker run fails.
 function assert_container_creation_fails() {
   local ret=0
+  local out=
 
   # Time the docker run command. It should fail. If it doesn't fail,
   # postgresql will keep running so we kill it with SIGKILL to make sure
   # timeout returns a non-zero value.
-  timeout -s 9 --preserve-status 60s docker run --rm "$@" $IMAGE_NAME
+  out=$(timeout -s 9 --preserve-status 60s docker run --rm "$@" $IMAGE_NAME 2>&1)
   ret=$?
 
   # Timeout will exit with a high number.
   if [ $ret -gt 30 ]; then
+    echo "Output of container that did not fail:"
+    echo "$out"
     return 1
   fi
 }
@@ -317,7 +312,7 @@ function test_config_option() {
   local setting=$1 ; shift
   local value=$1 ; shift
 
-  docker exec $(get_cid ${name}) grep -q "${setting} = ${value}" /var/lib/pgsql/openshift-custom-postgresql.conf
+  docker exec $(ct_get_cid ${name}) grep -q "${setting} = ${value}" /var/lib/pgsql/openshift-custom-postgresql.conf
 }
 
 
@@ -326,7 +321,7 @@ function test_config_option() {
 # Wait until the PG container becomes ready
 wait_ready ()
 {
-  while ! docker exec "$(get_cid "$1")" /usr/libexec/check-container ; do
+  while ! docker exec "$(ct_get_cid "$1")" /usr/libexec/check-container ; do
     sleep 1
   done
 }
@@ -338,7 +333,7 @@ assert_runtime_option ()
 {
   local name=$1 option=$2 value=$3
   wait_ready "$name"
-  set -- $(docker exec "$(get_cid "$name")" bash -c "psql -tA -c 'SHOW $option;'")
+  set -- $(docker exec "$(ct_get_cid "$name")" bash -c "psql -tA -c 'SHOW $option;'")
   test "$value" = "$1"
 }
 
@@ -367,12 +362,12 @@ test_scl_usage() {
     echo "ERROR[/bin/bash -c "${run_cmd}"] Expected '${expected}', got '${out}'"
     return 1
   fi
-  out=$(docker exec $(get_cid $name) /bin/bash -c "${run_cmd}" 2>&1)
+  out=$(docker exec $(ct_get_cid $name) /bin/bash -c "${run_cmd}" 2>&1)
   if ! echo "${out}" | grep -q "${expected}"; then
     echo "ERROR[exec /bin/bash -c "${run_cmd}"] Expected '${expected}', got '${out}'"
     return 1
   fi
-  out=$(docker exec $(get_cid $name) /bin/sh -ic "${run_cmd}" 2>&1)
+  out=$(docker exec $(ct_get_cid $name) /bin/sh -ic "${run_cmd}" 2>&1)
   if ! echo "${out}" | grep -q "${expected}"; then
     echo "ERROR[exec /bin/sh -ic "${run_cmd}"] Expected '${expected}', got '${out}'"
     return 1
@@ -411,7 +406,7 @@ function run_tests() {
     envs="$envs -e POSTGRESQL_SHARED_BUFFERS=$POSTGRESQL_SHARED_BUFFERS"
   fi
   DOCKER_ARGS="${DOCKER_ARGS:-} $envs" create_container $name
-  CONTAINER_IP=$(get_container_ip $name)
+  CONTAINER_IP=$(ct_get_cip $name)
   test_connection $name || ret=1
   echo "  Testing scl usage"
   test_scl_usage $name 'psql --version' "$VERSION" || ret=2
@@ -464,7 +459,7 @@ function test_slave_visibility() {
         return 1
     fi
     for i in $(seq $max_attempts); do
-      result="$(postgresql_cmd -c "select client_addr from pg_stat_replication;" | grep "$slave_ip" || true)"
+      result="$(postgresql_cmd -c "select client_addr from pg_stat_replication;" 2>/dev/null | grep "$slave_ip" || true)"
       if [[ -n "${result}" ]]; then
         echo "${slave_ip} successfully registered as SLAVE for ${master_ip}"
         break
@@ -493,7 +488,7 @@ function test_value_replication() {
     slave_ip=$(get_ip_from_cid $slave)
     CONTAINER_IP=$slave_ip
     for i in $(seq $max_attempts); do
-      result="$(postgresql_cmd -At -c "select * from $table_name" || :)"
+      result="$(postgresql_cmd -At -c "select * from $table_name" 2>/dev/null || :)"
       if [[ "$result" == "$value" ]]; then
         echo "${slave_ip} successfully got value from MASTER ${master_ip}"
         break
@@ -515,7 +510,7 @@ function setup_replication_cluster() {
 
   # Run the PostgreSQL slaves
   local i
-  master_ip=$(get_container_ip "master-$cid_suffix.cid")
+  master_ip=$(ct_get_cip "master-$cid_suffix.cid")
   local cluster_args="$cluster_args --add-host postgresql-master:$master_ip"
   local master_hostname="postgresql-master"
   for i in $(seq ${slave_num:-1}); do
@@ -558,7 +553,7 @@ function run_master_restart_test() {
   rm $cidfile
 
   run_master $cid_suffix
-  CONTAINER_IP=$(get_container_ip master-$cid_suffix.cid)
+  CONTAINER_IP=$(ct_get_cip master-$cid_suffix.cid)
 
   # Update master_ip in slaves
   for slave in $slave_cids; do
@@ -629,7 +624,7 @@ $volume_options
   PASS=${password}
 
   # need this to wait for the container to start up
-  CONTAINER_IP=$(get_container_ip ${name})
+  CONTAINER_IP=$(ct_get_cip ${name})
   test_connection ${name} || ret=3
 
   echo "  Testing login"
@@ -659,7 +654,7 @@ $volume_options
   PASS="NEW_${password}"
 
   # need this to wait for the container to start up
-  CONTAINER_IP=$(get_container_ip "${name}_NEW")
+  CONTAINER_IP=$(ct_get_cip "${name}_NEW")
   test_connection "${name}_NEW" || ret=7
 
   echo "  Testing login with new passwords"
@@ -733,27 +728,8 @@ run_migration_test ()
 }
 
 run_doc_test() {
-  local tmpdir=$(mktemp -d)
-  local f
-  echo "  Testing documentation in the container image"
-  # Extract the help files from the container
-  for f in help.1 ; do
-    docker run --rm ${IMAGE_NAME} /bin/bash -c "cat /${f}" >${tmpdir}/$(basename ${f})
-    # Check whether the files include some important information
-    for term in 'POSTGRESQL\\?_ADMIN\\?_PASSWORD' Volume 5432 ; do
-      if ! cat ${tmpdir}/$(basename ${f}) | grep -E -q -e "${term}" ; then
-        echo "ERROR: File /${f} does not include '${term}'."
-        return 1
-      fi
-    done
-  done
-  # Check whether the files use the correct format
-  if ! file ${tmpdir}/help.1 | grep -q roff ; then
-    echo "ERROR: /help.1 is not in troff or groff format"
-    return 1
-  fi
-  echo "  Success!"
-  echo
+  ct_doc_content_old 'POSTGRESQL\\?_ADMIN\\?_PASSWORD' Volume 5432
+  return $?
 }
 
 test_the_app_image () {
@@ -874,7 +850,7 @@ run_s2i_enable_ssl_test()
     IMAGE_NAME="$s2i_image_name" create_container "$container_name"
 
   wait_ready "$container_name"
-  CONTAINER_IP=$(get_container_ip $container_name)
+  CONTAINER_IP=$(ct_get_cip $container_name)
 
   DB=postgres assert_login_access postgres password true
 
@@ -895,7 +871,7 @@ run_s2i_bake_data_test ()
 
   wait_ready "$container_name"
 
-  test "hello world" == "$(docker exec "$(get_cid "$container_name")" \
+  test "hello world" == "$(docker exec "$(ct_get_cid "$container_name")" \
                            bash -c "psql -tA -c 'SELECT * FROM test;'")"
 }
 
@@ -932,14 +908,14 @@ run_pgaudit_test()
   # enable the pgaudit extension
   # Deliberately moving heredoc into the container, otherwise it does not work
   # in podman 1.6.x due to https://bugzilla.redhat.com/show_bug.cgi?id=1827324
-  docker exec -i $(get_cid "$name") bash -c "psql <<EOSQL
+  docker exec -i $(ct_get_cid "$name") bash -c "psql <<EOSQL
 CREATE EXTENSION pgaudit;
 SET pgaudit.log = 'read, ddl';
 CREATE DATABASE pgaudittest;
 EOSQL" || ret=2
 
   # simulate some trafic that should be audited
-  docker exec -i $(get_cid "$name") bash -c "psql pgaudittest <<EOSQL
+  docker exec -i $(ct_get_cid "$name") bash -c "psql pgaudittest <<EOSQL
 SET pgaudit.log = 'read, ddl';
 CREATE TABLE account (id int, name text, password text, description text);
 INSERT INTO account (id, name, password, description) VALUES (1, 'user1', 'HASH1', 'blah, blah');
@@ -975,13 +951,13 @@ run_logging_test()
   wait_ready "$name"
 
   # try loggin in as a user that does not exist to trigger an error log message
-  echo 'psql -U nonexistent' | docker exec -i $(get_cid "$name") bash || :
+  echo 'psql -U nonexistent' | docker exec -i $(ct_get_cid "$name") bash || :
 
   # give server some time for write all audit messages
   sleep 1
 
   # check whether we have a correct output in the container log
-  if docker logs $(get_cid "$name") 2>&1 | grep -q 'FATAL:  role "nonexistent" does not exist' ; then
+  if docker logs $(ct_get_cid "$name") 2>&1 | grep -q 'FATAL:  role "nonexistent" does not exist' ; then
     echo "    PASS: the container log does include expected error message"
   else
     echo "ERROR: the container log does not include expected error message"
