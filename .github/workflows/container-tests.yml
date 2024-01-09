@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ "10", "11", "12", "13", "14", "15" ]
+        version: [ "10", "11", "12", "13", "14", "15", "16" ]
         os_test: [ "fedora", "rhel7", "rhel8", "rhel9", "c9s", "c8s"]
         test_case: [ "container" ]
 
