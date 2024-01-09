@@ -156,6 +156,15 @@ specs:
       c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
       latest_fedora: "f38"
 
+    "16":
+      version: "16"
+      prev_version: "13"
+      short: "16"
+      prev_short: "13"
+      common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
+      latest_fedora: "f39"
+
 
 matrix:
   exclude:
@@ -185,3 +194,7 @@ matrix:
         - rhel-7-x86_64
         - centos-7-x86_64
       version: "15"
+    - distros:
+        - rhel-7-x86_64
+        - centos-7-x86_64
+      version: "16"
