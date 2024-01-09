@@ -1,4 +1,8 @@
+{% if spec.version == "16" %}
+FROM quay.io/fedora/s2i-core:39
+{% else %}
 FROM quay.io/fedora/s2i-core:38
+{% endif %}
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -44,12 +48,18 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
+{% if spec.version == "16" %}
+RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql16-server postgresql16-contrib nss_wrapper " && \
+{% else %}
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
+{% endif %}
     INSTALL_PKGS+="findutils xz" && \
 {% if spec.version not in ["9.6", "10", "11"] %}
     INSTALL_PKGS+=" pgaudit" && \
 {% endif %}
+{% if spec.version not in ["16"] %}
     dnf -y module enable postgresql:{{ spec.version }} && \
+{% endif %}
     dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
