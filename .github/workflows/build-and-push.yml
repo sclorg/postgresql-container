@@ -28,6 +28,20 @@ jobs:
             quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
             quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
             docker_context: 15
+          - dockerfile: "16/Dockerfile.c9s"
+            registry_namespace: "sclorg"
+            tag: "c9s"
+            image_name: "postgresql-16-c9s"
+            quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
+            docker_context: 16
+          - dockerfile: "16/Dockerfile.c8s"
+            registry_namespace: "sclorg"
+            tag: "c8s"
+            image_name: "postgresql-16-c8s"
+            quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
+            docker_context: 16
           - dockerfile: "10/Dockerfile.c8s"
             registry_namespace: "sclorg"
             tag: "c8s"
@@ -84,10 +98,16 @@ jobs:
             quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
             image_name: "postgresql-15"
             docker_context: 15
-
+          - dockerfile: "16/Dockerfile.fedora"
+            registry_namespace: "fedora"
+            tag: "16"
+            quayio_username: "QUAY_IMAGE_FEDORA_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
+            image_name: "postgresql-16"
+            docker_context: 16
     steps:
       - name: check if Dockerfile is c9s, then Build multi arch image and push to quay.io registry
-        if: matrix.dockerfile == '13/Dockerfile.c9s' || matrix.dockerfile == '15/Dockerfile.c9s'
+        if: matrix.dockerfile == '13/Dockerfile.c9s' || matrix.dockerfile == '15/Dockerfile.c9s' || matrix.dockerfile == '16/Dockerfile.c9s'
         uses: sclorg/build-and-push-action@v4
         with:
           registry: "quay.io"
@@ -101,7 +121,7 @@ jobs:
           archs: amd64, s390x, ppc64le, arm64
           
       - name: Check if Dockerfile is not c9s, then Build and push to quay.io registry
-        if: matrix.dockerfile != '13/Dockerfile.c9s' && matrix.dockerfile != '15/Dockerfile.c9s'
+        if: matrix.dockerfile != '13/Dockerfile.c9s' && matrix.dockerfile != '15/Dockerfile.c9s' && matrix.dockerfile != '16/Dockerfile.c9s'
         uses: sclorg/build-and-push-action@v4
         with:
           registry: "quay.io"
