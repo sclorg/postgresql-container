@@ -158,9 +158,9 @@ specs:
 
     "16":
       version: "16"
-      prev_version: "13"
+      prev_version: "15"
       short: "16"
-      prev_short: "13"
+      prev_short: "15"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
       latest_fedora: "f39"
