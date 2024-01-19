@@ -15,7 +15,7 @@ ENV NAME=postgresql \
     ARCH=x86_64 \
     \
     POSTGRESQL_VERSION=16 \
-    POSTGRESQL_PREV_VERSION=13 \
+    POSTGRESQL_PREV_VERSION=15 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
