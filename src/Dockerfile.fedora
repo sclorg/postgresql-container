@@ -54,8 +54,11 @@ RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql16-server postgresql16-
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
 {% endif %}
     INSTALL_PKGS+="findutils xz" && \
-{% if spec.version not in ["9.6", "10", "11"] %}
+{% if spec.version not in ["9.6", "10", "11", "16"] %}
     INSTALL_PKGS+=" pgaudit" && \
+{% endif %}
+{% if spec.version == "16" %}
+    INSTALL_PKGS+=" postgresql16-pgaudit" && \
 {% endif %}
 {% if spec.version not in ["16"] %}
     dnf -y module enable postgresql:{{ spec.version }} && \
