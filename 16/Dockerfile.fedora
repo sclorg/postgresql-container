@@ -1,8 +1,4 @@
-{% if spec.version == "16" %}
 FROM quay.io/fedora/s2i-core:39
-{% else %}
-FROM quay.io/fedora/s2i-core:38
-{% endif %}
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -18,8 +14,8 @@ ENV NAME=postgresql \
     VERSION=0 \
     ARCH=x86_64 \
     \
-    POSTGRESQL_VERSION={{ spec.version }} \
-    POSTGRESQL_PREV_VERSION={{ spec.prev_version }} \
+    POSTGRESQL_VERSION=16 \
+    POSTGRESQL_PREV_VERSION=15 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
@@ -32,14 +28,14 @@ create, run, maintain and access a PostgreSQL DBMS server."
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="PostgreSQL {{ spec.version }}" \
+      io.k8s.display-name="PostgreSQL 16" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql{{ spec.short }}" \
+      io.openshift.tags="database,postgresql,postgresql16" \
       com.redhat.component="$NAME" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>" \
-      name="fedora/$NAME-{{ spec.short }}" \
+      name="fedora/$NAME-16" \
       version="0" \
-      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 quay.io/fedora/$NAME-{{ spec.short }}"
+      usage="docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 quay.io/fedora/$NAME-16"
 
 EXPOSE 5432
 
@@ -48,21 +44,9 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-{% if spec.version == "16" %}
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql16-server postgresql16-contrib nss_wrapper " && \
-{% else %}
-RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
-{% endif %}
     INSTALL_PKGS+="findutils xz" && \
-{% if spec.version not in ["9.6", "10", "11", "16"] %}
-    INSTALL_PKGS+=" pgaudit" && \
-{% endif %}
-{% if spec.version == "16" %}
     INSTALL_PKGS+=" postgresql16-pgaudit" && \
-{% endif %}
-{% if spec.version not in ["16"] %}
-    dnf -y module enable postgresql:{{ spec.version }} && \
-{% endif %}
     dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
