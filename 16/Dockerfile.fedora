@@ -46,7 +46,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # to make sure of that.
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql16-server postgresql16-contrib nss_wrapper " && \
     INSTALL_PKGS+="findutils xz" && \
-    INSTALL_PKGS+=" pgaudit" && \
+    INSTALL_PKGS+=" postgresql16-pgaudit" && \
     dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
