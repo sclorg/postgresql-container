@@ -61,6 +61,11 @@ ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql
 COPY root /
 COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 
+# Hard links are not supported in Testing Farm approach during sync to guest
+# operation system. Therefore tests are failing on error
+# /usr/libexec/s2i/run no such file or directory
+RUN ln -s /usr/bin/run-postgresql $STI_SCRIPTS_PATH/run
+
 VOLUME ["/var/lib/pgsql/data"]
 
 # S2I permission fixes
