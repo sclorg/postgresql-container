@@ -101,7 +101,3 @@ SYMLINK_RULES:
 
   - src: ../test
     dest: test
-
-  - src: /usr/bin/run-postgresql
-    dest: s2i/bin/run
-    check_symlink: false  # Disable check of dead symlinks
