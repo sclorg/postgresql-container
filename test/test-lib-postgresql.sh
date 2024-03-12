@@ -18,6 +18,11 @@ function test_postgresql_integration() {
     namespace_image="rhscl/postgresql-${VERSION}-rhel7"
   else
     namespace_image="${OS}/postgresql-${VERSION}"
+    # In case we test postgresql-16 that is not released yet
+    # let's use postgresql-15
+    if [ "${VERSION}" == "16" ]; then
+      namespace_image="${OS}/postgresql-15"
+    fi
   fi
   TEMPLATES="postgresql-ephemeral-template.json
   postgresql-persistent-template.json"
