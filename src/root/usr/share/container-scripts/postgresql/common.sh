@@ -297,6 +297,11 @@ function wait_for_postgresql_master() {
 
 run_pgupgrade ()
 (
+  # Remove .pid file if the file persists after ugly shut down
+  if [ -f "$PGDATA/postmaster.pid" ] && ! pgrep -f "postgres" > /dev/null; then
+    rm -rf "$PGDATA/postmaster.pid"
+  fi
+
   optimized=false
   old_raw_version=${POSTGRESQL_PREV_VERSION//\./}
   new_raw_version=${POSTGRESQL_VERSION//\./}
