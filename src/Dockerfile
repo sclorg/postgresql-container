@@ -96,6 +96,11 @@ ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
 COPY root /
 COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 
+# Hard links are not supported in Testing Farm approach during sync to guest
+# operation system. Therefore tests are failing on error
+# /usr/libexec/s2i/run no such file or directory
+RUN ln -s /usr/bin/run-postgresql $STI_SCRIPTS_PATH/run
+
 {% if spec.prod != "rhel8" and spec.prod != "rhel9" and config.os.id != "fedora" and spec.prod != "c8s" and spec.prod != "c9s" %}
 # When bash is started non-interactively, to run a shell script, for example it
 # looks for this variable and source the content of this file. This will enable

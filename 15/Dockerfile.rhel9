@@ -62,6 +62,11 @@ ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
 COPY root /
 COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 
+# Hard links are not supported in Testing Farm approach during sync to guest
+# operation system. Therefore tests are failing on error
+# /usr/libexec/s2i/run no such file or directory
+RUN ln -s /usr/bin/run-postgresql $STI_SCRIPTS_PATH/run
+
 # Not using VOLUME statement since it's not working in OpenShift Online:
 # https://github.com/sclorg/httpd-container/issues/30
 # VOLUME ["/var/lib/pgsql/data"]
