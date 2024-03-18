@@ -22,7 +22,7 @@ function test_postgresql_integration() {
     # This directory is cloned from TMT plan repo 'sclorg-tmt-plans'
     local devel_file="/root/sclorg-tmt-plans/devel_images"
     if [ -f "${devel_file}" ]; then
-      if grep -q "${OS}=postgresql-image=${VERSION}" "$devel_file" ; then
+      if grep -q "${OS}=postgresql-container=${VERSION}" "$devel_file" ; then
         echo "This version is currently developed, so skipping this test."
         return
       fi
@@ -55,7 +55,7 @@ function test_postgresql_imagestream() {
   # This directory is cloned from TMT plan repo 'sclorg-tmt-plans'
   local devel_file="/root/sclorg-tmt-plans/devel_images"
   if [ -f "${devel_file}" ]; then
-    if grep -q "${OS}=postgresql-image=${VERSION}" "$devel_file" ; then
+    if grep -q "${OS}=postgresql-container=${VERSION}" "$devel_file" ; then
       echo "This version is currently developed, so skipping this test."
       return
     fi
