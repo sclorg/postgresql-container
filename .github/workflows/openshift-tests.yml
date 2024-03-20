@@ -6,6 +6,9 @@ jobs:
   distgen-check:
     name: "Check distgen generated files"
     runs-on: ubuntu-20.04
+    concurrency:
+      group: ocp-${{ github.event.issue.number }}-${{ matrix.version }}-${{ matrix.os_test }}
+      cancel-in-progress: true
     if: |
       github.event.issue.pull_request
       && (contains(github.event.comment.body, '[test-openshift]') || contains(github.event.comment.body, '[test-all]'))
