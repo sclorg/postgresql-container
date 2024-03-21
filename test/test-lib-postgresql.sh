@@ -18,6 +18,15 @@ function test_postgresql_integration() {
     namespace_image="rhscl/postgresql-${VERSION}-rhel7"
   else
     namespace_image="${OS}/postgresql-${VERSION}"
+    # Check if the current version is already GA
+    # This directory is cloned from TMT plan repo 'sclorg-tmt-plans'
+    local devel_file="/root/sclorg-tmt-plans/devel_images"
+    if [ -f "${devel_file}" ]; then
+      if grep -q "${OS}=postgresql-container=${VERSION}" "$devel_file" ; then
+        echo "This version is currently developed, so skipping this test."
+        return
+      fi
+    fi
   fi
   TEMPLATES="postgresql-ephemeral-template.json
   postgresql-persistent-template.json"
@@ -41,6 +50,15 @@ function test_postgresql_imagestream() {
     tag="-el8"
   elif [ "${OS}" == "rhel9" ]; then
     tag="-el9"
+  fi
+  # Check if the current version is already GA
+  # This directory is cloned from TMT plan repo 'sclorg-tmt-plans'
+  local devel_file="/root/sclorg-tmt-plans/devel_images"
+  if [ -f "${devel_file}" ]; then
+    if grep -q "${OS}=postgresql-container=${VERSION}" "$devel_file" ; then
+      echo "This version is currently developed, so skipping this test."
+      return
+    fi
   fi
   TEMPLATES="postgresql-ephemeral-template.json
   postgresql-persistent-template.json"
