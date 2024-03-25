@@ -3,7 +3,7 @@
   pretty_name: PostgreSQL
   sample_repo: ""
   category: database
-  description: >
+  description: >-
     Provides a PostgreSQL APP_VERSION database on DISTRO_NAME.
     For more information about using this database image,
     including OpenShift considerations,
