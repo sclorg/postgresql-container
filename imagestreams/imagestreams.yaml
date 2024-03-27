@@ -1,0 +1,40 @@
+---
+- name: postgresql
+  pretty_name: PostgreSQL
+  sample_repo: ""
+  category: database
+  description: >-
+    Provides a PostgreSQL APP_VERSION database on DISTRO_NAME.
+    For more information about using this database image,
+    including OpenShift considerations,
+    see https://github.com/sclorg/postgresql-container/blob/master/README.md.
+  imagestream_files:
+  - filename: postgresql-centos.json
+    latest: "15-el9"
+    distros:
+      - name: CentOS Stream 8
+        app_versions: [10, 12, 13, 15, 16]
+
+      - name: CentOS Stream 9
+        app_versions: [13, 15, 16]
+
+  - filename: postgresql-rhel.json
+    latest: "15-el8"
+    distros:
+      - name: RHEL 7
+        app_versions: [10, 12, 13]
+
+      - name: RHEL 8
+        app_versions: [10, 12, 13, 15, 16]
+
+      - name: RHEL 9
+        app_versions: [13, 15, 16]
+
+  - filename: postgresql-rhel-aarch64.json
+    latest: "13-el8"
+    distros:
+      - name: RHEL 8
+        app_versions: [10, 12, 13, 15, 16]
+
+      - name: RHEL 9
+        app_versions: [13, 15, 16]
