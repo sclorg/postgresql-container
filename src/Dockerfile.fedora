@@ -50,10 +50,11 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # to make sure of that.
 {% if spec.version == "16" %}
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql16-server postgresql16-contrib nss_wrapper " && \
+    INSTALL_PKGS+=" procps-ng util-linux postgresql16-upgrade" && \
 {% else %}
-RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
+RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper postgresql-upgrade procps-ng util-linux" && \
 {% endif %}
-    INSTALL_PKGS+="findutils xz" && \
+    INSTALL_PKGS+=" findutils xz" && \
 {% if spec.version not in ["9.6", "10", "11", "16"] %}
     INSTALL_PKGS+=" pgaudit" && \
 {% endif %}

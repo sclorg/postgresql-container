@@ -45,7 +45,8 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql16-server postgresql16-contrib nss_wrapper " && \
-    INSTALL_PKGS+="findutils xz" && \
+    INSTALL_PKGS+=" procps-ng util-linux postgresql16-upgrade" && \
+    INSTALL_PKGS+=" findutils xz" && \
     INSTALL_PKGS+=" postgresql16-pgaudit" && \
     dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \

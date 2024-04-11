@@ -75,6 +75,7 @@ RUN {{ spec.environment_setup }}
     INSTALL_PKGS="$INSTALL_PKGS rh-postgresql{{ spec.short }}-pgaudit" && \
     {% elif spec.prod == 'rhel8' or spec.prod == 'rhel9' or spec.prod == 'c9s' %}
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
+    INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
     {% endif %}
 {% endif %}
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
