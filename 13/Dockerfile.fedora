@@ -44,8 +44,8 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
-    INSTALL_PKGS+="findutils xz" && \
+RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper postgresql-upgrade procps-ng util-linux" && \
+    INSTALL_PKGS+=" findutils xz" && \
     INSTALL_PKGS+=" pgaudit" && \
     dnf -y module enable postgresql:13 && \
     dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \

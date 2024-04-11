@@ -298,7 +298,7 @@ function wait_for_postgresql_master() {
 run_pgupgrade ()
 (
   # Remove .pid file if the file persists after ugly shut down
-  if [ -f "$PGDATA/postmaster.pid" ] && ! pgrep -f "postgres" > /dev/null; then
+  if [ -f "$PGDATA/postmaster.pid" ] && ! pg_isready > /dev/null; then
     rm -rf "$PGDATA/postmaster.pid"
   fi
 
@@ -312,8 +312,17 @@ run_pgupgrade ()
     old_collection=rh-postgresql$old_raw_version
   fi
 
-  old_pgengine=/opt/rh/$old_collection/root/usr/bin
-  new_pgengine=/opt/rh/rh-postgresql${new_raw_version}/root/usr/bin
+  # Backward compatibility for RHEL/CentOS 7
+  source /etc/os-release
+
+  if [[ $VERSION_ID -lt 8 ]]; then
+    old_pgengine=/opt/rh/$old_collection/root/usr/bin
+    new_pgengine=/opt/rh/rh-postgresql${new_raw_version}/root/usr/bin
+  else
+    old_pgengine=/usr/lib64/pgsql/postgresql-$old_raw_version/bin
+    new_pgengine=/usr/bin
+  fi
+
   PGDATA_new="${PGDATA}-new"
 
   printf >&2 "\n==========  \$PGDATA upgrade: %s -> %s  ==========\n\n" \
@@ -351,9 +360,9 @@ run_pgupgrade ()
   # boot up data directory with old postgres once again to make sure
   # it was shut down properly, otherwise the upgrade process fails
   info_msg "Starting old postgresql once again for a clean shutdown..."
-  "${old_pgengine}/pg_ctl" start -w --timeout 86400 -o "-h ''"
+  "${old_pgengine}/pg_ctl" start -w --timeout 86400 -o "-h 127.0.0.1''"
   info_msg "Waiting for postgresql to be ready for shutdown again..."
-  "${old_pgengine}/pg_isready"
+  "${old_pgengine}/pg_isready" -h 127.0.0.1
   info_msg "Shutting down old postgresql cleanly..."
   "${old_pgengine}/pg_ctl" stop
 
