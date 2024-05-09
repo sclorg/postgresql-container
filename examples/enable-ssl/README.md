@@ -23,8 +23,8 @@ oc new-app --name psql-ssl postgresql:13-el7~https://github.com/sclorg/postgresq
 
 ```bash
 openssl genrsa -out tls.key 2048
-openssl req -new -x509 -key tls.key -out tls.cert
-oc create secret tls db-ssl-keys --key tls.key --cert tls.cert
+openssl req -new -x509 -key tls.key -out tls.crt
+oc create secret tls db-ssl-keys --key tls.key --cert tls.crt
 ```
 
 3. Bind your secrets into postgres deploymentConfig:
