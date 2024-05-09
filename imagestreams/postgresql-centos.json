@@ -118,18 +118,36 @@
         }
       },
       {
-        "name": "latest",
+        "name": "16-el9",
         "annotations": {
-          "openshift.io/display-name": "PostgreSQL 15 (Latest)",
+          "openshift.io/display-name": "PostgreSQL 16 (CentOS Stream 9)",
           "openshift.io/provider-display-name": "Red Hat, Inc.",
-          "description": "Provides a PostgreSQL 15 database on CentOS Stream 9. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.\n\nWARNING: By selecting this tag, your application will automatically update to use the latest version available on OpenShift, including major version updates.\n",
+          "description": "Provides a PostgreSQL 16 database on CentOS Stream 9. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
           "iconClass": "icon-postgresql",
           "tags": "database,postgresql",
-          "version": "15"
+          "version": "16"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "quay.io/sclorg/postgresql-16-c9s:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      },
+      {
+        "name": "latest",
+        "annotations": {
+          "openshift.io/display-name": "PostgreSQL 16 (Latest)",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a PostgreSQL 16 database on CentOS Stream 9. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.\n\nWARNING: By selecting this tag, your application will automatically update to use the latest version available on OpenShift, including major version updates.\n",
+          "iconClass": "icon-postgresql",
+          "tags": "database,postgresql",
+          "version": "16"
         },
         "from": {
           "kind": "ImageStreamTag",
-          "name": "15-el9"
+          "name": "16-el9"
         },
         "referencePolicy": {
           "type": "Local"
