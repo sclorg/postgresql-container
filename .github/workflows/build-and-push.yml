@@ -21,6 +21,7 @@ jobs:
             quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
             quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
             docker_context: 13
+
           - dockerfile: "15/Dockerfile.c9s"
             registry_namespace: "sclorg"
             tag: "c9s"
@@ -28,6 +29,7 @@ jobs:
             quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
             quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
             docker_context: 15
+
           - dockerfile: "16/Dockerfile.c9s"
             registry_namespace: "sclorg"
             tag: "c9s"
@@ -35,41 +37,7 @@ jobs:
             quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
             quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
             docker_context: 16
-          - dockerfile: "16/Dockerfile.c8s"
-            registry_namespace: "sclorg"
-            tag: "c8s"
-            image_name: "postgresql-16-c8s"
-            quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
-            docker_context: 16
-          - dockerfile: "10/Dockerfile.c8s"
-            registry_namespace: "sclorg"
-            tag: "c8s"
-            quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
-            image_name: "postgresql-10-c8s"
-            docker_context: 10
-          - dockerfile: "12/Dockerfile.c8s"
-            registry_namespace: "sclorg"
-            tag: "c8s"
-            quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
-            image_name: "postgresql-12-c8s"
-            docker_context: 12
-          - dockerfile: "13/Dockerfile.c8s"
-            registry_namespace: "sclorg"
-            tag: "c8s"
-            quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
-            image_name: "postgresql-13-c8s"
-            docker_context: 13
-          - dockerfile: "15/Dockerfile.c8s"
-            registry_namespace: "sclorg"
-            tag: "c8s"
-            quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
-            image_name: "postgresql-15-c8s"
-            docker_context: 15
+
           - dockerfile: "12/Dockerfile.fedora"
             registry_namespace: "fedora"
             tag: "12"
@@ -77,6 +45,7 @@ jobs:
             quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
             image_name: "postgresql-12"
             docker_context: 12
+
           - dockerfile: "13/Dockerfile.fedora"
             registry_namespace: "fedora"
             tag: "13"
@@ -84,6 +53,7 @@ jobs:
             quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
             image_name: "postgresql-13"
             docker_context: 13
+
           - dockerfile: "14/Dockerfile.fedora"
             registry_namespace: "fedora"
             tag: "14"
@@ -91,6 +61,7 @@ jobs:
             quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
             image_name: "postgresql-14"
             docker_context: 14
+
           - dockerfile: "15/Dockerfile.fedora"
             registry_namespace: "fedora"
             tag: "15"
@@ -98,6 +69,7 @@ jobs:
             quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
             image_name: "postgresql-15"
             docker_context: 15
+
           - dockerfile: "16/Dockerfile.fedora"
             registry_namespace: "fedora"
             tag: "16"
