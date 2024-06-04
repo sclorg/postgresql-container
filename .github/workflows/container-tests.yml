@@ -5,7 +5,7 @@ on:
 jobs:
   distgen-check:
     name: "Check distgen generated files"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     concurrency:
       group: container-${{ github.event.issue.number }}-${{ matrix.version }}-${{ matrix.os_test }}
       cancel-in-progress: true
@@ -52,13 +52,13 @@ jobs:
           fi
   container-tests:
     needs: distgen-check
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     name: "Container tests: ${{ matrix.version }} - ${{ matrix.os_test }}"
     strategy:
       fail-fast: false
       matrix:
         version: [ "10", "11", "12", "13", "14", "15", "16" ]
-        os_test: [ "fedora", "rhel7", "rhel8", "rhel9", "c9s", "c8s"]
+        os_test: [ "fedora", "rhel7", "rhel8", "rhel9", "c9s" ]
         test_case: [ "container" ]
 
     if: |

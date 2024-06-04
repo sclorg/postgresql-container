@@ -12,9 +12,6 @@
   - filename: postgresql-centos.json
     latest: "16-el9"
     distros:
-      - name: CentOS Stream 8
-        app_versions: [10, 12, 13, 15]
-
       - name: CentOS Stream 9
         app_versions: [13, 15, 16]
 

@@ -73,7 +73,7 @@ RUN {{ spec.environment_setup }}
 {% if spec.version not in ["9.6", "10", "11"] %}
     {% if spec.prod == 'rhel7' or spec.prod == 'centos7' %}
     INSTALL_PKGS="$INSTALL_PKGS rh-postgresql{{ spec.short }}-pgaudit" && \
-    {% elif spec.prod == 'rhel8' or spec.prod == 'rhel9' or spec.prod == 'c9s' or spec.prod == 'c8s' %}
+    {% elif spec.prod == 'rhel8' or spec.prod == 'rhel9' or spec.prod == 'c9s' %}
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     {% endif %}
 {% endif %}
@@ -101,7 +101,7 @@ COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 # /usr/libexec/s2i/run no such file or directory
 RUN ln -s /usr/bin/run-postgresql $STI_SCRIPTS_PATH/run
 
-{% if spec.prod != "rhel8" and spec.prod != "rhel9" and config.os.id != "fedora" and spec.prod != "c8s" and spec.prod != "c9s" %}
+{% if spec.prod != "rhel8" and spec.prod != "rhel9" and config.os.id != "fedora" and spec.prod != "c9s" %}
 # When bash is started non-interactively, to run a shell script, for example it
 # looks for this variable and source the content of this file. This will enable
 # the SCL for all scripts without need to do 'scl enable'.
