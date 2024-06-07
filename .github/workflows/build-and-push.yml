@@ -104,3 +104,5 @@ jobs:
           docker_context: ${{ matrix.docker_context }}
           tag: ${{ matrix.tag }}
           image_name: ${{ matrix.image_name }}
+          readme: "${{ matrix.docker_context }}/README.md"
+          quay_application_token: ${{ secrets.QUAY_IMAGE_SCLORG_UPDATE_DESC }}
