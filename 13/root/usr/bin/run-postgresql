@@ -2,6 +2,15 @@
 
 export ENABLE_REPLICATION=${ENABLE_REPLICATION:-false}
 
+# Load secrets from files mounted on the filesystem and only expose them to this process.
+# This allows kubernetes to mount secrets as files in a directory rather than exposing them in the ENV.
+# For example: mount secret with key username as /run/secrets/postgresql/POSTGRESQL_USER
+for file in /run/secrets/postgresql/*
+do
+    [ -e "$file" ] || continue
+    export "$(basename $file)=$(cat $file)"
+done
+
 set -eu
 export_vars=$(cgroup-limits) ; export $export_vars
 
