@@ -1,0 +1,41 @@
+on:
+  issue_comment:
+    types:
+      - created
+jobs:
+  check-imagestreams:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+    if: |
+      github.event.issue.pull_request
+      && (contains(github.event.comment.body, '[test-openshift-pytest]') || contains(github.event.comment.body, '[test-all]'))
+      && contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association)
+    steps:
+      - uses: sclorg/ci-scripts/ocp-stream-generator@master
+        with:
+          ref: "refs/pull/${{ github.event.issue.number }}/head"
+
+  openshift-pytests:
+    name: "${{ matrix.test_case }} PyTests: ${{ matrix.version }} - ${{ matrix.os_test }}"
+    runs-on: ubuntu-latest
+    needs: check-imagestreams
+    concurrency:
+      group: ocp-pytest-${{ github.event.issue.number }}-${{ matrix.version }}-${{ matrix.os_test }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [ "10", "12", "13", "14", "15", "16" ]
+        os_test: [ "rhel8", "rhel9"]
+        test_case: [ "openshift-pytest" ]
+
+    steps:
+      - uses: sclorg/tfaga-wrapper@main
+        with:
+          os_test: ${{ matrix.os_test }}
+          version: ${{ matrix.version }}
+          test_case: ${{ matrix.test_case }}
+          public_api_key: ${{ secrets.TF_PUBLIC_API_KEY }}
+          private_api_key: ${{ secrets.TF_INTERNAL_API_KEY }}
