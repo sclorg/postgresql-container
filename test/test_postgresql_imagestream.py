@@ -44,7 +44,7 @@ class TestPostgreSQLImagestreamTemplate:
             template_file=f"examples/{template}",
             app_name=self.oc_api.pod_name_prefix,
             openshift_args=[
-                f"POSTGRESQL__VERSION={VERSION}{TAG}"
+                f"POSTGRESQL_VERSION={VERSION}{TAG}"
             ]
         )
         assert self.oc_api.is_pod_running(pod_name_prefix=self.oc_api.pod_name_prefix)
