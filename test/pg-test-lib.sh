@@ -21,20 +21,6 @@ get_image_id ()
         remote)
             local version=${1//\./}
             case $OS in
-            rhel7)
-                ns=rhscl
-                if test "$version" -eq 92; then
-                    ns=openshift3
-                fi
-                image=registry.redhat.io/$ns/postgresql-${version}-rhel7
-                ;;
-            centos7)
-                ns=centos7
-                if test "$version" -eq 92; then
-                    ns=openshift
-                fi
-                local image=quay.io/$ns/postgresql-${1//\./}-centos7
-                ;;
             rhel8)
                 ns=rhel8
                 local image=registry.redhat.io/$ns/postgresql-${version}
@@ -42,10 +28,6 @@ get_image_id ()
             rhel9)
                 ns=rhel9
                 local image=registry.redhat.io/$ns/postgresql-${version}
-                ;;
-            c8s)
-                ns=c8s
-                local image=quay.io/sclorg/postgresql-${version}-$ns
                 ;;
             c9s)
                 ns=c9s

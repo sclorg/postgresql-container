@@ -18,9 +18,6 @@
   - filename: postgresql-rhel.json
     latest: "16-el9"
     distros:
-      - name: RHEL 7
-        app_versions: [10, 12, 13]
-
       - name: RHEL 8
         app_versions: [10, 12, 13, 15, 16]
 
