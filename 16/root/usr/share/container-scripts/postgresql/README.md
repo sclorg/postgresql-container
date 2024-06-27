@@ -1,6 +1,6 @@
 # PostgreSQL 16 SQL Database Server Container Image
 
-This container image features the PostgreSQL 16 SQL database server, suitable for OpenShift and general applications. Users have the option to select from RHEL, CentOS, and Fedora-based images. RHEL images can be found in the [Red Hat Container Catalog](https://access.redhat.com/containers/), while CentOS images are available on [Quay.io](https://quay.io/organization/centos7), and Fedora images can be accessed in [Quay.io](https://quay.io/organization/fedora). The resulting image can be executed using [podman](https://github.com/containers/libpod).
+This container image features the PostgreSQL 16 SQL database server, suitable for OpenShift and general applications. Users have the option to select from RHEL, CentOS Stream, and Fedora-based images. RHEL images can be found in the [Red Hat Container Catalog](https://access.redhat.com/containers/), while CentOS Stream images are available on [Quay.io](https://quay.io/organization/sclorg), and Fedora images can be accessed in [Quay.io](https://quay.io/organization/fedora). The resulting image can be executed using [podman](https://github.com/containers/libpod).
 
 Please note that while the examples provided in this README utilize `podman`, it is possible to substitute any instance of `podman` with `docker` and the same arguments. `podman` can be installed with on Fedora with command `dnf install podman-docker`.
 
@@ -135,7 +135,6 @@ admin user is by changing the environment variables `POSTGRESQL_PASSWORD` and `P
 
 Changing database passwords through SQL statements or any other method than the environment variables mentioned above will cause a mismatch between the stored variable values and the actual passwords. When a database container starts, it will reset the passwords to the values stored in the environment variables.
 
-
 ## Extending Image
 
 You can extend this image in Openshift using the `Source` build strategy or via the standalone [source-to-image](https://github.com/openshift/source-to-image) application (where available). For this example, assume that you are using the `` image, available via `postgresql:16` imagestream tag in Openshift.
@@ -192,4 +191,4 @@ Subsequently, log output is redirected to the logging collector process and will
 
 ## Additional Resources
 
-The Dockerfile and other sources related to this container image can be found at https://github.com/sclorg/postgresql-container. In this repository, the CentOS Dockerfile is named Dockerfile, the RHEL7 Dockerfile is named Dockerfile.rhel7, the RHEL8 Dockerfile is named Dockerfile.rhel8, the RHEL9 Dockerfile is named Dockerfile.rhel9, and the Fedora Dockerfile is named Dockerfile.fedora.
+The Dockerfile and other sources related to this container image can be found at https://github.com/sclorg/postgresql-container. In this repository, the RHEL8 Dockerfile is named Dockerfile.rhel8, the RHEL9 Dockerfile is named Dockerfile.rhel9, and the Fedora Dockerfile is named Dockerfile.fedora.

@@ -4,12 +4,6 @@
 
 Images available on Quay.io are:
 
-- CentOS 7 [postgresql-10](https://quay.io/repository/centos7/postgresql-10-centos7)
-- CentOS 7 [postgresql-12](https://quay.io/repository/centos7/postgresql-12-centos7)
-- CentOS 7 [postgresql-13](https://quay.io/repository/centos7/postgresql-13-centos7)
-- CentOS Stream 8 [postgresql-10](https://quay.io/repository/sclorg/postgresql-10-c8s)
-- CentOS Stream 8 [postgresql-13](https://quay.io/repository/sclorg/postgresql-13-c8s)
-- CentOS Stream 8 [postgresql-15](https://quay.io/repository/sclorg/postgresql-15-c8s)
 - CentOS Stream 9 [postgresql-13](https://quay.io/repository/sclorg/postgresql-13-c9s)
 - CentOS Stream 9 [postgresql-15](https://quay.io/repository/sclorg/postgresql-15-c9s)
 - Fedora [postgresql-11](https://quay.io/repository/fedora/postgresql-11)
@@ -36,15 +30,10 @@ PostgreSQL versions currently supported are:
 - [postgresql-15](https://github.com/sclorg/postgresql-container/tree/master/15)
 
 RHEL versions currently supported are:
-
-- RHEL7
 - RHEL8
 - RHEL9
 
 CentOS versions currently supported are:
-
-- CentOS7
-- CentOS Stream 8
 - CentOS Stream 9
 
 ## Installation
