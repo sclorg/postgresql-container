@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         version: [ "10", "11", "12", "13", "15", "16" ]
-        os_test: [ "rhel7", "rhel8", "rhel9"]
+        os_test: [ "rhel8", "rhel9"]
         test_case: [ "openshift-4" ]
     steps:
       - uses: sclorg/tfaga-wrapper@main

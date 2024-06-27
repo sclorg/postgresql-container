@@ -57,10 +57,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 {% endif %}
 RUN {{ spec.environment_setup }}
 {% if spec.has_devel_repo %}
-  {% if config.os.id == 'centos' and spec.has_devel_repo.centos %}
-    yum-config-manager --add-repo https://cbs.centos.org/repos/sclo7-rh-postgresql{{ spec.version }}-rh-candidate/x86_64/os/ && \
-    echo gpgcheck=0 >> /etc/yum.repos.d/cbs.centos.org_repos_sclo7-rh-postgresql{{ spec.version }}-rh-candidate_x86_64_os_.repo && \
-  {% elif config.os.id == 'rhel' %}
+  {% if config.os.id == 'rhel' %}
     {% if spec.has_devel_repo.rhel == 'brew' %}
     yum-config-manager --add-repo http://download.devel.redhat.com/brewroot/repos/rhscl-{{ spec.rhscl_version.development }}-rh-postgresql{{ spec.version }}-rhel-7-build/latest/x86_64 && \
     echo gpgcheck=0 >> /etc/yum.repos.d/download.devel.redhat.com_brewroot_repos_rhscl-{{ spec.rhscl_version.development }}-rh-postgresql{{ spec.version }}-rhel-7-build_latest_x86_64.repo && \
@@ -71,12 +68,8 @@ RUN {{ spec.environment_setup }}
 {% endif %}
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper {{ spec.pkgs }}" && \
 {% if spec.version not in ["9.6", "10", "11"] %}
-    {% if spec.prod == 'rhel7' or spec.prod == 'centos7' %}
-    INSTALL_PKGS="$INSTALL_PKGS rh-postgresql{{ spec.short }}-pgaudit" && \
-    {% elif spec.prod == 'rhel8' or spec.prod == 'rhel9' or spec.prod == 'c9s' %}
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
-    {% endif %}
 {% endif %}
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
@@ -102,15 +95,6 @@ COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 # /usr/libexec/s2i/run no such file or directory
 RUN ln -s /usr/bin/run-postgresql $STI_SCRIPTS_PATH/run
 
-{% if spec.prod != "rhel8" and spec.prod != "rhel9" and config.os.id != "fedora" and spec.prod != "c9s" %}
-# When bash is started non-interactively, to run a shell script, for example it
-# looks for this variable and source the content of this file. This will enable
-# the SCL for all scripts without need to do 'scl enable'.
-ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
-    ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
-    PROMPT_COMMAND=". ${CONTAINER_SCRIPTS_PATH}/scl_enable"
-
-{% endif %}
 # Not using VOLUME statement since it's not working in OpenShift Online:
 # https://github.com/sclorg/httpd-container/issues/30
 # VOLUME ["/var/lib/pgsql/data"]

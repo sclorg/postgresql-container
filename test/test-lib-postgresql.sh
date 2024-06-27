@@ -14,18 +14,14 @@ source "${THISDIR}"/test-lib-remote-openshift.sh
 
 function test_postgresql_integration() {
   local service_name=postgresql
-  if [ "${OS}" == "rhel7" ]; then
-    namespace_image="rhscl/postgresql-${VERSION}-rhel7"
-  else
-    namespace_image="${OS}/postgresql-${VERSION}"
-    # Check if the current version is already GA
-    # This directory is cloned from TMT plan repo 'sclorg-tmt-plans'
-    local devel_file="/root/sclorg-tmt-plans/devel_images"
-    if [ -f "${devel_file}" ]; then
-      if grep -q "${OS}=postgresql-container=${VERSION}" "$devel_file" ; then
-        echo "This version is currently developed, so skipping this test."
-        return
-      fi
+  namespace_image="${OS}/postgresql-${VERSION}"
+  # Check if the current version is already GA
+  # This directory is cloned from TMT plan repo 'sclorg-tmt-plans'
+  local devel_file="/root/sclorg-tmt-plans/devel_images"
+  if [ -f "${devel_file}" ]; then
+    if grep -q "${OS}=postgresql-container=${VERSION}" "$devel_file" ; then
+      echo "This version is currently developed, so skipping this test."
+      return
     fi
   fi
   TEMPLATES="postgresql-ephemeral-template.json
@@ -45,10 +41,8 @@ function test_postgresql_integration() {
 
 # Check the imagestream
 function test_postgresql_imagestream() {
-  local tag="-el7"
-  if [ "${OS}" == "rhel8" ]; then
-    tag="-el8"
-  elif [ "${OS}" == "rhel9" ]; then
+  tag="-el8"
+  if [ "${OS}" == "rhel9" ]; then
     tag="-el9"
   fi
   # Check if the current version is already GA

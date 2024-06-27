@@ -14,41 +14,6 @@ specs:
       pkgs: "postgresql-server postgresql-contrib"
       environment_setup: >-4
            { yum -y module enable postgresql:{{ spec.version }} || :; } && \
-    centos:
-      distros:
-        - centos-7-x86_64
-      s2i_base: quay.io/centos7/s2i-core-centos7
-      org: "centos7"
-      prod: "centos7"
-      openshift_tags: "database,postgresql,postgresql{{ spec.short }},rh-postgresql{{ spec.short }}"
-      redhat_component: "rh-postgresql{{ spec.short }}-container"
-      enabled_collection: "rh-postgresql{{ spec.short }}"
-      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      pkgs: "rh-postgresql{{ spec.short }} rh-postgresql{{ spec.short }}-postgresql-contrib rh-postgresql{{ spec.short }}-syspaths rh-postgresql{{ spec.prev_short }}-postgresql-server"
-      repo_enable_reason: ""
-      environment_setup: yum install -y centos-release-scl-rh && \
-      staging_repo_setup: >-4
-              yum-config-manager --add-repo https://cbs.centos.org/repos/sclo7-rh-postgresql96-rh-candidate/x86_64/os/ && \
-              echo gpgcheck=0 >> /etc/yum.repos.d/cbs.centos.org_repos_sclo7-rh-postgresql96-rh-candidate_x86_64_os_.repo && \
-    rhel7:
-       distros:
-         - rhel-7-x86_64
-       s2i_base: rhscl/s2i-core-rhel7
-       org: "rhscl"
-       prod: "rhel7"
-       openshift_tags: "database,postgresql,postgresql{{ spec.short }},rh-postgresql{{ spec.short }}"
-       redhat_component: "rh-postgresql{{ spec.short }}-container"
-       enabled_collection: "rh-postgresql{{ spec.short }}"
-       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-       pkgs: "rh-postgresql{{ spec.short }} rh-postgresql{{ spec.short }}-postgresql-contrib rh-postgresql{{ spec.short }}-syspaths rh-postgresql{{ spec.prev_short }}-postgresql-server"
-       repo_enable_reason: |-
-         # rhel-7-server-ose-3.2-rpms is enabled for nss_wrapper until this pkg is
-         # in base RHEL
-       environment_setup: >-4
-           yum install -y yum-utils gettext && \
-               prepare-yum-repositories rhel-server-rhscl-7-rpms && \
-       rhscl_version:
-         development: 3.4
     rhel8:
        distros:
          - rhel-8-x86_64
@@ -97,8 +62,7 @@ specs:
       short: "10"
       prev_short: "96"
       common_image_name: "{{ spec.org }}/postgresql-10-{{ spec.prod }}"
-      rhel_image_name: "rhscl/postgresql-10-rhel7"
-      centos_image_name: "centos7/postgresql-10-centos7"
+      rhel_image_name: "rhel8/postgresql-{{ spec.short }}"
       latest_fedora: "f34"
 
     "12":
@@ -107,8 +71,7 @@ specs:
       short: "12"
       prev_short: "10"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      rhel_image_name: "rhscl/postgresql-{{ spec.short }}-rhel7"
-      centos_image_name: "centos7/postgresql-{{ spec.short }}-centos7"
+      rhel_image_name: "rhel8/postgresql-{{ spec.short }}"
       latest_fedora: "f38"
 
     "13":
@@ -117,9 +80,8 @@ specs:
       short: "13"
       prev_short: "12"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      rhel_image_name: "rhscl/postgresql-{{ spec.short }}-rhel7"
-      centos_image_name: "centos7/postgresql-{{ spec.short }}-centos7"
       c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
+      rhel_image_name: "rhel8/postgresql-{{ spec.short }}"
       latest_fedora: "f38"
 
     "14":
@@ -128,8 +90,7 @@ specs:
       short: "14"
       prev_short: "13"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      rhel_image_name: "rhscl/postgresql-{{ spec.short }}-rhel7"
-      centos_image_name: "centos7/postgresql-{{ spec.short }}-centos7"
+      rhel_image_name: "fedora/postgresql-{{ spec.short }}"
       c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
       latest_fedora: "f38"
 
@@ -139,7 +100,7 @@ specs:
       short: "15"
       prev_short: "13"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
+      rhel_image_name: "rhel8/postgresql-{{ spec.short }}"
       latest_fedora: "f38"
 
     "16":
@@ -156,16 +117,13 @@ matrix:
   include:
     - version: "10"
       distros:
-        - rhel-7-x86_64
         - rhel-8-x86_64
     - version: "12"
       distros:
-        - rhel-7-x86_64
         - rhel-8-x86_64
         - fedora-38-x86_64
     - version: "13"
       distros:
-        - rhel-7-x86_64
         - rhel-8-x86_64
         - rhel-9-x86_64
         - centos-stream-9-x86_64
