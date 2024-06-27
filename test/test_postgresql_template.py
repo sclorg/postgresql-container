@@ -15,6 +15,12 @@ VERSION = os.getenv("SINGLE_VERSION")
 IMAGE_NAME = os.getenv("IMAGE_NAME")
 OS = os.getenv("TARGET")
 
+TAGS = {
+    "rhel8": "-el8",
+    "rhel9": "-el9"
+}
+TAG = TAGS.get(OS, None)
+
 
 class TestPostgreSQLDeployTemplate:
 
@@ -38,7 +44,7 @@ class TestPostgreSQLDeployTemplate:
             template=f"examples/{template}",
             name_in_template="postgresql",
             openshift_args=[
-                f"POSTGRESQL_VERSION={VERSION}",
+                f"POSTGRESQL_VERSION={VERSION}{TAG}",
                 f"DATABASE_SERVICE_NAME={self.oc_api.pod_name_prefix}",
                 f"POSTGRESQL_USER=testu",
                 f"POSTGRESQL_PASSWORD=testp",
