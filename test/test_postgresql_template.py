@@ -44,7 +44,7 @@ class TestPostgreSQLDeployTemplate:
             template=f"examples/{template}",
             name_in_template="postgresql",
             openshift_args=[
-                f"POSTGRESQL_VERSION={VERSION}{TAG}",
+                f"POSTGRESQL_VERSION={VERSION}",
                 f"DATABASE_SERVICE_NAME={self.oc_api.pod_name_prefix}",
                 f"POSTGRESQL_USER=testu",
                 f"POSTGRESQL_PASSWORD=testp",
