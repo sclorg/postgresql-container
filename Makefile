@@ -1,6 +1,6 @@
 # Variables are documented in common/build.sh.
 BASE_IMAGE_NAME = postgresql
-VERSIONS = 10 12 13 14 15 16
+VERSIONS = 12 13 14 15 16
 OPENSHIFT_NAMESPACES = 9.2
 NOT_RELEASED_VERSIONS =
 
