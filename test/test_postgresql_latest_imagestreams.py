@@ -11,7 +11,7 @@ from container_ci_suite.utils import check_variables
 TEST_DIR = Path(os.path.abspath(os.path.dirname(__file__)))
 
 if not check_variables():
-    print("At least one variable from IMAGE_NAME, OS, SINGLE_VERSION is missing.")
+    print("At least one variable from IMAGE_NAME, OS, VERSION is missing.")
     sys.exit(1)
 
 
