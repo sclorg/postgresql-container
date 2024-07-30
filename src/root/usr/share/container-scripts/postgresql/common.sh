@@ -145,6 +145,13 @@ function should_hack_data_sync_retry() {
   return 1
 }
 
+function generate_postgresql_libraries_config() {
+  if [ -v POSTGRESQL_LIBRARIES ]; then
+    echo "shared_preload_libraries='${POSTGRESQL_LIBRARIES}'" >> "${POSTGRESQL_CONFIG_FILE}"
+  fi
+}
+
+
 # New config is generated every time a container is created. It only contains
 # additional custom settings and is included from $PGDATA/postgresql.conf.
 function generate_postgresql_config() {
@@ -172,6 +179,7 @@ function generate_postgresql_config() {
     echo "log_filename = '$(basename "${POSTGRESQL_LOG_DESTINATION}")'" >>"${POSTGRESQL_CONFIG_FILE}"
   fi
 
+  generate_postgresql_libraries_config
   (
   shopt -s nullglob
   for conf in "${APP_DATA}"/src/postgresql-cfg/*.conf; do
@@ -516,4 +524,13 @@ process_extending_files()
       fi
     done
   done <<<"$(get_matched_files '*.sh' "$@" | sort -u)"
+}
+
+create_extensions()
+{
+  if [ -v POSTGRESQL_EXTENSIONS ]; then
+    for EXT in $POSTGRESQL_EXTENSIONS; do
+      psql -c "CREATE EXTENSION IF NOT EXISTS ${EXT};"
+    done
+  fi
 }
