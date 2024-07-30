@@ -47,6 +47,7 @@ if $PG_INITIALIZED ; then
     create_users
 fi
 
+create_extensions
 process_extending_files \
     "${APP_DATA}/src/postgresql-start" \
     "${CONTAINER_SCRIPTS_PATH}/start"
