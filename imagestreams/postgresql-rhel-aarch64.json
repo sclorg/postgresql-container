@@ -10,24 +10,6 @@
   "spec": {
     "tags": [
       {
-        "name": "10-el8",
-        "annotations": {
-          "openshift.io/display-name": "PostgreSQL 10 (RHEL 8)",
-          "openshift.io/provider-display-name": "Red Hat, Inc.",
-          "description": "Provides a PostgreSQL 10 database on RHEL 8. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
-          "iconClass": "icon-postgresql",
-          "tags": "database,postgresql",
-          "version": "10"
-        },
-        "from": {
-          "kind": "DockerImage",
-          "name": "registry.redhat.io/rhel8/postgresql-10:latest"
-        },
-        "referencePolicy": {
-          "type": "Local"
-        }
-      },
-      {
         "name": "12-el8",
         "annotations": {
           "openshift.io/display-name": "PostgreSQL 12 (RHEL 8)",
