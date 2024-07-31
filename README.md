@@ -23,7 +23,6 @@ For learning more information about concepts used in these container images, see
 
 PostgreSQL versions currently supported are:
 
-- [postgresql-10](https://github.com/sclorg/postgresql-container/tree/master/10)
 - [postgresql-12](https://github.com/sclorg/postgresql-container/tree/master/12)
 - [postgresql-13](https://github.com/sclorg/postgresql-container/tree/master/13)
 - [postgresql-14](https://github.com/sclorg/postgresql-container/tree/master/14)
@@ -99,7 +98,6 @@ To contribute, please follow these steps:
 
 For detailed information on the usage of specific PostgreSQL Dockerfiles, please refer to the corresponding usage documentation:
 
-- [PostgreSQL 10 Usage Documentation](https://github.com/sclorg/postgresql-container/tree/master/10)
 - [PostgreSQL 12 Usage Documentation](https://github.com/sclorg/postgresql-container/tree/master/12)
 - [PostgreSQL 13 Usage Documentation](https://github.com/sclorg/postgresql-container/tree/master/13)
 - [PostgreSQL 14 Usage Documentation](https://github.com/sclorg/postgresql-container/tree/master/14)
