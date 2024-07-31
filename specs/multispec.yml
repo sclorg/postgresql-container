@@ -56,15 +56,6 @@ specs:
            { yum -y module enable postgresql:{{ spec.version }} || :; } && \
 
   version:
-    "10":
-      version: "10"
-      prev_version: "9.6"
-      short: "10"
-      prev_short: "96"
-      common_image_name: "{{ spec.org }}/postgresql-10-{{ spec.prod }}"
-      rhel_image_name: "rhel8/postgresql-{{ spec.short }}"
-      latest_fedora: "f34"
-
     "12":
       version: "12"
       prev_version: "10"
@@ -115,9 +106,6 @@ specs:
 
 matrix:
   include:
-    - version: "10"
-      distros:
-        - rhel-8-x86_64
     - version: "12"
       distros:
         - rhel-8-x86_64

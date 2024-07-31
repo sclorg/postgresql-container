@@ -686,7 +686,7 @@ run_upgrade_test ()
 {
   local ret=0
 
-    local upgrade_path="none 9.2 9.4 9.5 9.6 10 12 13 none" prev= act=
+    local upgrade_path="none 12 13 15 16 none" prev= act=
     for act in $upgrade_path; do
         if test "$act" = $VERSION; then
             break
@@ -711,12 +711,7 @@ run_migration_test ()
     [ "${OS}" == "fedora" ] && return 0
 
     local from_version
-    # Only test a subset of the migration path on non-intel hosts
-    if [ "$(uname -m)" == "x86_64" ]; then
-        local upgrade_path="9.2 9.4 9.5 9.6 10 12 13 15"
-    else
-        local upgrade_path="10 12 13 15"
-    fi
+    local upgrade_path="12 13 15 16"
 
     for from_version in $upgrade_path; do
         # Do not test migration from $VERSION:remote to $VERSION:local

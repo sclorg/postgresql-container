@@ -252,8 +252,8 @@
     {
       "name": "POSTGRESQL_VERSION",
       "displayName": "Version of PostgreSQL Image",
-      "description": "Version of PostgreSQL image to be used (10-el7, 10-el8, or latest).",
-      "value": "10-el8",
+      "description": "Version of PostgreSQL image to be used (13-el8, 15-el8, or latest).",
+      "value": "15-el8",
       "required": true
     }
   ]

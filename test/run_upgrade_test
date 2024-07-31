@@ -74,6 +74,7 @@ assert_upgrade_succeeds ()
         info "Upgrading to $upgrade_to"
         UPGRADE_IMAGE=$(get_image_id "$upgrade_to")
         run_server "$DATADIR" "$UPGRADE_IMAGE" "-e POSTGRESQL_UPGRADE=$1"
+        docker logs "$CID"
         wait_for_postgres "$CID"
         eval "data_${dataspec}_check"
         debug "the upgrading container of version '$upgrade_to' responded"
@@ -81,6 +82,7 @@ assert_upgrade_succeeds ()
         docker rm -f "$CID" >/dev/null
 
         run_server "$DATADIR" "$UPGRADE_IMAGE"
+        docker logs "$CID"
         wait_for_postgres "$CID"
         eval "data_${dataspec}_check"
         debug "restarted server of version '$upgrade_to' responded"
