@@ -233,10 +233,10 @@ EOF
 #
 
 # Allow connections from all hosts.
-host all all all md5
+host all all all scram-sha-256
 
 # Allow replication connections from all hosts.
-host replication all all md5
+host replication all all scram-sha-256
 EOF
 }
 
