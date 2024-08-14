@@ -48,6 +48,7 @@ LABEL summary="$SUMMARY" \
 EXPOSE 5432
 
 COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
+COPY CentOS-Stream-AppStream.repo CentOS-Stream-BaseOS.repo CentOS-Stream-Extras.repo CentOS-Stream-Extras-common.repo /etc/yum.repos.d/
 
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
