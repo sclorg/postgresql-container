@@ -65,6 +65,17 @@ specs:
       environment_setup: >-4
            { yum -y module enable postgresql:{{ spec.version }} || :; } && \
 
+    c10s:
+      distros:
+        - centos-stream-10-x86_64
+      s2i_base: quay.io/sclorg/s2i-core-c10s:c10s
+      org: "sclorg"
+      prod: "c10s"
+      openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+      redhat_component: "postgresql-{{ spec.short }}-container"
+      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      pkgs: "postgresql-server postgresql-contrib glibc-locale-source"
+
   version:
     "12":
       version: "12"
@@ -126,3 +137,4 @@ matrix:
         - rhel-9-x86_64
         - centos-stream-9-x86_64
         - fedora-40-x86_64
+        - centos-stream-10-x86_64

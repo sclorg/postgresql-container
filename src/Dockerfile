@@ -55,6 +55,9 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 {% if spec.repo_enable_reason %}
 {{ spec.repo_enable_reason }}
 {% endif %}
+{% if spec.prod == "c10s" %}
+RUN INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper {{ spec.pkgs }}" && \
+{% else %}
 RUN {{ spec.environment_setup }}
 {% if spec.has_devel_repo %}
   {% if config.os.id == 'rhel' %}
@@ -67,6 +70,7 @@ RUN {{ spec.environment_setup }}
   {% endif %}
 {% endif %}
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper {{ spec.pkgs }}" && \
+{% endif %}
 {% if spec.version not in ["9.6", "10", "11"] %}
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
