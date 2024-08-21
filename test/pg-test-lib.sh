@@ -33,6 +33,10 @@ get_image_id ()
                 ns=c9s
                 local image=quay.io/sclorg/postgresql-${version}-$ns
                 ;;
+            c10s)
+                ns=c10s
+                local image=quay.io/sclorg/postgresql-${version}-$ns
+                ;;
             esac
             docker pull "$image" >/dev/null
             echo "$image"
