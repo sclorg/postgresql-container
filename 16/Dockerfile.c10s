@@ -51,7 +51,8 @@ RUN INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper postgresql-server pos
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     mkdir -p /var/lib/pgsql/data && \
-    /usr/libexec/fix-permissions /var/lib/pgsql /var/run/postgresql
+    # Directory /var/run/postgresql was removed and /run/postgresql is marked as %ghost dir
+    /usr/libexec/fix-permissions /var/lib/pgsql
 
 # Get prefix path and path to scripts rather than hard-code them in scripts
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
