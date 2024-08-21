@@ -64,6 +64,24 @@
         }
       },
       {
+        "name": "16-el10",
+        "annotations": {
+          "openshift.io/display-name": "PostgreSQL 16 (CentOS Stream 10)",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a PostgreSQL 16 database on CentOS Stream 10. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/postgresql-container/blob/master/README.md.",
+          "iconClass": "icon-postgresql",
+          "tags": "database,postgresql",
+          "version": "16"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "quay.io/sclorg/postgresql-16-c10s:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      },
+      {
         "name": "latest",
         "annotations": {
           "openshift.io/display-name": "PostgreSQL 16 (Latest)",
