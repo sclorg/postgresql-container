@@ -313,22 +313,8 @@ run_pgupgrade ()
   old_raw_version=${POSTGRESQL_PREV_VERSION//\./}
   new_raw_version=${POSTGRESQL_VERSION//\./}
 
-  if test "$old_raw_version" = 92; then
-    old_collection=postgresql92
-  else
-    old_collection=rh-postgresql$old_raw_version
-  fi
-
-  # Backward compatibility for RHEL/CentOS 7
-  source /etc/os-release
-
-  if [[ $VERSION_ID -lt 8 ]]; then
-    old_pgengine=/opt/rh/$old_collection/root/usr/bin
-    new_pgengine=/opt/rh/rh-postgresql${new_raw_version}/root/usr/bin
-  else
-    old_pgengine=/usr/lib64/pgsql/postgresql-$old_raw_version/bin
-    new_pgengine=/usr/bin
-  fi
+  old_pgengine=/usr/lib64/pgsql/postgresql-$old_raw_version/bin
+  new_pgengine=/usr/bin
 
   PGDATA_new="${PGDATA}-new"
 
@@ -344,13 +330,6 @@ run_pgupgrade ()
   # disable this because of scl_source, 'set +u' just makes the code ugly
   # anyways
   set +u
-
-  # we need to have the old SCL enabled, otherwise the $old_pgengine is not
-  # working.  The scl_source script doesn't pay attention to non-zero exit
-  # statuses, so use 'set +e'.
-  set +e
-  source scl_source enable $old_collection
-  set -e
 
   case $POSTGRESQL_UPGRADE in
     copy) # we accept this
