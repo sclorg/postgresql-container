@@ -54,14 +54,19 @@ data_pagila_check ()
 2'
     # Deliberately moving heredoc into the container, otherwise it does not work
     # in podman 1.6.x due to https://bugzilla.redhat.com/show_bug.cgi?id=1827324
-    local output=$(docker exec -i "$CID" bash -c "psql -tA <<EOF
+    SECONDS=15
+    local output
+    while [ $SECONDS -gt 0 ] ; do
+        output=$(docker exec -i "$CID" bash -c "psql -tA <<EOF
 select count(*) from information_schema.tables where table_schema = 'public';
 select count(*) from information_schema.triggers;
 select count(*) from staff;
-EOF"
+EOF" 2>/dev/null || :
 )
-    test "$exp_output" = "$output" \
-        || error "Unexpected output: '$output', expected: '$exp_output'"
+        test "$exp_output" = "$output" && return
+        sleep 1
+    done
+    error "Unexpected output: '$output', expected: '$exp_output', and/or we waited too long"
 }
 
 data_empty_create ()
@@ -82,11 +87,17 @@ data_empty_check ()
 3'
     # Deliberately moving heredoc into the container, otherwise it does not work
     # in podman 1.6.x due to https://bugzilla.redhat.com/show_bug.cgi?id=1827324
-    local output=$(docker exec -i "$CID" bash -c "psql -tA <<EOF
+    SECONDS=15
+    local output
+    while [ $SECONDS -gt 0 ] ; do
+        output=$(docker exec -i "$CID" bash -c "psql -tA <<EOF
 select * from blah order by id;
-EOF"
+EOF" 2>/dev/null || :
 )
-    test "$exp_output" = "$output" || error "Unexpected output '$output'"
+        test "$exp_output" = "$output" && return
+	sleep 1
+    done
+    error "Unexpected output '$output', expected: '$exp_output', and/or we waited too long"
 }
 
 # wait_for_postgres CID
@@ -105,9 +116,9 @@ wait_for_postgres ()
         output=$(docker exec -i "$cid" bash -c \
             "psql -h localhost -tA -c 'select 1;' 2>/dev/null || :")
         case $output in
-        1*) return ;;
+        1*) debug "server up" ; return ;;
         "") ;;
-        *) echo "$output" ; false ;;
+        *) debug "server down" ; echo "$output" ; false ;;
         esac
         sleep 1
         counter=$(( counter + 1 ))
