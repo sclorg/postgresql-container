@@ -686,14 +686,33 @@ run_upgrade_test ()
 {
   local ret=0
 
-    local upgrade_path="none 12 13 15 16 none" prev= act=
+    local upgrade_path= prev= act=
+    case $OS in
+        rhel8)
+            upgrade_path="none 12 13 15 16 none"
+            ;;
+        rhel9|c9s)
+            upgrade_path="none 13 15 16 none"
+            ;;
+        rhel10|c10s)
+            upgrade_path="none 13 15 16 none"
+            ;;
+        fedora)
+            upgrade_path="none 12 13 14 15 16 none"
+            ;;
+        *)
+            echo "unsupported OS variable" >&2
+            return 1
+            ;;
+    esac
+
     for act in $upgrade_path; do
         if test "$act" = $VERSION; then
             break
         fi
         prev=$act
     done
-    test "$prev" != none
+    test "$prev" != none || return 0
     # Check if the previous image is available in the registry
     docker pull "$(get_image_id "$prev:remote")" || return 0
 
