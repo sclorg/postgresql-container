@@ -29,6 +29,7 @@ background_container ()
 {
     CID=$(eval "docker run -d $2 $1 $3")
     test -n "$CID"
+    info "Started container $CID" >&2
 }
 
 # run_server DATADIR IMAGE_ID DOCKER_ARGS
