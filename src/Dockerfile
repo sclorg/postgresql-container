@@ -56,20 +56,10 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 {{ spec.repo_enable_reason }}
 {% endif %}
 {% if spec.prod == "c10s" %}
-RUN INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper {{ spec.pkgs }}" && \
+RUN INSTALL_PKGS="rsync tar gettext-envsubst bind-utils nss_wrapper-libs {{ spec.pkgs }}" && \
 {% else %}
 RUN {{ spec.environment_setup }}
-{% if spec.has_devel_repo %}
-  {% if config.os.id == 'rhel' %}
-    {% if spec.has_devel_repo.rhel == 'brew' %}
-    yum-config-manager --add-repo http://download.devel.redhat.com/brewroot/repos/rhscl-{{ spec.rhscl_version.development }}-rh-postgresql{{ spec.version }}-rhel-7-build/latest/x86_64 && \
-    echo gpgcheck=0 >> /etc/yum.repos.d/download.devel.redhat.com_brewroot_repos_rhscl-{{ spec.rhscl_version.development }}-rh-postgresql{{ spec.version }}-rhel-7-build_latest_x86_64.repo && \
-    {% elif spec.has_devel_repo.rhel == 'beta' %}
-    yum-config-manager --enable rhel-server-rhscl-7-beta-rpms && \
-    {% endif %}
-  {% endif %}
-{% endif %}
-    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper {{ spec.pkgs }}" && \
+    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper-libs {{ spec.pkgs }}" && \
 {% endif %}
 {% if spec.version not in ["9.6", "10", "11"] %}
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
