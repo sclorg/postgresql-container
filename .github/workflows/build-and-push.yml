@@ -38,30 +38,6 @@ jobs:
             quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
             docker_context: 16
 
-          - dockerfile: "12/Dockerfile.fedora"
-            registry_namespace: "fedora"
-            tag: "12"
-            quayio_username: "QUAY_IMAGE_FEDORA_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
-            image_name: "postgresql-12"
-            docker_context: 12
-
-          - dockerfile: "13/Dockerfile.fedora"
-            registry_namespace: "fedora"
-            tag: "13"
-            quayio_username: "QUAY_IMAGE_FEDORA_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
-            image_name: "postgresql-13"
-            docker_context: 13
-
-          - dockerfile: "14/Dockerfile.fedora"
-            registry_namespace: "fedora"
-            tag: "14"
-            quayio_username: "QUAY_IMAGE_FEDORA_BUILDER_USERNAME"
-            quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
-            image_name: "postgresql-14"
-            docker_context: 14
-
           - dockerfile: "15/Dockerfile.fedora"
             registry_namespace: "fedora"
             tag: "15"
@@ -77,6 +53,7 @@ jobs:
             quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
             image_name: "postgresql-16"
             docker_context: 16
+
     steps:
       - name: check if Dockerfile is c9s, then Build multi arch image and push to quay.io registry
         if: matrix.dockerfile == '13/Dockerfile.c9s' || matrix.dockerfile == '15/Dockerfile.c9s' || matrix.dockerfile == '16/Dockerfile.c9s'
