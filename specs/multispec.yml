@@ -2,9 +2,9 @@ version: 1
 
 specs:
   distroinfo:
-    fedora:
+    fedora39:
       distros:
-        - fedora-38-x86_64
+        - fedora-39-x86_64
       s2i_base: quay.io/fedora/s2i-core
       org: "fedora"
       prod: "fedora"
@@ -12,8 +12,18 @@ specs:
       redhat_component: "postgresql-{{ spec.short }}-container"
       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       pkgs: "postgresql-server postgresql-contrib"
-      environment_setup: >-4
-           { yum -y module enable postgresql:{{ spec.version }} || :; } && \
+
+    fedora40:
+      distros:
+        - fedora-40-x86_64
+      s2i_base: quay.io/fedora/s2i-core
+      org: "fedora"
+      prod: "fedora"
+      openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+      redhat_component: "postgresql-{{ spec.short }}-container"
+      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      pkgs: "postgresql-server postgresql-contrib"
+
     rhel8:
        distros:
          - rhel-8-x86_64
@@ -75,16 +85,6 @@ specs:
       rhel_image_name: "rhel8/postgresql-{{ spec.short }}"
       latest_fedora: "f38"
 
-    "14":
-      version: "14"
-      prev_version: "13"
-      short: "14"
-      prev_short: "13"
-      common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      rhel_image_name: "fedora/postgresql-{{ spec.short }}"
-      c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
-      latest_fedora: "f38"
-
     "15":
       version: "15"
       prev_version: "13"
@@ -92,7 +92,7 @@ specs:
       prev_short: "13"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       rhel_image_name: "rhel8/postgresql-{{ spec.short }}"
-      latest_fedora: "f38"
+      latest_fedora: "f40"
 
     "16":
       version: "16"
@@ -101,7 +101,7 @@ specs:
       prev_short: "15"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
-      latest_fedora: "f39"
+      latest_fedora: "f40"
 
 
 matrix:
@@ -109,25 +109,20 @@ matrix:
     - version: "12"
       distros:
         - rhel-8-x86_64
-        - fedora-38-x86_64
     - version: "13"
       distros:
         - rhel-8-x86_64
         - rhel-9-x86_64
         - centos-stream-9-x86_64
-        - fedora-38-x86_64
-    - version: "14"
-      distros:
-        - fedora-38-x86_64
     - version: "15"
       distros:
         - rhel-8-x86_64
         - rhel-9-x86_64
         - centos-stream-9-x86_64
-        - fedora-38-x86_64
+        - fedora-40-x86_64
     - version: "16"
       distros:
         - rhel-8-x86_64
         - rhel-9-x86_64
         - centos-stream-9-x86_64
-        - fedora-38-x86_64
+        - fedora-40-x86_64
