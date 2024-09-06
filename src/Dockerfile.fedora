@@ -1,5 +1,5 @@
-{% if spec.version == "16" %}
-FROM quay.io/fedora/s2i-core:39
+{% if spec.version == "16" or spec.version == "15" %}
+FROM quay.io/fedora/s2i-core:40
 {% else %}
 FROM quay.io/fedora/s2i-core:38
 {% endif %}
