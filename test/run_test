@@ -329,9 +329,14 @@ function test_config_option() {
 # Wait until the PG container becomes ready
 wait_ready ()
 {
-  while ! docker exec "$(get_cid "$1")" /usr/libexec/check-container ; do
+  local max_attempts=20
+  for i in $(seq $max_attempts); do
+    if docker exec "$(get_cid "$1")" /usr/libexec/check-container; then
+      return 0
+    fi
     sleep 1
   done
+  return 1
 }
 
 
@@ -887,7 +892,8 @@ run_s2i_enable_ssl_test()
   DOCKER_ARGS="-e POSTGRESQL_ADMIN_PASSWORD=password" \
     IMAGE_NAME="$s2i_image_name" create_container "$container_name"
 
-  wait_ready "$container_name"
+  wait_ready "$container_name" || \
+    false "FAIL: Container did not start up properly."
   CONTAINER_IP=$(get_container_ip $container_name)
 
   DB=postgres assert_login_access postgres password true
@@ -907,7 +913,8 @@ run_s2i_bake_data_test ()
   DOCKER_ARGS="-e POSTGRESQL_ADMIN_PASSWORD=password" \
     IMAGE_NAME="$s2i_image_name" create_container "$container_name"
 
-  wait_ready "$container_name"
+  wait_ready "$container_name" || \
+    false "FAIL: Container did not start up properly."
 
   test "hello world" == "$(docker exec "$(get_cid "$container_name")" \
                            bash -c "psql -tA -c 'SELECT * FROM test;'")"
@@ -942,7 +949,8 @@ $DOCKER_EXTRA_ARGS
   " create_container "$name"
 
   assert_runtime_option "$name" shared_preload_libraries pgaudit || ret=1
-  wait_ready "$name"
+  wait_ready "$name" || \
+    false "FAIL: Container did not start up properly."
 
   # enable the pgaudit extension
   # Deliberately moving heredoc into the container, otherwise it does not work
@@ -986,7 +994,8 @@ run_logging_test()
   " create_container "$name"
 
   assert_runtime_option "$name" log_destination logging_collector log_directory log_filename
-  wait_ready "$name"
+  wait_ready "$name" || \
+    false "FAIL: Container did not start up properly."
 
   # try loggin in as a user that does not exist to trigger an error log message
   echo 'psql -U nonexistent' | docker exec -i $(get_cid "$name") bash || :
