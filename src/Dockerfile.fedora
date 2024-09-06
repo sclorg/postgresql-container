@@ -52,13 +52,13 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
     INSTALL_PKGS+=" procps-ng util-linux postgresql-upgrade" && \
 {% else %}
-RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql15-server postgresql15-contrib nss_wrapper postgresql15-upgrade procps-ng util-linux" && \
+RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib nss_wrapper postgresql{{ spec.short }}-upgrade procps-ng util-linux" && \
 {% endif %}
     INSTALL_PKGS+=" findutils xz" && \
 {% if spec.version == "16" %}
     INSTALL_PKGS+=" pgaudit" && \
 {% else %}
-    INSTALL_PKGS+=" postgresql15-pgaudit" && \
+    INSTALL_PKGS+=" postgresql{{ spec.short }}-pgaudit" && \
 {% endif %}
     dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
