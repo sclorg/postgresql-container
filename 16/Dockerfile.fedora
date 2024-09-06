@@ -44,17 +44,18 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql16-server postgresql16-contrib nss_wrapper " && \
-    INSTALL_PKGS+=" procps-ng util-linux postgresql16-upgrade" && \
+RUN INSTALL_PKGS="rsync tar gettext bind-utils postgresql-server postgresql-contrib nss_wrapper " && \
+    INSTALL_PKGS+=" procps-ng util-linux postgresql-upgrade" && \
     INSTALL_PKGS+=" findutils xz" && \
-    INSTALL_PKGS+=" postgresql16-pgaudit" && \
+    INSTALL_PKGS+=" pgaudit" && \
     dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
     dnf clean all && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     mkdir -p /var/lib/pgsql/data && \
-    /usr/libexec/fix-permissions /var/lib/pgsql /var/run/postgresql
+    mkdir -p /run/postgresql && \
+    /usr/libexec/fix-permissions /var/lib/pgsql /run/postgresql
 
 # Get prefix path and path to scripts rather than hard-code them in scripts
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql
