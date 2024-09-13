@@ -56,15 +56,17 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 {{ spec.repo_enable_reason }}
 {% endif %}
 {% if spec.prod == "c10s" %}
-RUN INSTALL_PKGS="rsync tar gettext-envsubst bind-utils nss_wrapper-libs {{ spec.pkgs }}" && \
-    PSQL_PKGS={{ spec.pkgs }} && \
+RUN INSTALL_PKGS="rsync tar gettext-envsubst bind-utils nss_wrapper-libs glibc-locale-source xz" && \
+    PSQL_PKGS="{{ spec.pkgs }}" && \
 {% else %}
 RUN {{ spec.environment_setup }}
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper-libs {{ spec.pkgs }}" && \
 {% endif %}
 {% if spec.version not in ["9.6", "10", "11"] %}
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
+    {% if spec.prod != "c10s" %}
     INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
+    {% endif %}
 {% endif %}
 {% if spec.prod == "c10s" %}
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS $PSQL_PKGS  && \

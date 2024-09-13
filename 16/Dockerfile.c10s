@@ -41,12 +41,11 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN INSTALL_PKGS="rsync tar gettext-envsubst bind-utils nss_wrapper-libs postgresql16-server postgresql16-contrib glibc-locale-source xz" && \
-    PSQL_PKGS=postgresql16-server postgresql16-contrib glibc-locale-source xz && \
+RUN INSTALL_PKGS="rsync tar gettext-envsubst bind-utils nss_wrapper-libs glibc-locale-source xz" && \
+    PSQL_PKGS="postgresql16-server postgresql16-contrib postgresql16-upgrade" && \
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
-    INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS $PSQL_PKGS  && \
-    rpm -V $INSTALL_PKGS postgresql-server-16 postgresql-contrib-16 && \
+    rpm -V $INSTALL_PKGS postgresql-server postgresql-contrib postgresql-upgrade && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
     yum -y clean all --enablerepo='*' && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
