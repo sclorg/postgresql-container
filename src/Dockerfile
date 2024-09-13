@@ -57,6 +57,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 {% endif %}
 {% if spec.prod == "c10s" %}
 RUN INSTALL_PKGS="rsync tar gettext-envsubst bind-utils nss_wrapper-libs {{ spec.pkgs }}" && \
+    PSQL_PKGS={{ spec.pkgs }} && \
 {% else %}
 RUN {{ spec.environment_setup }}
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper-libs {{ spec.pkgs }}" && \
@@ -65,8 +66,13 @@ RUN {{ spec.environment_setup }}
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
 {% endif %}
+{% if spec.prod == "c10s" %}
+    yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS $PSQL_PKGS  && \
+    rpm -V $INSTALL_PKGS {{ spec.check_pkgs }} && \
+{% else %}
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
+{% endif %}
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
     {% if spec.post_install %}
     {{ spec.post_install }}

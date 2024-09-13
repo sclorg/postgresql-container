@@ -74,7 +74,8 @@ specs:
       openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
       redhat_component: "postgresql-{{ spec.short }}-container"
       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      pkgs: "postgresql-server postgresql-contrib glibc-locale-source xz"
+      pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib glibc-locale-source xz"
+      check_pkgs: "postgresql-server-{{ spec.short }} postgresql-contrib-{{ spec.short }}"
 
   version:
     "12":
