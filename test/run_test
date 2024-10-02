@@ -934,7 +934,7 @@ run_pgaudit_test()
   # create a dir for config
   config_dir=$(mktemp -d --tmpdir pg-hook-volume.XXXXX)
   add_cleanup_command /bin/rm -rf "$config_dir"
-  -v DOCKER_EXTRA_ARGS || cp -r "$test_dir"/examples/pgaudit/* "$config_dir"
+  test -n "$DOCKER_EXTRA_ARGS" || cp -r "$test_dir"/examples/pgaudit/* "$config_dir"
   setfacl -R -m u:26:rwx "$config_dir"
 
   # create a dir for data
