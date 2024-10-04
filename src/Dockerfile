@@ -58,6 +58,8 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 {% if spec.prod == "c10s" %}
 RUN INSTALL_PKGS="rsync tar gettext-envsubst bind-utils nss_wrapper-libs glibc-locale-source xz" && \
     PSQL_PKGS="{{ spec.pkgs }}" && \
+{% elif spec.prod == "rhel9" and spec.version == "13" %} \
+RUN INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper-libs {{ spec.pkgs }}" && \
 {% else %}
 RUN {{ spec.environment_setup }}
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper-libs {{ spec.pkgs }}" && \
