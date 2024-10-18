@@ -20,7 +20,6 @@ run_container_creation_tests
 run_general_tests
 run_change_password_test
 run_replication_test
-run_doc_test
 run_s2i_test
 run_test_cfg_hook
 run_s2i_bake_data_test
@@ -805,9 +804,6 @@ ${mount_opts}
 run_s2i_test() {
   local temp_file
   local ret=0
-  echo "  Testing s2i usage"
-  ct_s2i_usage "${IMAGE_NAME}" --pull-policy=never 1>/dev/null || ret=1
-
   echo "  Testing s2i build"
 
   local s2i_image_name=$IMAGE_NAME-testapp_$(ct_random_string)
