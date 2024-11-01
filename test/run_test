@@ -27,7 +27,7 @@ run_s2i_enable_ssl_test
 run_upgrade_test
 run_migration_test
 run_pgaudit_test
-run_new_pgaudit_test
+run_env_extension_load_test
 run_logging_test
 "
 
@@ -291,6 +291,12 @@ function try_image_invalid_combinations() {
   return $ret
 }
 
+# run_container_creation_tests
+# --------------------
+# Asserts that container image fails to run in certain illegal use of arguments,
+# while it correctly runs in other combinations.
+# NOTE: Previously the `creation_succeeds` combinations were supposed to fail, but
+# these cases are now supposed to work
 function run_container_creation_tests() {
   local ret=0
   echo "  Testing image entrypoint usage"
@@ -583,6 +589,11 @@ function run_master_restart_test() {
   return $ret
 }
 
+# run_replication_test
+# --------------------
+# Start two containers one as main, one as secondary. Checks whether the main
+# sees secondary server connected. Tries to create data on main server and
+# checks whether they are correctly replicated to secondary server.
 function run_replication_test() {
   local DB=postgres
   local PGUSER=master
@@ -610,6 +621,10 @@ function run_replication_test() {
   return $ret
 }
 
+# run_change_password_test
+# --------------------
+# Check whether starting container with different password argument correctly
+# changes the password and allows connection to old already used db.
 function run_change_password_test() {
   echo "  Testing password change"
   local name="change_password"
@@ -686,6 +701,11 @@ $volume_options
   return $ret
 }
 
+# run_upgrade_test
+# --------------------
+# Testing upgrade from previous version to current version using
+# POSTGRESQL_UPGRADE env variable. Checks that upgrade is successfull using two
+# demo databases (simple and pagila)
 run_upgrade_test ()
 {
   local ret=0
@@ -728,6 +748,11 @@ run_upgrade_test ()
   return $ret
 }
 
+# run_migration_test
+# --------------------
+# Testing migration from each supported version to currently tested one. Pagila
+# is used as a demo database - data integrity is checked. Asserts that no
+# invalid options can be passed without container failing to start.
 run_migration_test ()
 {
   local ret=0
@@ -750,6 +775,10 @@ run_migration_test ()
   return $ret
 }
 
+# run_doc_test
+# --------------------
+# Checks whether `help.1` file with specific terms is included in default
+# working directory in the container image.
 run_doc_test() {
   local tmpdir=$(mktemp -d)
   local f
@@ -801,6 +830,10 @@ ${mount_opts}
   return $ret
 }
 
+# run_s2i_test
+# --------------------
+# Build S2I image with basic script. Try running the container with usage of the
+# script that we built into that S2I image. Compare with original image.
 run_s2i_test() {
   local temp_file
   local ret=0
@@ -826,6 +859,10 @@ run_s2i_test() {
   return $ret
 }
 
+# run_general_tests
+# --------------------
+# Tests different combinations of parameters and that they work. Also tests SCL
+# usage. Tries to actually SELECT something from the database.
 function run_general_tests() {
   local ret=0
   PGUSER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_MAX_PREPARED_TRANSACTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin || ret=1
@@ -841,6 +878,10 @@ function run_general_tests() {
   return $ret
 }
 
+# run_test_cfg_hook
+# --------------------
+# Checks whether using config files in persistent mounted volume works. Also
+# checks that the config file has priority over env variables.
 run_test_cfg_hook()
 {
   local ret=0
@@ -877,6 +918,10 @@ run_test_cfg_hook()
   return $ret
 }
 
+# run_s2i_enable_ssl_test
+# --------------------
+# Creates S2I image with SSL config and certificates. Tries to connect with
+# required SSL connection.
 run_s2i_enable_ssl_test()
 {
   local s2i_image_name="$IMAGE_NAME-ssl_$(ct_random_string)"
@@ -898,6 +943,10 @@ run_s2i_enable_ssl_test()
     false "FAIL: Did not manage to connect using SSL only."
 }
 
+# run_s2i_bake_data_test
+# --------------------
+# Testing pre-start script and `init.sql` file with prefilled data placed in S2I
+# resulting image.
 run_s2i_bake_data_test ()
 {
   local s2i_image_name="$IMAGE_NAME-bake_$(ct_random_string)"
@@ -916,6 +965,11 @@ run_s2i_bake_data_test ()
                            bash -c "psql -tA -c 'SELECT * FROM test;'")"
 }
 
+# run_pgaudit_test
+# --------------------
+# Configure container to include pgaudit using config directory volumes. Check
+# that pgaudit is loaded. Set pgaudit logging and check that logs are present in
+# log folder.
 run_pgaudit_test()
 {
   local ret=0
@@ -975,6 +1029,10 @@ EOSQL" || ret=3
   return $ret
 }
 
+# run_logging_test
+# --------------------
+# Checks that changing log location via `POSTGRESQL_LOG_DESTINATION` env
+# variable works correctly.
 run_logging_test()
 {
   local data_dir name=pg-test-logging
@@ -1018,7 +1076,11 @@ run_logging_test()
   echo "  Success!"
 }
 
-run_new_pgaudit_test() {
+# run_env_extension_load_test
+# --------------------
+# Tries to load pgaudit extension using environment variables
+# `POSTGRESQL_EXTENSIONS` and `POSTGRESQL_LIBRARIES`
+run_env_extension_load_test() {
     DOCKER_EXTRA_ARGS="
 -e POSTGRESQL_EXTENSIONS=pgaudit
 -e POSTGRESQL_LIBRARIES=pgaudit"
