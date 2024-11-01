@@ -37,6 +37,10 @@ test -n "${VERSION-}" || false 'make sure $VERSION is defined'
 test -n "${OS-}" || false 'make sure $OS is defined'
 
 
+####
+# HELPER FUNCTIONS
+####
+
 DOCKER_EXTRA_ARGS=
 
 volumes_to_clean=
@@ -291,35 +295,6 @@ function try_image_invalid_combinations() {
   return $ret
 }
 
-# run_container_creation_tests
-# --------------------
-# Asserts that container image fails to run in certain illegal use of arguments,
-# while it correctly runs in other combinations.
-# NOTE: Previously the `creation_succeeds` combinations were supposed to fail, but
-# these cases are now supposed to work
-function run_container_creation_tests() {
-  local ret=0
-  echo "  Testing image entrypoint usage"
-  try_image_invalid_combinations || ret=1
-  try_image_invalid_combinations  -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=2
-
-VERY_LONG_IDENTIFIER="very_long_identifier_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  assert_container_creation_fails -e POSTGRESQL_USER= -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=3
-  assert_container_creation_fails -e POSTGRESQL_USER=$VERY_LONG_IDENTIFIER -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=4
-  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD="\"" -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=5
-  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=9invalid -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=6
-  assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=$VERY_LONG_IDENTIFIER -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=7
-  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD="\"" || ret=8
-
-  assert_container_creation_succeeds -e POSTGRESQL_ADMIN_PASSWORD="the @password" || ret=9
-  assert_container_creation_succeeds -e POSTGRESQL_PASSWORD="the pass" -e POSTGRESQL_USER="the user" -e POSTGRESQL_DATABASE="the db" || ret=10
-
-  if [ $ret -eq 0 ]; then
-    echo "  Success!"
-  fi
-  return $ret
-}
-
 function test_config_option() {
   local name=$1 ; shift
   local setting=$1 ; shift
@@ -537,6 +512,38 @@ function setup_replication_cluster() {
 
 }
 
+test_the_app_image () {
+  local container_name=$1
+  local mount_opts=$2
+  local ret=0
+  echo "    Testing s2i app image with invalid configuration"
+  assert_container_creation_fails -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db || ret=1
+  echo "    Testing s2i app image with correct configuration"
+
+    DOCKER_ARGS="
+-e POSTGRESQL_DATABASE=db
+-e POSTGRESQL_USER=user
+-e POSTGRESQL_PASSWORD=password
+-e POSTGRESQL_ADMIN_PASSWORD=password
+-e POSTGRESQL_BACKUP_USER=backuser
+-e POSTGRESQL_BACKUP_PASSWORD=pass
+${mount_opts}
+" create_container "$container_name" || ret=2
+
+  # need this to wait for the container to start up
+  PGUSER=user     PASS=password           test_connection "$container_name" || ret=3
+  PGUSER=backuser PASS=pass     DB=backup test_connection "$container_name" || ret=4
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
+}
+
+
+####
+# DISABLED TESTS
+####
+
 # This test is removed from the test suite
 # In our CI is failing sporadically and solution is not available yet.
 # Let's remove it from test but the test function remains.
@@ -583,6 +590,68 @@ function run_master_restart_test() {
 
   # Check if the replication works
   table_name="t1" test_value_replication || ret=3
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
+}
+
+# run_doc_test
+# --------------------
+# Checks whether `help.1` file with specific terms is included in default
+# working directory in the container image.
+run_doc_test() {
+  local tmpdir=$(mktemp -d)
+  local f
+  echo "  Testing documentation in the container image"
+  # Extract the help files from the container
+  for f in help.1 ; do
+    docker run --rm ${IMAGE_NAME} /bin/bash -c "cat /${f}" >${tmpdir}/$(basename ${f})
+    # Check whether the files include some important information
+    for term in 'POSTGRESQL\\?_ADMIN\\?_PASSWORD' Volume 5432 ; do
+      if ! cat ${tmpdir}/$(basename ${f}) | grep -E -q -e "${term}" ; then
+        echo "ERROR: File /${f} does not include '${term}'."
+        return 1
+      fi
+    done
+  done
+  # Check whether the files use the correct format
+  if ! file ${tmpdir}/help.1 | grep -q roff ; then
+    echo "ERROR: /help.1 is not in troff or groff format"
+    return 1
+  fi
+  echo "  Success!"
+  echo
+}
+
+
+####
+# TESTING FUNCTIONS
+####
+
+# run_container_creation_tests
+# --------------------
+# Asserts that container image fails to run in certain illegal use of arguments,
+# while it correctly runs in other combinations.
+# NOTE: Previously the `creation_succeeds` combinations were supposed to fail, but
+# these cases are now supposed to work
+function run_container_creation_tests() {
+  local ret=0
+  echo "  Testing image entrypoint usage"
+  try_image_invalid_combinations || ret=1
+  try_image_invalid_combinations  -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=2
+
+VERY_LONG_IDENTIFIER="very_long_identifier_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  assert_container_creation_fails -e POSTGRESQL_USER= -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=3
+  assert_container_creation_fails -e POSTGRESQL_USER=$VERY_LONG_IDENTIFIER -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=4
+  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD="\"" -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=5
+  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=9invalid -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=6
+  assert_container_creation_fails -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=$VERY_LONG_IDENTIFIER -e POSTGRESQL_ADMIN_PASSWORD=admin_pass || ret=7
+  assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD="\"" || ret=8
+
+  assert_container_creation_succeeds -e POSTGRESQL_ADMIN_PASSWORD="the @password" || ret=9
+  assert_container_creation_succeeds -e POSTGRESQL_PASSWORD="the pass" -e POSTGRESQL_USER="the user" -e POSTGRESQL_DATABASE="the db" || ret=10
+
   if [ $ret -eq 0 ]; then
     echo "  Success!"
   fi
@@ -769,61 +838,6 @@ run_migration_test ()
         docker pull "$(get_image_id "$from_version:remote")" || continue
         test/run_migration_test $from_version:remote $VERSION:local || ret=1
     done
-  if [ $ret -eq 0 ]; then
-    echo "  Success!"
-  fi
-  return $ret
-}
-
-# run_doc_test
-# --------------------
-# Checks whether `help.1` file with specific terms is included in default
-# working directory in the container image.
-run_doc_test() {
-  local tmpdir=$(mktemp -d)
-  local f
-  echo "  Testing documentation in the container image"
-  # Extract the help files from the container
-  for f in help.1 ; do
-    docker run --rm ${IMAGE_NAME} /bin/bash -c "cat /${f}" >${tmpdir}/$(basename ${f})
-    # Check whether the files include some important information
-    for term in 'POSTGRESQL\\?_ADMIN\\?_PASSWORD' Volume 5432 ; do
-      if ! cat ${tmpdir}/$(basename ${f}) | grep -E -q -e "${term}" ; then
-        echo "ERROR: File /${f} does not include '${term}'."
-        return 1
-      fi
-    done
-  done
-  # Check whether the files use the correct format
-  if ! file ${tmpdir}/help.1 | grep -q roff ; then
-    echo "ERROR: /help.1 is not in troff or groff format"
-    return 1
-  fi
-  echo "  Success!"
-  echo
-}
-
-test_the_app_image () {
-  local container_name=$1
-  local mount_opts=$2
-  local ret=0
-  echo "    Testing s2i app image with invalid configuration"
-  assert_container_creation_fails -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db || ret=1
-  echo "    Testing s2i app image with correct configuration"
-
-    DOCKER_ARGS="
--e POSTGRESQL_DATABASE=db
--e POSTGRESQL_USER=user
--e POSTGRESQL_PASSWORD=password
--e POSTGRESQL_ADMIN_PASSWORD=password
--e POSTGRESQL_BACKUP_USER=backuser
--e POSTGRESQL_BACKUP_PASSWORD=pass
-${mount_opts}
-" create_container "$container_name" || ret=2
-
-  # need this to wait for the container to start up
-  PGUSER=user     PASS=password           test_connection "$container_name" || ret=3
-  PGUSER=backuser PASS=pass     DB=backup test_connection "$container_name" || ret=4
   if [ $ret -eq 0 ]; then
     echo "  Success!"
   fi
