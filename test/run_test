@@ -658,32 +658,19 @@ VERY_LONG_IDENTIFIER="very_long_identifier_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   return $ret
 }
 
-# run_replication_test
+# run_general_tests
 # --------------------
-# Start two containers one as main, one as secondary. Checks whether the main
-# sees secondary server connected. Tries to create data on main server and
-# checks whether they are correctly replicated to secondary server.
-function run_replication_test() {
-  local DB=postgres
-  local PGUSER=master
-  local PASS=master
+# Tests different combinations of parameters and that they work. Also tests SCL
+# usage. Tries to actually SELECT something from the database.
+function run_general_tests() {
   local ret=0
-
-  echo "Testing master-slave replication"
-  local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
-  local cid_suffix="basic"
-  local master_ip=
-  local slave_cids=
-
-  # Setup the cluster
-  setup_replication_cluster || ret=1
-
-  # Check if the master knows about the slaves
-  CONTAINER_IP=$master_ip
-  test_slave_visibility || ret=2
-
-  # Do some real work to test replication in practice
-  table_name="t1" test_value_replication || ret=3
+  PGUSER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_MAX_PREPARED_TRANSACTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin || ret=1
+  PGUSER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin || ret=2
+  DB=postgres ADMIN_PASS=r00t run_tests only_admin || ret=3
+  # Test with arbitrary uid for the container
+  DOCKER_ARGS="-u 12345" PGUSER=user2 PASS=pass run_tests no_admin_altuid || ret=4
+  DOCKER_ARGS="-u 12345" PGUSER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid || ret=5
+  DB=postgres DOCKER_ARGS="-u 12345" ADMIN_PASS=rOOt run_tests only_admin_altuid || ret=6
   if [ $ret -eq 0 ]; then
     echo "  Success!"
   fi
@@ -770,6 +757,154 @@ $volume_options
   return $ret
 }
 
+# run_replication_test
+# --------------------
+# Start two containers one as main, one as secondary. Checks whether the main
+# sees secondary server connected. Tries to create data on main server and
+# checks whether they are correctly replicated to secondary server.
+function run_replication_test() {
+  local DB=postgres
+  local PGUSER=master
+  local PASS=master
+  local ret=0
+
+  echo "Testing master-slave replication"
+  local cluster_args="-e POSTGRESQL_ADMIN_PASSWORD=pass -e POSTGRESQL_MASTER_USER=$PGUSER -e POSTGRESQL_MASTER_PASSWORD=$PASS"
+  local cid_suffix="basic"
+  local master_ip=
+  local slave_cids=
+
+  # Setup the cluster
+  setup_replication_cluster || ret=1
+
+  # Check if the master knows about the slaves
+  CONTAINER_IP=$master_ip
+  test_slave_visibility || ret=2
+
+  # Do some real work to test replication in practice
+  table_name="t1" test_value_replication || ret=3
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
+}
+
+# run_s2i_test
+# --------------------
+# Build S2I image with basic script. Try running the container with usage of the
+# script that we built into that S2I image. Compare with original image.
+run_s2i_test() {
+  local temp_file
+  local ret=0
+  echo "  Testing s2i build"
+
+  local s2i_image_name=$IMAGE_NAME-testapp_$(ct_random_string)
+  images_to_clean+=( "$s2i_image_name" )
+
+  ct_s2i_build_as_df "file://${test_dir}/test-app" "${IMAGE_NAME}" "$s2i_image_name" 1>/dev/null || ret=2
+  IMAGE_NAME=$s2i_image_name test_the_app_image s2i_config_build "" || ret=3
+
+  echo "  Testing s2i mount"
+  create_temp_file
+  cat "$test_dir"/test-app/postgresql-init/backup_user.sh >> "$temp_file"
+
+  # Test against original image, not the s2i one.  But even if so, we expect
+  # user mouns the directory under "s2i" direcetory $APP_DATA/src.
+  local mount_point=/opt/app-root/src/postgresql-init/add_backup_user.sh
+  test_the_app_image _s2i_test_mount "-v ${temp_file}:$mount_point:z,ro" || ret=4
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
+}
+
+# run_test_cfg_hook
+# --------------------
+# Checks whether using config files in persistent mounted volume works. Also
+# checks that the config file has priority over env variables.
+run_test_cfg_hook()
+{
+  local ret=0
+  local volume_dir name=pg-test-cfg-dir
+  volume_dir=$(mktemp -d --tmpdir pg-hook-volume.XXXXX)
+  add_cleanup_command /bin/rm -rf "$volume_dir"
+  setfacl -R -m u:26:rwx "$volume_dir"
+  cp -r "$test_dir"/examples/custom-config/* "$volume_dir"
+  setfacl -R -m u:26:rwx "$volume_dir"
+
+  DOCKER_ARGS="
+-e POSTGRESQL_ADMIN_PASSWORD=password
+-v $volume_dir:/opt/app-root/src:Z
+  " create_container "$name"
+  assert_runtime_option "$name" shared_buffers 111MB || ret=1
+
+  # Check that POSTGRESQL_SHARED_BUFFERS has effect.
+  DOCKER_ARGS="
+-e POSTGRESQL_ADMIN_PASSWORD=password
+-e POSTGRESQL_SHARED_BUFFERS=113MB
+  " create_container "$name-2"
+  assert_runtime_option "$name-2" shared_buffers 113MB || ret=2
+
+  # Check that volume has priority over POSTGRESQL_SHARED_BUFFERS.
+  DOCKER_ARGS="
+-e POSTGRESQL_ADMIN_PASSWORD=password
+-e POSTGRESQL_SHARED_BUFFERS=113MB
+-v $volume_dir:/opt/app-root/src:Z
+  " create_container "$name-3"
+  assert_runtime_option "$name-3" shared_buffers 111MB || ret=3
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
+}
+
+# run_s2i_bake_data_test
+# --------------------
+# Testing pre-start script and `init.sql` file with prefilled data placed in S2I
+# resulting image.
+run_s2i_bake_data_test ()
+{
+  local s2i_image_name="$IMAGE_NAME-bake_$(ct_random_string)"
+  ct_s2i_build_as_df "file://$test_dir/examples/s2i-dump-data" "${IMAGE_NAME}" "$s2i_image_name" 1>/dev/null
+  images_to_clean+=( "$s2i_image_name" )
+
+  local container_name=bake-data-test
+
+  DOCKER_ARGS="-e POSTGRESQL_ADMIN_PASSWORD=password" \
+    IMAGE_NAME="$s2i_image_name" create_container "$container_name"
+
+  wait_ready "$container_name" || \
+    false "FAIL: Container did not start up properly."
+
+  test "hello world" == "$(docker exec "$(get_cid "$container_name")" \
+                           bash -c "psql -tA -c 'SELECT * FROM test;'")"
+}
+
+# run_s2i_enable_ssl_test
+# --------------------
+# Creates S2I image with SSL config and certificates. Tries to connect with
+# required SSL connection.
+run_s2i_enable_ssl_test()
+{
+  local s2i_image_name="$IMAGE_NAME-ssl_$(ct_random_string)"
+  ct_s2i_build_as_df "file://$test_dir/examples/enable-ssl" "${IMAGE_NAME}" "$s2i_image_name" 1>/dev/null
+  images_to_clean+=( "$s2i_image_name" )
+
+  local container_name=enable-ssl-test
+
+  DOCKER_ARGS="-e POSTGRESQL_ADMIN_PASSWORD=password" \
+    IMAGE_NAME="$s2i_image_name" create_container "$container_name"
+
+  wait_ready "$container_name" || \
+    false "FAIL: Container did not start up properly."
+  CONTAINER_IP=$(get_container_ip $container_name)
+
+  DB=postgres assert_login_access postgres password true
+
+  docker run --rm -e PGPASSWORD="password" "$IMAGE_NAME" psql "postgresql://postgres@$CONTAINER_IP:5432/postgres?sslmode=require" || \
+    false "FAIL: Did not manage to connect using SSL only."
+}
+
 # run_upgrade_test
 # --------------------
 # Testing upgrade from previous version to current version using
@@ -844,141 +979,6 @@ run_migration_test ()
   return $ret
 }
 
-# run_s2i_test
-# --------------------
-# Build S2I image with basic script. Try running the container with usage of the
-# script that we built into that S2I image. Compare with original image.
-run_s2i_test() {
-  local temp_file
-  local ret=0
-  echo "  Testing s2i build"
-
-  local s2i_image_name=$IMAGE_NAME-testapp_$(ct_random_string)
-  images_to_clean+=( "$s2i_image_name" )
-
-  ct_s2i_build_as_df "file://${test_dir}/test-app" "${IMAGE_NAME}" "$s2i_image_name" 1>/dev/null || ret=2
-  IMAGE_NAME=$s2i_image_name test_the_app_image s2i_config_build "" || ret=3
-
-  echo "  Testing s2i mount"
-  create_temp_file
-  cat "$test_dir"/test-app/postgresql-init/backup_user.sh >> "$temp_file"
-
-  # Test against original image, not the s2i one.  But even if so, we expect
-  # user mouns the directory under "s2i" direcetory $APP_DATA/src.
-  local mount_point=/opt/app-root/src/postgresql-init/add_backup_user.sh
-  test_the_app_image _s2i_test_mount "-v ${temp_file}:$mount_point:z,ro" || ret=4
-  if [ $ret -eq 0 ]; then
-    echo "  Success!"
-  fi
-  return $ret
-}
-
-# run_general_tests
-# --------------------
-# Tests different combinations of parameters and that they work. Also tests SCL
-# usage. Tries to actually SELECT something from the database.
-function run_general_tests() {
-  local ret=0
-  PGUSER=user PASS=pass POSTGRESQL_MAX_CONNECTIONS=42 POSTGRESQL_MAX_PREPARED_TRANSACTIONS=42 POSTGRESQL_SHARED_BUFFERS=64MB run_tests no_admin || ret=1
-  PGUSER=user1 PASS=pass1 ADMIN_PASS=r00t run_tests admin || ret=2
-  DB=postgres ADMIN_PASS=r00t run_tests only_admin || ret=3
-  # Test with arbitrary uid for the container
-  DOCKER_ARGS="-u 12345" PGUSER=user2 PASS=pass run_tests no_admin_altuid || ret=4
-  DOCKER_ARGS="-u 12345" PGUSER=user3 PASS=pass1 ADMIN_PASS=r00t run_tests admin_altuid || ret=5
-  DB=postgres DOCKER_ARGS="-u 12345" ADMIN_PASS=rOOt run_tests only_admin_altuid || ret=6
-  if [ $ret -eq 0 ]; then
-    echo "  Success!"
-  fi
-  return $ret
-}
-
-# run_test_cfg_hook
-# --------------------
-# Checks whether using config files in persistent mounted volume works. Also
-# checks that the config file has priority over env variables.
-run_test_cfg_hook()
-{
-  local ret=0
-  local volume_dir name=pg-test-cfg-dir
-  volume_dir=$(mktemp -d --tmpdir pg-hook-volume.XXXXX)
-  add_cleanup_command /bin/rm -rf "$volume_dir"
-  setfacl -R -m u:26:rwx "$volume_dir"
-  cp -r "$test_dir"/examples/custom-config/* "$volume_dir"
-  setfacl -R -m u:26:rwx "$volume_dir"
-
-  DOCKER_ARGS="
--e POSTGRESQL_ADMIN_PASSWORD=password
--v $volume_dir:/opt/app-root/src:Z
-  " create_container "$name"
-  assert_runtime_option "$name" shared_buffers 111MB || ret=1
-
-  # Check that POSTGRESQL_SHARED_BUFFERS has effect.
-  DOCKER_ARGS="
--e POSTGRESQL_ADMIN_PASSWORD=password
--e POSTGRESQL_SHARED_BUFFERS=113MB
-  " create_container "$name-2"
-  assert_runtime_option "$name-2" shared_buffers 113MB || ret=2
-
-  # Check that volume has priority over POSTGRESQL_SHARED_BUFFERS.
-  DOCKER_ARGS="
--e POSTGRESQL_ADMIN_PASSWORD=password
--e POSTGRESQL_SHARED_BUFFERS=113MB
--v $volume_dir:/opt/app-root/src:Z
-  " create_container "$name-3"
-  assert_runtime_option "$name-3" shared_buffers 111MB || ret=3
-  if [ $ret -eq 0 ]; then
-    echo "  Success!"
-  fi
-  return $ret
-}
-
-# run_s2i_enable_ssl_test
-# --------------------
-# Creates S2I image with SSL config and certificates. Tries to connect with
-# required SSL connection.
-run_s2i_enable_ssl_test()
-{
-  local s2i_image_name="$IMAGE_NAME-ssl_$(ct_random_string)"
-  ct_s2i_build_as_df "file://$test_dir/examples/enable-ssl" "${IMAGE_NAME}" "$s2i_image_name" 1>/dev/null
-  images_to_clean+=( "$s2i_image_name" )
-
-  local container_name=enable-ssl-test
-
-  DOCKER_ARGS="-e POSTGRESQL_ADMIN_PASSWORD=password" \
-    IMAGE_NAME="$s2i_image_name" create_container "$container_name"
-
-  wait_ready "$container_name" || \
-    false "FAIL: Container did not start up properly."
-  CONTAINER_IP=$(get_container_ip $container_name)
-
-  DB=postgres assert_login_access postgres password true
-
-  docker run --rm -e PGPASSWORD="password" "$IMAGE_NAME" psql "postgresql://postgres@$CONTAINER_IP:5432/postgres?sslmode=require" || \
-    false "FAIL: Did not manage to connect using SSL only."
-}
-
-# run_s2i_bake_data_test
-# --------------------
-# Testing pre-start script and `init.sql` file with prefilled data placed in S2I
-# resulting image.
-run_s2i_bake_data_test ()
-{
-  local s2i_image_name="$IMAGE_NAME-bake_$(ct_random_string)"
-  ct_s2i_build_as_df "file://$test_dir/examples/s2i-dump-data" "${IMAGE_NAME}" "$s2i_image_name" 1>/dev/null
-  images_to_clean+=( "$s2i_image_name" )
-
-  local container_name=bake-data-test
-
-  DOCKER_ARGS="-e POSTGRESQL_ADMIN_PASSWORD=password" \
-    IMAGE_NAME="$s2i_image_name" create_container "$container_name"
-
-  wait_ready "$container_name" || \
-    false "FAIL: Container did not start up properly."
-
-  test "hello world" == "$(docker exec "$(get_cid "$container_name")" \
-                           bash -c "psql -tA -c 'SELECT * FROM test;'")"
-}
-
 # run_pgaudit_test
 # --------------------
 # Configure container to include pgaudit using config directory volumes. Check
@@ -1043,6 +1043,17 @@ EOSQL" || ret=3
   return $ret
 }
 
+# run_env_extension_load_test
+# --------------------
+# Tries to load pgaudit extension using environment variables
+# `POSTGRESQL_EXTENSIONS` and `POSTGRESQL_LIBRARIES`
+run_env_extension_load_test() {
+    DOCKER_EXTRA_ARGS="
+-e POSTGRESQL_EXTENSIONS=pgaudit
+-e POSTGRESQL_LIBRARIES=pgaudit"
+    run_pgaudit_test
+}
+
 # run_logging_test
 # --------------------
 # Checks that changing log location via `POSTGRESQL_LOG_DESTINATION` env
@@ -1088,17 +1099,6 @@ run_logging_test()
   done
   echo "    PASS: the traditional log file under ${data_dir}/userdata/log/postgresql-*.log does not exist"
   echo "  Success!"
-}
-
-# run_env_extension_load_test
-# --------------------
-# Tries to load pgaudit extension using environment variables
-# `POSTGRESQL_EXTENSIONS` and `POSTGRESQL_LIBRARIES`
-run_env_extension_load_test() {
-    DOCKER_EXTRA_ARGS="
--e POSTGRESQL_EXTENSIONS=pgaudit
--e POSTGRESQL_LIBRARIES=pgaudit"
-    run_pgaudit_test
 }
 
 # configuration defaults
