@@ -1,0 +1,27 @@
+name: Gather Pull Request Metadata
+on:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
+    branches: [ master ]
+
+permissions:
+  contents: read
+
+jobs:
+  gather-metadata:
+    if: github.repository_owner == 'sclorg'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@v4
+
+      - id: Metadata
+        name: Gather Pull Request Metadata
+        uses: redhat-plumbers-in-action/gather-pull-request-metadata@v1
+
+      - name: Upload artifact with gathered metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-metadata
+          path: ${{ steps.Metadata.outputs.metadata-file }}

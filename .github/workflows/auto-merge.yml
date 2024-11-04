@@ -1,0 +1,43 @@
+name: Auto Merge
+on:
+  workflow_run:
+    workflows: [ Gather Pull Request Metadata ]
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  download-metadata:
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    outputs:
+      pr-metadata: ${{ steps.Artifact.outputs.pr-metadata-json }}
+
+    steps:
+      - id: Artifact
+        name: Download Artifact
+        uses: redhat-plumbers-in-action/download-artifact@v1
+        with:
+          name: pr-metadata
+
+  auto-merge:
+    needs: [ download-metadata ]
+    runs-on: ubuntu-latest
+
+    permissions:
+      # required for merging PRs
+      contents: write
+      # required for PR comments and setting labels
+      pull-requests: write
+
+    steps:
+      - name: Auto Merge wrapper
+        uses: sclorg/auto-merge-wrapper@v1
+        with:
+          pr-metadata: ${{ needs.download-metadata.outputs.pr-metadata }}
+          token: ${{ secrets.GITHUB_TOKEN }}
