@@ -1,0 +1,71 @@
+name: Auto Merge Scheduled / On Demand
+on:
+  schedule:
+    # Workflow runs every 45 minutes
+    - cron: '*/45 * * * *'
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: 'Pull Request number/s ; when not provided, the workflow will run for all open PRs'
+        required: true
+        default: '0'
+
+permissions:
+  contents: read
+
+jobs:
+  # Get all open PRs
+  gather-pull-requests:
+    if: github.repository_owner == 'sclorg'
+    runs-on: ubuntu-latest
+
+    outputs:
+      pr-numbers: ${{ steps.get-pr-numbers.outputs.result }}
+      pr-numbers-manual: ${{ steps.parse-manual-input.outputs.result }}
+
+    steps:
+      - id: get-pr-numbers
+        if: inputs.pr-number == '0'
+        name: Get all open PRs
+        uses: actions/github-script@v7
+        with:
+          # !FIXME: this is not working if there is more than 100 PRs opened
+          script: |
+            const { data: pullRequests } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            return pullRequests.map(pr => pr.number);
+
+      - id: parse-manual-input
+        if: inputs.pr-number != '0'
+        name: Parse manual input
+        run: |
+          # shellcheck disable=SC2086
+          echo "result="[ ${{ inputs.pr-number }} ]"" >> $GITHUB_OUTPUT
+        shell: bash
+
+  validate-pr:
+    name: 'Validation of Pull Request #${{ matrix.pr-number }}'
+    needs: [ gather-pull-requests ]
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        pr-number: ${{ inputs.pr-number == 0 && fromJSON(needs.gather-pull-requests.outputs.pr-numbers) || fromJSON(needs.gather-pull-requests.outputs.pr-numbers-manual) }}
+
+    permissions:
+      # required for merging PRs
+      contents: write
+      # required for PR comments and setting labels
+      pull-requests: write
+
+    steps:
+      - name: Auto Merge wrapper
+        uses: sclorg/auto-merge-wrapper@v1
+        with:
+          pr-number: ${{ matrix.pr-number }}
+          token: ${{ secrets.GITHUB_TOKEN }}
