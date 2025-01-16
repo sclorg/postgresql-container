@@ -52,6 +52,16 @@ specs:
            { yum -y module enable postgresql:{{ spec.version }} || :; } && \
        post_install: >-4
            (yum -y reinstall tzdata || yum -y update tzdata ) && \
+    rhel10:
+       distros:
+         - rhel-10-x86_64
+       s2i_base: registry.stage.redhat.io/ubi10/s2i-core
+       org: "rhel10"
+       prod: "rhel10"
+       openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+       redhat_component: "postgresql-{{ spec.short }}-container"
+       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}"
+       pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib"
     c9s:
       distros:
         - centos-stream-9-x86_64
@@ -139,3 +149,4 @@ matrix:
         - centos-stream-9-x86_64
         - fedora-40-x86_64
         - centos-stream-10-x86_64
+        - rhel-10-x86_64
