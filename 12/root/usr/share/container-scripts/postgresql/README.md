@@ -144,6 +144,30 @@ admin user is by changing the environment variables `POSTGRESQL_PASSWORD` and `P
 
 Changing database passwords through SQL statements or any other method than the environment variables mentioned above will cause a mismatch between the stored variable values and the actual passwords. When a database container starts, it will reset the passwords to the values stored in the environment variables.
 
+## Upgrading Database
+
+Upgrading by switching to newer PostgreSQL image version
+
+---
+
+** Warning! Before deciding to upgrade the data directory, ensure that you have carefully backed up all your data and are prepared for potential manual rollback! **
+This image supports automatic upgrade of data directories created by the PostgreSQL server version 10 (and _only_ this version) - provided by sclorg image. The upgrade process is designed to allow you to switch from _image A_ to _image B_, and set the `$POSTGRESQL_UPGRADE` variable appropriately to explicitly request the database data transformation.
+
+The upgrade process is internally implemented via the `pg_upgrade` binary, which requires the container to contain two versions of the PostgreSQL server (refer to `man pg_upgrade` for more information).
+
+For the `pg_upgrade` process and the new server version, a new data directory must be initialized. The container tooling automatically creates this data directory under `/var/lib/pgsql/data`, which is typically an external bind-mountpoint. The `pg_upgrade` execution is then similar to the **dump and restore**
+approach: it starts both the old and new PostgreSQL servers (within the container) and "dumps" the old data directory while simultaneously "restoring" it into the new data directory. This operation involves copying many data files, so you can decide the type of upgrade by setting `$POSTGRESQL_UPGRADE` accordingly:
+
+**`copy`**
+
+Data files are copied from old datadir to new datadir. This option has a low risk of data loss in case of upgrade failure.
+Note that because the data directory is copied, ensure that you have enough space for the copy. Upgrade failure due to insufficient space may lead to data loss.
+
+**`hardlink`**
+
+
+Data files are hard-linked from the old to the new data directory, providing performance optimization. However, the old directory becomes unusable, even in case of failure.
+
 ## Extending Image
 
 You can extend this image in Openshift using the `Source` build strategy or via the standalone [source-to-image](https://github.com/openshift/source-to-image) application (where available). For this example, assume that you are using the `rhel8/postgresql-12` image, available via `postgresql:12` imagestream tag in Openshift.
