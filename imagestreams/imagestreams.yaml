@@ -27,6 +27,9 @@
       - name: RHEL 9
         app_versions: [13, 15, 16]
 
+      - name: RHEL 10
+        app_versions: [16]
+
   - filename: postgresql-rhel-aarch64.json
     latest: "16-el9"
     distros:
@@ -35,3 +38,6 @@
 
       - name: RHEL 9
         app_versions: [13, 15, 16]
+
+      - name: RHEL 10
+        app_versions: [16]
