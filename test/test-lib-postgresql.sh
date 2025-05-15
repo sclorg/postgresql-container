@@ -44,6 +44,8 @@ function test_postgresql_imagestream() {
   tag="-el8"
   if [ "${OS}" == "rhel9" ]; then
     tag="-el9"
+  elif [ "${OS}" == "rhel10" ]; then
+    tag="-el10"
   fi
   # Check if the current version is already GA
   # This directory is cloned from TMT plan repo 'sclorg-tmt-plans'

@@ -6,6 +6,8 @@ import pytest
 from container_ci_suite.openshift import OpenShiftAPI
 from container_ci_suite.utils import check_variables
 
+from constants import TAGS
+
 if not check_variables():
     print("At least one variable from IMAGE_NAME, OS, VERSION is missing.")
     sys.exit(1)
@@ -15,17 +17,13 @@ VERSION = os.getenv("VERSION")
 IMAGE_NAME = os.getenv("IMAGE_NAME")
 OS = os.getenv("TARGET")
 
-TAGS = {
-    "rhel8": "-el8",
-    "rhel9": "-el9"
-}
-TAG = TAGS.get(OS, None)
+TAG = TAGS.get(OS)
 
 
 class TestPostgreSQLDeployTemplate:
 
     def setup_method(self):
-        self.oc_api = OpenShiftAPI(pod_name_prefix="postgresql-testing", version=VERSION)
+        self.oc_api = OpenShiftAPI(pod_name_prefix="postgresql-testing", version=VERSION, shared_cluster=True)
 
     def teardown_method(self):
         self.oc_api.delete_project()

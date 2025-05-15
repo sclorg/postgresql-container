@@ -39,6 +39,7 @@ class TestHelmRHELPostgresqlImageStreams:
             ("15-el9", "registry.redhat.io/rhel9/postgresql-15:latest", True),
             ("16-el8", "registry.redhat.io/rhel8/postgresql-16:latest", True),
             ("16-el9", "registry.redhat.io/rhel9/postgresql-16:latest", True),
+            ("16-el10", "registry.redhat.io/rhel10/postgresql-16:latest", True),
         ],
     )
     def test_package_imagestream(self, version, registry, expected):
