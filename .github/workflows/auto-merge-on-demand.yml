@@ -1,8 +1,8 @@
-name: Auto Merge Scheduled / On Demand
+name: Auto Merge On Demand
 on:
-  schedule:
-    # Workflow runs every 45 minutes
-    - cron: '*/45 * * * *'
+  issue_comment:
+    types:
+      - created
   workflow_dispatch:
     inputs:
       pr-number:
@@ -16,7 +16,10 @@ permissions:
 jobs:
   # Get all open PRs
   gather-pull-requests:
-    if: github.repository_owner == 'sclorg'
+    if: |
+      github.repository_owner == 'sclorg'
+      || (contains(github.event.comment.body, '/auto-merge-on-demand')
+      && contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
 
     outputs:
@@ -44,7 +47,7 @@ jobs:
         name: Parse manual input
         run: |
           # shellcheck disable=SC2086
-          echo "result="[ ${{ inputs.pr-number }} ]"" >> $GITHUB_OUTPUT
+          echo "result="[ ${{ github.event.issue.number }} ]"" >> $GITHUB_OUTPUT
         shell: bash
 
   validate-pr:
