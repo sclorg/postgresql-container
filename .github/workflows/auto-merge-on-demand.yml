@@ -1,8 +1,8 @@
 name: Auto Merge Scheduled / On Demand
 on:
-  schedule:
-    # Workflow runs every 45 minutes
-    - cron: '*/45 * * * *'
+  # schedule:
+  #  # Workflow runs every 45 minutes
+  #  - cron: '0 10,12,14,16 * * *'
   workflow_dispatch:
     inputs:
       pr-number:
