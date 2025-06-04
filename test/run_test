@@ -29,6 +29,7 @@ run_migration_test
 run_pgaudit_test
 run_env_extension_load_test
 run_logging_test
+run_locales_test
 "
 
 test $# -eq 1 -a "${1-}" == --list && echo "$TEST_LIST" && exit 0
@@ -1099,6 +1100,54 @@ run_logging_test()
   done
   echo "    PASS: the traditional log file under ${data_dir}/userdata/log/postgresql-*.log does not exist"
   echo "  Success!"
+}
+
+run_locales_test() {
+  local data_dir config_dir name=pg-test-locales-1
+  # create a dir for data
+  create_volume_dir
+  data_dir="${volume_dir}"
+
+  DOCKER_ARGS="-e POSTGRESQL_ADMIN_PASSWORD=Mellon
+               -e POSTGRESQL_LOCALE=en_GB
+               -e POSTGRESQL_ENCODING=ISO885915
+               -v ${data_dir}:/var/lib/pgsql/data:Z" create_container $name
+
+  wait_ready "$name"
+
+  # LATIN9 is a alias for ISO885915
+  docker exec -i $(get_cid "$name") bash -c "psql <<EOSQL
+  SHOW SERVER_ENCODING;
+EOSQL" | grep LATIN9
+
+  docker exec -i $(get_cid "$name") bash -c "psql <<EOSQL
+  SHOW LC_COLLATE;
+EOSQL" | grep -vi LC_COLLA | grep en_GB
+
+  docker stop "$(get_cid "$name")"
+
+  name=pg-test-locales-2
+  # create a dir for data
+  create_volume_dir
+  data_dir="${volume_dir}"
+
+  DOCKER_ARGS="-e POSTGRESQL_ADMIN_PASSWORD=Natoar23ae
+               -e POSTGRESQL_LOCALE=C
+               -e POSTGRESQL_ENCODING=UTF8
+               -v ${data_dir}:/var/lib/pgsql/data:Z" create_container $name
+
+  wait_ready "$name"
+
+  docker exec -i $(get_cid "$name") bash -c "psql <<EOSQL
+  SHOW SERVER_ENCODING;
+EOSQL" | grep UTF8
+
+  docker exec -i $(get_cid "$name") bash -c "psql <<EOSQL
+  SHOW LC_COLLATE;
+EOSQL" | grep -vi LC_COLLA | grep C
+
+  docker stop "$(get_cid "$name")"
+
 }
 
 # configuration defaults
