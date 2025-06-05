@@ -19,7 +19,7 @@ jobs:
     if: |
       github.repository_owner == 'sclorg'
       || (contains(github.event.comment.body, '/auto-merge')
-      && contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association)
+      && contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association))
     runs-on: ubuntu-latest
 
     outputs:
