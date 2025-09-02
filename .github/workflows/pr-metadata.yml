@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Repository checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - id: Metadata
         name: Gather Pull Request Metadata
