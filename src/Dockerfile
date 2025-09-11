@@ -32,12 +32,10 @@ LABEL summary="$SUMMARY" \
       io.openshift.s2i.assemble-user="26" \
       name="{{ spec.img_name }}" \
       com.redhat.component="{{ spec.redhat_component }}" \
-{% if spec.version not in ["9.4", "9.5", "9.6"] %}
+{% if config.os.id == "rhel" and spec.prod != "rhel10" %}
       version="1" \
-{% elif spec.version == "9.6" and config.os.id == "rhel" %}
+{% elif spec.prod in ["c9s", "c10s"] %}
       version="1" \
-{% else %}
-      version="{{ spec.version }}" \
 {% endif %}
 {% if config.os.id == 'rhel' %}
       com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
