@@ -30,7 +30,7 @@ jobs:
       - id: get-pr-numbers
         if: inputs.pr-number == '0'
         name: Get all open PRs
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           # !FIXME: this is not working if there is more than 100 PRs opened
           script: |
