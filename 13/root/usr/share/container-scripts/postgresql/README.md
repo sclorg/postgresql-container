@@ -1,6 +1,6 @@
 # PostgreSQL 13 SQL Database Server Container Image
 
-This container image features the PostgreSQL 13 SQL database server, suitable for OpenShift and general applications. Users have the option to select from RHEL, CentOS Stream, and Fedora-based images. RHEL images can be found in the [Red Hat Container Catalog](https://access.redhat.com/containers/), while CentOS Stream images are available on [Quay.io](https://quay.io/organization/sclorg), and Fedora images can be accessed in [Quay.io](https://quay.io/organization/fedora). The resulting image can be executed using [podman](https://github.com/containers/libpod).
+This container image features the PostgreSQL 13 SQL database server, suitable for OpenShift and general applications. Users have the option to select from RHEL, CentOS Stream, and Fedora-based images. RHEL images can be found in the [Red Hat Container Catalog](https://access.redhat.com/containers/), while CentOS Stream images are available on [Quay.io](https://quay.io/organization/sclorg). The resulting image can be executed using [podman](https://github.com/containers/libpod).
 
 Please note that while the examples provided in this README utilize `podman`, it is possible to substitute any instance of `podman` with `docker` and the same arguments. `podman` can be installed with on Fedora with command `dnf install podman-docker`.
 
@@ -10,10 +10,10 @@ This container image offers a containerized version of the PostgreSQL postgres d
 
 ## Usage
 
-Assuming you are utilizing the `rhel8/postgresql-13` image, which is accessible via the `postgresql:13` imagestream tag in Openshift, the following steps outline usage. To set only the mandatory environment variables without storing the database in a host directory, execute this command:
+Assuming you are utilizing the `rhel9/postgresql-13` image, which is accessible via the `postgresql:13` imagestream tag in Openshift, the following steps outline usage. To set only the mandatory environment variables without storing the database in a host directory, execute this command:
 
 ```bash
-$ podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel8/postgresql-13
+$ podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel9/postgresql-13
 ```
 
 This command creates a container named `postgresql_database` running PostgreSQL with the database `db` and a user with the credentials `user:pass`.
@@ -110,7 +110,7 @@ $ podman run -d --name postgresql_database \
     -e POSTGRESQL_MIGRATION_REMOTE_HOST=172.17.0.2 \
     -e POSTGRESQL_MIGRATION_ADMIN_PASSWORD=remoteAdminP@ssword \
     [ OPTIONAL_CONFIGURATION_VARIABLES ]
-    rhel8/postgresql-13
+    rhel9/postgresql-13
 ```
 
 The migration is performed using the **dump and restore** method (running `pg_dumpall` against the remote cluster and importing the dump locally using `psql`). The process is streamed (via a Unix pipeline), eliminating the need for intermediate dump files and conserving storage space.
@@ -170,7 +170,7 @@ Data files are hard-linked from the old to the new data directory, providing per
 
 ## Extending Image
 
-You can extend this image in Openshift using the `Source` build strategy or via the standalone [source-to-image](https://github.com/openshift/source-to-image) application (where available). For this example, assume that you are using the `rhel8/postgresql-13` image, available via `postgresql:13` imagestream tag in Openshift.
+You can extend this image in Openshift using the `Source` build strategy or via the standalone [source-to-image](https://github.com/openshift/source-to-image) application (where available). For this example, assume that you are using the `rhel9/postgresql-13` image, available via `postgresql:13` imagestream tag in Openshift.
 
 To build a customized image `new-postgresql` with configuration from `https://github.com/sclorg/postgresql-container/tree/master/examples/extending-image`, run:
 
@@ -186,7 +186,7 @@ $ oc new-app postgresql:13~https://github.com/sclorg/postgresql-container.git \
 or via `s2i`:
 
 ```
-$ s2i build --context-dir examples/extending-image/ https://github.com/sclorg/postgresql-container.git rhel8/postgresql-13 new-postgresql
+$ s2i build --context-dir examples/extending-image/ https://github.com/sclorg/postgresql-container.git rhel9/postgresql-13 new-postgresql
 ```
 
 The directory passed to Openshift should contain one or more of the following directories:
@@ -224,4 +224,4 @@ Subsequently, log output is redirected to the logging collector process and will
 
 ## Additional Resources
 
-The Dockerfile and other sources related to this container image can be found at https://github.com/sclorg/postgresql-container. In this repository, the RHEL8 Dockerfile is named Dockerfile.rhel8, the RHEL9 Dockerfile is named Dockerfile.rhel9, the RHEL10 Dockerfile is named Dockerfile.rhel10, and the Fedora Dockerfile is named Dockerfile.fedora.
+The Dockerfile and other sources related to this container image can be found at https://github.com/sclorg/postgresql-container. In this repository, the RHEL8 Dockerfile is named Dockerfile.rhel8, the RHEL9 Dockerfile is named Dockerfile.rhel9, and the CentOS Stream 9 Dockerfile is named Dockerfile.c9s.
