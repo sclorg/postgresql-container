@@ -12,7 +12,7 @@ In this example, we will assume that you are using OpenShift. Suppose you do not
    You should use your configuration for `myUser`, `myPassword` and `myDB`
 
 ```bash
-oc new-app --name psql-ssl postgresql:13-el7~https://github.com/sclorg/postgresql-container.git \
+oc new-app --name psql-ssl postgresql:16-el10~https://github.com/sclorg/postgresql-container.git \
   --context-dir examples/enable-ssl \
   -e POSTGRESQL_USER=myUser \
   -e POSTGRESQL_PASSWORD=myPassword \

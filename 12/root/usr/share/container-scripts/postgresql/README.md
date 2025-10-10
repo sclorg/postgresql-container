@@ -1,6 +1,9 @@
 # PostgreSQL 12 SQL Database Server Container Image
 
-This container image features the PostgreSQL 12 SQL database server, suitable for OpenShift and general applications. Users have the option to select from RHEL, CentOS Stream, and Fedora-based images. RHEL images can be found in the [Red Hat Container Catalog](https://access.redhat.com/containers/), while CentOS Stream images are available on [Quay.io](https://quay.io/organization/sclorg), and Fedora images can be accessed in [Quay.io](https://quay.io/organization/fedora). The resulting image can be executed using [podman](https://github.com/containers/libpod).
+This container image features the PostgreSQL 12 SQL database server, suitable for OpenShift and general applications.
+Only RHEL based images are available.
+RHEL images can be found in the [Red Hat Container Catalog](https://access.redhat.com/containers/).
+The resulting image can be executed using [podman](https://github.com/containers/libpod).
 
 Please note that while the examples provided in this README utilize `podman`, it is possible to substitute any instance of `podman` with `docker` and the same arguments. `podman` can be installed with on Fedora with command `dnf install podman-docker`.
 
@@ -224,4 +227,4 @@ Subsequently, log output is redirected to the logging collector process and will
 
 ## Additional Resources
 
-The Dockerfile and other sources related to this container image can be found at https://github.com/sclorg/postgresql-container. In this repository, the RHEL8 Dockerfile is named Dockerfile.rhel8, the RHEL9 Dockerfile is named Dockerfile.rhel9, the RHEL10 Dockerfile is named Dockerfile.rhel10, and the Fedora Dockerfile is named Dockerfile.fedora.
+The Dockerfile and other sources related to this container image can be found at https://github.com/sclorg/postgresql-container. In this repository, the RHEL8 Dockerfile is named Dockerfile.rhel8.
