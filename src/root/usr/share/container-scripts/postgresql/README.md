@@ -110,7 +110,7 @@ $ podman run -d --name postgresql_database \
     -e POSTGRESQL_MIGRATION_REMOTE_HOST=172.17.0.2 \
     -e POSTGRESQL_MIGRATION_ADMIN_PASSWORD=remoteAdminP@ssword \
     [ OPTIONAL_CONFIGURATION_VARIABLES ]
-    rhel8/postgresql-13
+    {{ spec.rhel_image_name }}
 ```
 
 The migration is performed using the **dump and restore** method (running `pg_dumpall` against the remote cluster and importing the dump locally using `psql`). The process is streamed (via a Unix pipeline), eliminating the need for intermediate dump files and conserving storage space.
@@ -224,4 +224,4 @@ Subsequently, log output is redirected to the logging collector process and will
 
 ## Additional Resources
 
-The Dockerfile and other sources related to this container image can be found at https://github.com/sclorg/postgresql-container. In this repository, the RHEL8 Dockerfile is named Dockerfile.rhel8, the RHEL9 Dockerfile is named Dockerfile.rhel9, the RHEL10 Dockerfile is named Dockerfile.rhel10, and the Fedora Dockerfile is named Dockerfile.fedora.
+The Dockerfile and other sources related to this container image can be found at https://github.com/sclorg/postgresql-container. In this repository, the RHEL8 Dockerfile is named Dockerfile.rhel8, the RHEL9 Dockerfile is named Dockerfile.rhel9, the RHEL10 Dockerfile is named Dockerfile.rhel10, the CentOS Stream 9 Dockerfile is named Dockerfile.c9s, the CentOS Stream 10 Dockerfile is named Dockerfile.c10s, and the Fedora Dockerfile is named Dockerfile.fedora.

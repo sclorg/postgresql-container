@@ -51,9 +51,6 @@ COPY_RULES:
   - src: src/root/usr/share/container-scripts/postgresql/openshift-custom-postgresql.conf.template
     dest: root/usr/share/container-scripts/postgresql/openshift-custom-postgresql.conf.template
 
-  - src: src/root/usr/share/container-scripts/postgresql/scl_enable
-    dest: root/usr/share/container-scripts/postgresql/scl_enable
-
   - src: src/root/usr/bin/run-postgresql
     dest: root/usr/bin/run-postgresql
     mode: "0755"

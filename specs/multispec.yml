@@ -104,7 +104,7 @@ specs:
       prev_short: "12"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
-      rhel_image_name: "rhel8/postgresql-{{ spec.short }}"
+      rhel_image_name: "rhel9/postgresql-{{ spec.short }}"
       latest_fedora: "f38"
 
     "15":
@@ -113,7 +113,8 @@ specs:
       short: "15"
       prev_short: "13"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      rhel_image_name: "rhel8/postgresql-{{ spec.short }}"
+      c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
+      rhel_image_name: "rhel9/postgresql-{{ spec.short }}"
       latest_fedora: "f40"
 
     "16":
@@ -122,7 +123,8 @@ specs:
       short: "16"
       prev_short: "15"
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c9s"
+      c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c10s"
+      rhel_image_name: "rhel10/postgresql-{{ spec.short }}"
       latest_fedora: "f40"
 
 

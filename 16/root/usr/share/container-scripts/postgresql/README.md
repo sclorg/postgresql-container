@@ -170,7 +170,7 @@ Data files are hard-linked from the old to the new data directory, providing per
 
 ## Extending Image
 
-You can extend this image in Openshift using the `Source` build strategy or via the standalone [source-to-image](https://github.com/openshift/source-to-image) application (where available). For this example, assume that you are using the `rhel10-postgresql-16` image, available via `postgresql:16` imagestream tag in Openshift.
+You can extend this image in Openshift using the `Source` build strategy or via the standalone [source-to-image](https://github.com/openshift/source-to-image) application (where available). For this example, assume that you are using the `rhel10/postgresql-16` image, available via `postgresql:16` imagestream tag in Openshift.
 
 To build a customized image `new-postgresql` with configuration from `https://github.com/sclorg/postgresql-container/tree/master/examples/extending-image`, run:
 

@@ -224,4 +224,4 @@ Subsequently, log output is redirected to the logging collector process and will
 
 ## Additional Resources
 
-The Dockerfile and other sources related to this container image can be found at https://github.com/sclorg/postgresql-container. In this repository, the RHEL8 Dockerfile is named Dockerfile.rhel8, the RHEL9 Dockerfile is named Dockerfile.rhel9, and the CentOS Stream 9 Dockerfile is named Dockerfile.c9s.
+The Dockerfile and other sources related to this container image can be found at https://github.com/sclorg/postgresql-container. In this repository, the RHEL8 Dockerfile is named Dockerfile.rhel8, the RHEL9 Dockerfile is named Dockerfile.rhel9, the RHEL10 Dockerfile is named Dockerfile.rhel10, the CentOS Stream 9 Dockerfile is named Dockerfile.c9s, the CentOS Stream 10 Dockerfile is named Dockerfile.c10s, and the Fedora Dockerfile is named Dockerfile.fedora.
