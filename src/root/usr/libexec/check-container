@@ -7,8 +7,6 @@
 # wait for it (this script might run forever, we expect that the timeout is
 # maintained externally).
 
-test -z "$ENABLED_COLLECTIONS" || . scl_source enable $ENABLED_COLLECTIONS
-
 if test x"$1" = "x--live"; then
     # Since livenessProbe is about to detect container deadlocks, and we
     # so far don't know about real deadlocks to be detected -- we keep

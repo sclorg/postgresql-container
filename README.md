@@ -6,11 +6,10 @@ Images available on Quay.io are:
 
 - CentOS Stream 9 [postgresql-13](https://quay.io/repository/sclorg/postgresql-13-c9s)
 - CentOS Stream 9 [postgresql-15](https://quay.io/repository/sclorg/postgresql-15-c9s)
-- Fedora [postgresql-11](https://quay.io/repository/fedora/postgresql-11)
-- Fedora [postgresql-12](https://quay.io/repository/fedora/postgresql-12)
-- Fedora [postgresql-13](https://quay.io/repository/fedora/postgresql-13)
-- Fedora [postgresql-14](https://quay.io/repository/fedora/postgresql-14)
+- CentOS Stream 9 [postgresql-16](https://quay.io/repository/sclorg/postgresql-16-c9s)
+- CentOS Stream 10 [postgresql-16](https://quay.io/repository/sclorg/postgresql-16-c10s)
 - Fedora [postgresql-15](https://quay.io/repository/fedora/postgresql-15)
+- Fedora [postgresql-16](https://quay.io/repository/fedora/postgresql-16)
 
 This repository provides Dockerfiles for PostgreSQL container images, optimized for use with OpenShift. These images are available in RHEL, Fedora, and CentOS-based variants.
 
@@ -25,44 +24,45 @@ PostgreSQL versions currently supported are:
 
 - [postgresql-12](https://github.com/sclorg/postgresql-container/tree/master/12)
 - [postgresql-13](https://github.com/sclorg/postgresql-container/tree/master/13)
-- [postgresql-14](https://github.com/sclorg/postgresql-container/tree/master/14)
 - [postgresql-15](https://github.com/sclorg/postgresql-container/tree/master/15)
+- [postgresql-16](https://github.com/sclorg/postgresql-container/tree/master/16)
 
 RHEL versions currently supported are:
 - RHEL8
 - RHEL9
 - RHEL10
 
-CentOS versions currently supported are:
+CentOS Stream versions currently supported are:
 - CentOS Stream 9
+- CentOS Stream 10
 
 ## Installation
 
-Choose either the CentOS Stream 9 or RHEL9-based image:
+Choose either the CentOS Stream or RHEL-based image:
 
-- **RHEL9 based image**
+- **RHEL based image**
 
-  These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhel9/postgresql-13).
+  These images are available in the [Red Hat Container Catalog](https://catalog.redhat.com/en/search?searchType=containers).
   To download the image, execute the following command:
 
   ```bash
-  podman pull registry.redhat.io/rhel9/postgresql-13
+  podman pull registry.redhat.io/rhel10/postgresql-16
   ```
 
-  To build a RHEL9-based image, ensure you run Docker build on a RHEL machine with a valid subscription.
+  To build a RHEL-based image, ensure you run Docker build on a RHEL machine with a valid subscription.
 
   ```bash
   $ git clone --recursive https://github.com/sclorg/postgresql-container.git
   $ cd postgresql
-  $ make build TARGET=rhel9 VERSIONS=13
+  $ make build TARGET=rhel10 VERSIONS=16
   ```
 
-- **CentOS Stream 9 based image**
+- **CentOS Stream based image**
 
   These images are available on Quay.io. To download the image, execute the following command:
 
   ```bash
-  $ podman pull https://quay.io/repository/sclorg/postgresql-13-c9s
+  $ podman pull https://quay.io/repository/sclorg/postgresql-16-c10s
   ```
 
   To build a PostgreSQL image from scratch, perform the following steps:
@@ -70,7 +70,7 @@ Choose either the CentOS Stream 9 or RHEL9-based image:
   ```bash
   $ git clone --recursive https://github.com/sclorg/postgresql-container.git
   $ cd postgresql
-  $ make build TARGET=c9s VERSIONS=13
+  $ make build TARGET=c10s VERSIONS=16
   ```
 
 Note: While the installation steps utilize `podman`, you can substitute these calls with `docker` with the same arguments.
@@ -101,8 +101,8 @@ For detailed information on the usage of specific PostgreSQL Dockerfiles, please
 
 - [PostgreSQL 12 Usage Documentation](https://github.com/sclorg/postgresql-container/tree/master/12)
 - [PostgreSQL 13 Usage Documentation](https://github.com/sclorg/postgresql-container/tree/master/13)
-- [PostgreSQL 14 Usage Documentation](https://github.com/sclorg/postgresql-container/tree/master/14)
 - [PostgreSQL 15 Usage Documentation](https://github.com/sclorg/postgresql-container/tree/master/15)
+- [PostgreSQL 16 Usage Documentation](https://github.com/sclorg/postgresql-container/tree/master/16)
 
 For unsupported versions, you may refer to:
 
@@ -119,21 +119,21 @@ This repository includes a testing framework that verifies the basic functionali
 
   ```bash
   $ cd postgresql
-  $ make test TARGET=rhel9 VERSIONS=13
+  $ make test TARGET=rhel10 VERSIONS=16
   ```
 
 - **CentOS Stream-based image**
 
   ```bash
   $ cd postgresql
-  $ make test TARGET=c9s VERSIONS=13
+  $ make test TARGET=c10s VERSIONS=16
   ```
 
 - To run a specific subset of test cases, use the `TESTS` parameter:
 
   ```bash
   $ cd postgresql
-  $ make test VERSIONS=13 TESTS="run_general_tests run_replication_test"
+  $ make test VERSIONS=16 TESTS="run_general_tests run_replication_test"
   ```
 
 **Note: By omitting the `VERSIONS` parameter, the build/test action will be performed on all provided versions of PostgreSQL.**
