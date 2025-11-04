@@ -37,7 +37,7 @@ generate_passwd_file
 generate_postgresql_config
 
 wait_for_postgresql_master
-export MASTER_FQDN=$(postgresql_master_addr)
+export MASTER_FQDN=${POSTGRESQL_MASTER_IP}
 initialize_replica
 
 unset_env_vars
