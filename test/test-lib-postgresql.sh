@@ -59,7 +59,7 @@ function test_postgresql_imagestream() {
   TEMPLATES="postgresql-ephemeral-template.json
   postgresql-persistent-template.json"
   for template in $TEMPLATES; do
-    ct_os_test_image_stream_template "${THISDIR}/imagestreams/postgresql-${OS%[0-9]*}.json" "${THISDIR}/examples/${template}" postgresql "-p POSTGRESQL_VERSION=${VERSION}${tag}"
+    ct_os_test_image_stream_template "${THISDIR}/imagestreams/postgresql-${OS//[0-9]/}.json" "${THISDIR}/examples/${template}" postgresql "-p POSTGRESQL_VERSION=${VERSION}${tag}"
   done
 }
 

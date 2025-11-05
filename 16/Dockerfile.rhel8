@@ -43,7 +43,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN yum -y module enable postgresql:16 && \
-    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper-libs postgresql-server postgresql-contrib" && \
+    INSTALL_PKGS="rsync tar gettext nss_wrapper-libs postgresql-server postgresql-contrib" && \
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \

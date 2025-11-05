@@ -91,22 +91,6 @@ function unset_env_vars() {
   unset POSTGRESQL_{DATABASE,USER,PASSWORD,ADMIN_PASSWORD}
 }
 
-# postgresql_master_addr lookups the 'postgresql-master' DNS and get list of the available
-# endpoints. Each endpoint is a PostgreSQL container with the 'master' PostgreSQL running.
-function postgresql_master_addr() {
-  local service_name=${POSTGRESQL_MASTER_SERVICE_NAME:-postgresql-master}
-  local endpoints=$(dig ${service_name} A +search | grep ";${service_name}" | cut -d ';' -f 2 2>/dev/null)
-  # FIXME: This is for debugging (docker run)
-  if [ -v POSTGRESQL_MASTER_IP ]; then
-    endpoints=${POSTGRESQL_MASTER_IP:-}
-  fi
-  if [ -z "$endpoints" ]; then
-    >&2 echo "Failed to resolve PostgreSQL master IP address"
-    exit 3
-  fi
-  echo -n "$(echo $endpoints | cut -d ' ' -f 1)"
-}
-
 # Converts the version in format x.y or x.y.z to a number.
 version2number ()
 {
@@ -290,12 +274,11 @@ function set_pgdata ()
 
 function wait_for_postgresql_master() {
   while true; do
-    master_fqdn=$(postgresql_master_addr)
-    echo "Waiting for PostgreSQL master (${master_fqdn}) to accept connections ..."
+    echo "Waiting for PostgreSQL master (${POSTGRESQL_MASTER_IP}) to accept connections ..."
     if [ -v POSTGRESQL_ADMIN_PASSWORD ]; then
-      PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} psql "postgresql://postgres@${master_fqdn}" -c "SELECT 1;" && return 0
+      PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} psql "postgresql://postgres@${POSTGRESQL_MASTER_IP}" -c "SELECT 1;" && return 0
     else
-      PGPASSWORD=${POSTGRESQL_PASSWORD} psql "postgresql://${POSTGRESQL_USER}@${master_fqdn}/${POSTGRESQL_DATABASE}" -c "SELECT 1;" && return 0
+      PGPASSWORD=${POSTGRESQL_PASSWORD} psql "postgresql://${POSTGRESQL_USER}@${POSTGRESQL_MASTER_IP}/${POSTGRESQL_DATABASE}" -c "SELECT 1;" && return 0
     fi
     sleep 1
   done
