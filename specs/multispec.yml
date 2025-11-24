@@ -85,7 +85,7 @@ specs:
       redhat_component: "postgresql-{{ spec.short }}-container"
       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib postgresql{{ spec.short }}-upgrade"
-      check_pkgs: "postgresql-server postgresql-contrib postgresql-upgrade"
+      check_pkgs: "postgresql-server postgresql-contrib postgresql-upgrade pgvector"
 
   version:
     "12":

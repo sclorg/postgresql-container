@@ -71,6 +71,14 @@ RUN {{ spec.environment_setup }}
     INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
     {% endif %}
 {% endif %}
+{% if spec.version == "16" %}
+    {% if spec.prod in ["c9s", "rhel9"] %}
+    INSTALL_PKGS="$INSTALL_PKGS pgvector" && \
+    {% endif %}
+    {% if spec.prod in ["c10s", "rhel10" ] %}
+    PSQL_PKGS="$PSQL_PKGS postgresql16-pgvector" && \
+    {% endif %}
+{% endif %}
 {% if spec.prod == "c10s" or spec.prod == "rhel10" %}
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS $PSQL_PKGS  && \
     rpm -V $INSTALL_PKGS {{ spec.check_pkgs }} && \
