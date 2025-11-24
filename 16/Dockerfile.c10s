@@ -44,8 +44,9 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 RUN INSTALL_PKGS="rsync tar gettext-envsubst nss_wrapper-libs glibc-locale-source xz" && \
     PSQL_PKGS="postgresql16-server postgresql16-contrib postgresql16-upgrade" && \
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
+    PSQL_PKGS="$PSQL_PKGS postgresql16-pgvector" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS $PSQL_PKGS  && \
-    rpm -V $INSTALL_PKGS postgresql-server postgresql-contrib postgresql-upgrade && \
+    rpm -V $INSTALL_PKGS postgresql-server postgresql-contrib postgresql-upgrade pgvector && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
     yum -y clean all --enablerepo='*' && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \

@@ -45,6 +45,7 @@ RUN INSTALL_PKGS="rsync tar gettext-envsubst nss_wrapper-libs glibc-locale-sourc
     PSQL_PKGS="postgresql16-server postgresql16-contrib" && \
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
+    PSQL_PKGS="$PSQL_PKGS postgresql16-pgvector" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS $PSQL_PKGS  && \
     rpm -V $INSTALL_PKGS  && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
