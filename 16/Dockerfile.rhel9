@@ -46,6 +46,7 @@ RUN { yum -y module enable postgresql:16 || :; } && \
     INSTALL_PKGS="rsync tar gettext bind9.18-utils nss_wrapper-libs postgresql-server postgresql-contrib" && \
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
+    INSTALL_PKGS="$INSTALL_PKGS pgvector" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
