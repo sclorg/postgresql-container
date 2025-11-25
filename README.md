@@ -2,15 +2,6 @@
 
 [![Build and push images to Quay.io registry](https://github.com/sclorg/postgresql-container/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/sclorg/postgresql-container/actions/workflows/build-and-push.yml)
 
-Images available on Quay.io are:
-
-- CentOS Stream 9 [postgresql-13](https://quay.io/repository/sclorg/postgresql-13-c9s)
-- CentOS Stream 9 [postgresql-15](https://quay.io/repository/sclorg/postgresql-15-c9s)
-- CentOS Stream 9 [postgresql-16](https://quay.io/repository/sclorg/postgresql-16-c9s)
-- CentOS Stream 10 [postgresql-16](https://quay.io/repository/sclorg/postgresql-16-c10s)
-- Fedora [postgresql-15](https://quay.io/repository/fedora/postgresql-15)
-- Fedora [postgresql-16](https://quay.io/repository/fedora/postgresql-16)
-
 This repository provides Dockerfiles for PostgreSQL container images, optimized for use with OpenShift. These images are available in RHEL, Fedora, and CentOS-based variants.
 
 For more information about using these images with OpenShift, please refer to the official [OpenShift Documentation](https://docs.okd.io/latest/openshift_images/using-templates.html).
@@ -19,22 +10,19 @@ To contribute to this project, please review [the Contribution Guidelines](https
 For learning more information about concepts used in these container images, see the [Landing page](https://github.com/sclorg/welcome).
 
 ## Versions
-
-PostgreSQL versions currently supported are:
-
-- [postgresql-12](https://github.com/sclorg/postgresql-container/tree/master/12)
-- [postgresql-13](https://github.com/sclorg/postgresql-container/tree/master/13)
-- [postgresql-15](https://github.com/sclorg/postgresql-container/tree/master/15)
-- [postgresql-16](https://github.com/sclorg/postgresql-container/tree/master/16)
-
-RHEL versions currently supported are:
-- RHEL8
-- RHEL9
-- RHEL10
-
-CentOS Stream versions currently supported are:
-- CentOS Stream 9
-- CentOS Stream 10
+Currently supported versions are visible in the following table, expand an entry to see its container registry address.
+<!--
+Table start
+-->
+||CentOS Stream 9|CentOS Stream 10|Fedora|RHEL 8|RHEL 9|RHEL 10|
+|:--|:--:|:--:|:--:|:--:|:--:|:--:|
+|12||||<details><summary>✓</summary>`registry.redhat.io/rhel8/postgresql-12`</details>|||
+|13|<details><summary>✓</summary>`quay.io/sclorg/postgresql-13-c9s`</details>|||<details><summary>✓</summary>`registry.redhat.io/rhel8/postgresql-13`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel9/postgresql-13`</details>||
+|15|<details><summary>✓</summary>`quay.io/sclorg/postgresql-15-c9s`</details>||<details><summary>✓</summary>`quay.io/fedora/postgresql-15`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel8/postgresql-15`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel9/postgresql-15`</details>||
+|16|<details><summary>✓</summary>`quay.io/sclorg/postgresql-16-c9s`</details>|<details><summary>✓</summary>`quay.io/sclorg/postgresql-16-c10s`</details>|<details><summary>✓</summary>`quay.io/fedora/postgresql-16`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel8/postgresql-16`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel9/postgresql-16`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel10/postgresql-16`</details>|
+<!--
+Table end
+-->
 
 ## Installation
 
