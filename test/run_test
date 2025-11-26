@@ -27,6 +27,7 @@ run_s2i_enable_ssl_test
 run_upgrade_test
 run_migration_test
 run_pgaudit_test
+run_pgvector_test
 run_env_extension_load_test
 run_logging_test
 "
@@ -1033,6 +1034,60 @@ EOSQL" || ret=3
 
   grep -E 'AUDIT: SESSION,.*,.*,DDL,CREATE DATABASE,,,CREATE DATABASE pgaudittest' "${data_dir}"/userdata/log/postgresql-*.log || ret=4
   grep -E 'AUDIT: SESSION,.*,.*,READ,SELECT,,,SELECT' "${data_dir}"/userdata/log/postgresql-*.log || ret=5
+  if [ $ret -eq 0 ]; then
+    echo "  Success!"
+  fi
+  return $ret
+}
+
+# run_pgvector_test
+# --------------------
+# Configure container to include pgvector. Check
+# that pgvector is loaded.
+run_pgvector_test()
+{
+  local ret=0
+  # extension pgvector is not available for older versions
+  case ${VERSION} in
+    11|12|15) echo "pgvector not expected, test skipped."; return ;;
+    *) ;;
+  esac
+  case ${OS} in
+    fedora)
+      echo "pgvector not expected, test skipped."; return ;;
+    *) ;;
+  esac
+
+  local config_dir data_dir name=test-pgvector
+
+  # create a dir for config
+  config_dir=$(mktemp -d --tmpdir vector-hook-volume.XXXXX)
+  add_cleanup_command /bin/rm -rf "$config_dir"
+  test -n "$DOCKER_EXTRA_ARGS" || cp -r "$test_dir"/examples/pgvector/* "$config_dir"
+  setfacl -R -m u:26:rwx "$config_dir"
+
+  # create a dir for data
+  create_volume_dir
+  data_dir="${volume_dir}"
+
+  DOCKER_ARGS="
+-e POSTGRESQL_ADMIN_PASSWORD=password
+$DOCKER_EXTRA_ARGS
+-v ${config_dir}:/opt/app-root/src:Z
+-v ${data_dir}:/var/lib/pgsql/data:Z
+  " create_container "$name"
+
+  assert_runtime_option "$name" shared_preload_libraries vector || ret=1
+  wait_ready "$name" || \
+    false "FAIL: Container did not start up properly."
+
+  # enable the pgvector extension
+  docker exec -i $(get_cid "$name") bash -c "psql <<EOSQL
+CREATE EXTENSION vector;
+CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(3));
+EOSQL" || ret=2
+
+
   if [ $ret -eq 0 ]; then
     echo "  Success!"
   fi
