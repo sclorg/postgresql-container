@@ -1053,7 +1053,7 @@ run_pgvector_test()
     *) ;;
   esac
   case ${OS} in
-    fedora|rhel8)
+    rhel8)
       echo "pgvector not expected, test skipped."; return ;;
     *) ;;
   esac
