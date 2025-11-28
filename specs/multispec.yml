@@ -24,6 +24,17 @@ specs:
       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       pkgs: "postgresql-server postgresql-contrib"
 
+    fedora41:
+      distros:
+        - fedora-41-x86_64
+      s2i_base: quay.io/fedora/s2i-core
+      org: "fedora"
+      prod: "fedora"
+      openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+      redhat_component: "postgresql-{{ spec.short }}-container"
+      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      pkgs: "postgresql-server postgresql-contrib"
+
     rhel8:
        distros:
          - rhel-8-x86_64
@@ -149,6 +160,6 @@ matrix:
         - rhel-8-x86_64
         - rhel-9-x86_64
         - centos-stream-9-x86_64
-        - fedora-40-x86_64
+        - fedora-41-x86_64
         - centos-stream-10-x86_64
         - rhel-10-x86_64

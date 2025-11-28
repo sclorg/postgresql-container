@@ -1,7 +1,7 @@
-{% if spec.version == "16" or spec.version == "15" %}
-FROM quay.io/fedora/s2i-core:40
+{% if spec.version == "16" %}
+FROM quay.io/fedora/s2i-core:41
 {% else %}
-FROM quay.io/fedora/s2i-core:38
+FROM quay.io/fedora/s2i-core:40
 {% endif %}
 
 # PostgreSQL image for OpenShift.
@@ -56,7 +56,7 @@ RUN INSTALL_PKGS="rsync tar gettext postgresql{{ spec.short }}-server postgresql
 {% endif %}
     INSTALL_PKGS+=" findutils xz" && \
 {% if spec.version == "16" %}
-    INSTALL_PKGS+=" pgaudit" && \
+    INSTALL_PKGS+=" pgaudit pgvector" && \
 {% else %}
     INSTALL_PKGS+=" postgresql{{ spec.short }}-pgaudit" && \
 {% endif %}

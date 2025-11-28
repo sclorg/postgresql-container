@@ -1,10 +1,17 @@
-The PostgreSQL Audit Extension (or pgaudit) provides detailed session and/or object
-audit logging via the standard logging facility provided by PostgreSQL.
+Open-source vector similarity search for Postgres
+
+Store your vectors with the rest of your data. Supports:
+
+    exact and approximate nearest neighbor search
+    single-precision, half-precision, binary, and sparse vectors
+    L2 distance, inner product, cosine distance, L1 distance, Hamming distance, and Jaccard distance
+    any language with a Postgres client
+
 
 Bind-mount this directory under /opt/app-root/src in the container, and all the
 *.conf files from postgresql-cfg/ files will be included to postgresql.conf.
 
-This config file enables the pgaudit extensions that is available in the container
+This config file enables the pgvector extensions that is available in the container
 image, but needs to be enabled.
 
-More about pgaudit extension at https://www.pgaudit.org.
+More about pgvector extension at https://github.com/pgvector/pgvector.
