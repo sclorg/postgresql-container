@@ -11,7 +11,7 @@ jobs:
     needs: check-readme
     uses: "sclorg/ci-actions/.github/workflows/container-tests.yml@main"
     with:
-      enabled-tests: '["container","openshift-4","openshift-pytest"]'
+      enabled-tests: '["container", "container-pytest", "openshift-4", "openshift-pytest"]'
       versions: '[ "12", "13", "15", "16" ]'
       openshift-versions: '[ "12", "13", "15", "16" ]'
     secrets: inherit
