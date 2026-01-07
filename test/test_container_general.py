@@ -33,10 +33,10 @@ class TestPostgreSQLGeneralContainer:
         [
             ("", "user", "pass", "", "", "no_admin"),
             ("", "user1", "pass1", "", "r00t", "admin"),
-            # ("", "", "", "postgres", "r00t", "only_admin"),
+            ("", "", "", "postgres", "r00t", "only_admin"),
             ("-u 12345", "user2", "pass", "", "", "no_admin_altuid"),
             ("-u 12345", "user3", "pass1", "", "r00t", "admin_altuid"),
-            # ("-u 12345", "", "", "postgres", "r00t", "only_admin_altuid"),
+            ("-u 12345", "", "", "postgres", "r00t", "only_admin_altuid"),
         ],
     )
     def test_run(
@@ -60,28 +60,24 @@ class TestPostgreSQLGeneralContainer:
             POSTGRESQL_SHARED_BUFFERS = "64MB"
         expected_success = False
         expected_admin_success = False
+        psql_user_arg = ""
+        psql_pwd_arg = ""
+        db_name_arg = ""
+        admin_root_password_arg = ""
         if psql_user != "":
             psql_user_arg = f"-e POSTGRESQL_USER={psql_user}"
             expected_success = True
-        else:
-            psql_user_arg = ""
         if psql_password:  # empty password is allowed
             psql_pwd_arg = f"-e POSTGRESQL_PASSWORD={psql_password}"
-        else:
-            psql_pwd_arg = ""
-        if psql_database:
-            db_name = psql_database
-        else:
-            db_name = "db"
+        if psql_user and psql_password:
+            db_name_arg = "-e POSTGRESQL_DATABASE=db"
         if root_password == "r00t":
             admin_root_password_arg = f"-e POSTGRESQL_ADMIN_PASSWORD={root_password}"
             expected_admin_success = True
-        else:
-            admin_root_password_arg = ""
         docker_all_args = [
             psql_user_arg,
             psql_pwd_arg,
-            f"-e POSTGRESQL_DATABASE={db_name}",
+            db_name_arg,
             admin_root_password_arg,
             f"-e POSTGRESQL_MAX_CONNECTIONS={POSTGRESQL_MAX_CONNECTIONS}",
             f"-e POSTGRESQL_MAX_PREPARED_TRANSACTIONS={POSTGRESQL_MAX_PREPARED_TRANSACTIONS}",
@@ -115,30 +111,29 @@ class TestPostgreSQLGeneralContainer:
             cmd="psql --version",
         )
         assert VARS.VERSION in output
-        self.db_image.db_lib.assert_login_access(
-            container_ip=cip,
-            username=psql_user,
-            password=psql_password,
-            expected_success=expected_success,
-        )
-        self.db_image.db_lib.assert_login_access(
-            container_ip=cip,
-            username=psql_user,
-            password=f"{psql_password}_foo",
-            expected_success=False,
-        )
-        self.db_image.db_lib.assert_login_access(
-            container_ip=cip,
-            username="postgres",
-            password=root_password,
-            expected_success=expected_admin_success,
-        )
-        self.db_image.db_lib.assert_login_access(
-            container_ip=cip,
-            username="postgres",
-            password=f"{root_password}_foo",
-            expected_success=False,
-        )
+        access_output = True
+        if psql_database == "":
+            psql_database = "db"
+        for user, pwd, ret_value in [
+            (psql_user, psql_password, expected_success),
+            (psql_user, f"{psql_password}_foo", False),
+            ("postgres", root_password, expected_admin_success),
+            ("postgres", f"{root_password}_foo", False),
+        ]:
+            test_assert = self.db_image.db_lib.assert_login_access(
+                container_ip=cip,
+                username=user,
+                password=pwd,
+                expected_success=ret_value,
+                database=psql_database,
+            )
+            if not test_assert:
+                print(
+                    f"Login access failed for {user}:{pwd} with expected success {ret_value}"
+                )
+                access_output = False
+                break
+        assert access_output, "Login access failed for above results"
         assert self.db_image.db_lib.assert_local_access(container_id=cid)
         output = PodmanCLIWrapper.podman_exec_shell_command(
             cid_file_name=cid,
@@ -154,24 +149,30 @@ class TestPostgreSQLGeneralContainer:
             assert re.search(word, output), f"Word {word} not found in {output}"
         # test_postgresql
         if test_name == "admin":
-            psql_user = "postgres"
-            psql_password = root_password
-            psql_database = "postgres"
             output = self.db_api.run_sql_command(
                 container_ip=cip,
-                username=psql_user,
-                password=psql_password,
+                username="postgres",
+                password=root_password,
                 container_id=VARS.IMAGE_NAME,
-                database=db_name,
+                database="postgres",
                 sql_cmd="-At -c 'CREATE EXTENSION \"uuid-ossp\";'",
                 expected_output="CREATE EXTENSION",
             )
+        if psql_password == "":
+            psql_password = root_password
+
+        self.database_test(cip, psql_user, psql_password, psql_database)
+
+    def database_test(self, cip, psql_user, psql_password, psql_database):
+        """
+        Test PostgreSQL database creation.
+        """
         output = self.db_api.run_sql_command(
             container_ip=cip,
             username=psql_user,
             password=psql_password,
             container_id=VARS.IMAGE_NAME,
-            database=db_name,
+            database=psql_database,
             sql_cmd='-At -c "CREATE TABLE tbl (a integer, b integer);"',
             expected_output="CREATE TABLE",
         )
@@ -181,7 +182,7 @@ class TestPostgreSQLGeneralContainer:
             username=psql_user,
             password=psql_password,
             container_id=VARS.IMAGE_NAME,
-            database=db_name,
+            database=psql_database,
             sql_cmd=[
                 '-At -c "INSERT INTO tbl VALUES (1, 2);"',
                 '-At -c "INSERT INTO tbl VALUES (3, 4);"',
@@ -194,7 +195,7 @@ class TestPostgreSQLGeneralContainer:
             username=psql_user,
             password=psql_password,
             container_id=VARS.IMAGE_NAME,
-            database=db_name,
+            database=psql_database,
             sql_cmd='-At -c "SELECT * FROM tbl;"',
         )
         words = [
@@ -209,7 +210,7 @@ class TestPostgreSQLGeneralContainer:
             username=psql_user,
             password=psql_password,
             container_id=VARS.IMAGE_NAME,
-            database=db_name,
+            database=psql_database,
             sql_cmd='-At -c "DROP TABLE tbl;"',
             expected_output="DROP TABLE",
         )

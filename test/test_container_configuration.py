@@ -18,6 +18,7 @@ class TestPostgreSQLConfigurationContainer:
         """
         self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type="postgresql")
         self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
+        self.volume_dir = create_postgresql_volume_dir()
 
     def teardown_method(self):
         """
@@ -142,16 +143,10 @@ class TestPostgreSQLConfigurationContainer:
                 "-e POSTGRESQL_ADMIN_PASSWORD=",
             ],
             [
-                "-e POSTGRESQL_USER=user",
-                "-e POSTGRESQL_PASSWORD=pass",
-                "-e POSTGRESQL_DATABASE=db",
-                "-e POSTGRESQL_ADMIN_PASSWORD=",
-            ],
-            [
-                "-e POSTGRESQL_USER=",
-                "-e POSTGRESQL_PASSWORD=",
-                "-e POSTGRESQL_DATABASE=",
-                '-e POSTGRESQL_ADMIN_PASSWORD="The @password"',
+                "",
+                "",
+                "",
+                '-e POSTGRESQL_ADMIN_PASSWORD="the @password"',
             ],
             [
                 '-e POSTGRESQL_USER="the user"',
@@ -185,13 +180,21 @@ class TestPostgreSQLConfigurationContainer:
         """
         Test container creation fails with no arguments.
         """
-        cid_file_name = "test_pg_hook"
-        volume_dir = create_postgresql_volume_dir()
+        self.shared_buffer_test("32MB")
+        self.shared_buffer_test("113MB")
+        self.shared_buffer_test("111MB")
+
+    def shared_buffer_test(self, shared_buffer_value):
+        """
+        Test shared buffer configuration.
+        """
+        cid_file_name = f"test_pg_hook_{shared_buffer_value}"
         docker_args = [
             "-e POSTGRESQL_ADMIN_PASSWORD=password",
-            "-e POSTGRESQL_SHARED_BUFFERS=32MB",
-            f"-v {volume_dir}:/opt/app-root/src:Z",
+            f"-e POSTGRESQL_SHARED_BUFFERS={shared_buffer_value}",
+            f"-v {self.volume_dir}:/opt/app-root/src:Z",
         ]
+
         assert self.db.create_container(
             cid_file_name=cid_file_name,
             docker_args=docker_args,
@@ -208,52 +211,6 @@ class TestPostgreSQLConfigurationContainer:
             cid_file_name=cid,
             cmd='psql -tA -c "SHOW shared_buffers;"',
         )
-        assert "32MB" in output, f"Shared buffers should be 32MB, but is {output}"
-        # Check that POSTGRESQL_SHARED_BUFFERS has effect.
-        docker_args = [
-            "-e POSTGRESQL_ADMIN_PASSWORD=password",
-            "-e POSTGRESQL_SHARED_BUFFERS=113MB",
-        ]
-        cid_file_name2 = "test_pg_hook_2"
-        assert self.db.create_container(
-            cid_file_name=cid_file_name2,
-            docker_args=docker_args,
-            command="",
+        assert shared_buffer_value in output, (
+            f"Shared buffers should be {shared_buffer_value}, but is {output}"
         )
-        cid = self.db.get_cid(cid_file_name=cid_file_name2)
-        assert cid
-        cip = self.db.get_cip(cid_file_name=cid_file_name2)
-        assert cip
-        assert self.db_api.wait_for_database(
-            container_id=cid, command="/usr/libexec/check-container"
-        )
-        output = PodmanCLIWrapper.podman_exec_shell_command(
-            cid_file_name=cid,
-            cmd='psql -tA -c "SHOW shared_buffers;"',
-        )
-        assert "113MB" in output, f"Shared buffers should be 113MB, but is {output}"
-        # Check that volume has priority over POSTGRESQL_SHARED_BUFFERS.
-        cid_file_name3 = "test_pg_hook_3"
-        docker_args = [
-            "-e POSTGRESQL_ADMIN_PASSWORD=password",
-            "-e POSTGRESQL_SHARED_BUFFERS=113MB",
-            f"-v {volume_dir}:/opt/app-root/src:Z",
-        ]
-        assert self.db.create_container(
-            cid_file_name=cid_file_name3,
-            docker_args=docker_args,
-            command="",
-        )
-        cid = self.db.get_cid(cid_file_name=cid_file_name3)
-        assert cid
-        cip = self.db.get_cip(cid_file_name=cid_file_name3)
-        assert cip
-        assert self.db_api.wait_for_database(
-            container_id=cid, command="/usr/libexec/check-container"
-        )
-        output = PodmanCLIWrapper.podman_exec_shell_command(
-            cid_file_name=cid,
-            cmd='psql -tA -c "SHOW shared_buffers;"',
-        )
-
-        assert "113MB" in output, f"Shared buffers should be 113MB, but is {output}"

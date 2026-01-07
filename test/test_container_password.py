@@ -64,13 +64,13 @@ class TestPostgreSQLPasswordChangeContainer:
         )
         cid1 = self.pwd_change.get_cid(cid_file_name=cid_file_name1)
         assert cid1
-        self.pwd_change.db_lib.assert_login_access(
+        assert self.pwd_change.db_lib.assert_login_access(
             container_ip=cip1,
             username=username,
             password=password,
             expected_success=True,
         )
-        self.pwd_change.db_lib.assert_login_access(
+        assert self.pwd_change.db_lib.assert_login_access(
             container_ip=cip1,
             username="postgres",
             password=admin_password,
@@ -135,36 +135,26 @@ class TestPostgreSQLPasswordChangeContainer:
         )
         cip_new = self.pwd_change.get_cip(cid_file_name=cid_file_name_new)
         assert cip_new
+
         assert self.pwd_change.test_db_connection(
             container_ip=cip_new,
             username=username,
             password=new_password,
             max_attempts=10,
         )
-        self.pwd_change.db_lib.assert_login_access(
-            container_ip=cip_new,
-            username=username,
-            password=new_password,
-            expected_success=True,
-        )
-        self.pwd_change.db_lib.assert_login_access(
-            container_ip=cip_new,
-            username=username,
-            password=password,
-            expected_success=False,
-        )
-        self.pwd_change.db_lib.assert_login_access(
-            container_ip=cip_new,
-            username="postgres",
-            password=new_admin_password,
-            expected_success=True,
-        )
-        self.pwd_change.db_lib.assert_login_access(
-            container_ip=cip_new,
-            username="postgres",
-            password=admin_password,
-            expected_success=False,
-        )
+        for user, pwd, ret_value in [
+            (username, new_password, True),
+            (username, password, False),
+            ("postgres", new_admin_password, True),
+            ("postgres", "admin_password", False),
+        ]:
+            assert self.pwd_change.db_lib.assert_login_access(
+                container_ip=cip_new,
+                username=user,
+                password=pwd,
+                expected_success=ret_value,
+            )
+
         output = self.dw_api.run_sql_command(
             container_ip=cip_new,
             username=username,

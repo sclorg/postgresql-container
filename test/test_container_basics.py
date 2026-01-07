@@ -1,6 +1,9 @@
+import shutil
+
 from pathlib import Path
 
 from container_ci_suite.container_lib import ContainerTestLib
+from container_ci_suite.utils import ContainerTestLibUtils
 
 from conftest import VARS, create_postgresql_temp_file
 
@@ -23,15 +26,21 @@ class TestPostgreSQLBasicsContainer:
     """
 
     def setup_method(self):
+        """
+        Setup the test environment.
+        """
         self.app_image = build_s2i_app(app_path=VARS.TEST_DIR / "test-app")
         self.app_image.db_lib.db_type = "postgresql"
 
     def teardown_method(self):
+        """
+        Teardown the test environment.
+        """
         self.app_image.cleanup()
 
     def test_s2i_usage(self):
         """
-        Test container creation fails with invalid combinations of arguments.
+        Test container creation based on s2i technology.
         """
         cid_config_build = "s2i_config_build"
         psql_password = "password"
@@ -70,14 +79,16 @@ class TestPostgreSQLBasicsContainer:
             password=psql_backup_password,
             database="backup",
         )
-        tmp_file = create_postgresql_temp_file()
         backup_user_script = (
             VARS.TEST_DIR / "test-app" / "postgresql-init" / "backup_user.sh"
         )
-        with open(backup_user_script, "r") as f:
-            backup_user_script_content = f.read()
-        with open(tmp_file, "w") as f:
-            f.write(backup_user_script_content)
+        tmp_file = create_postgresql_temp_file()
+        shutil.copy(backup_user_script, tmp_file)
+        ContainerTestLibUtils.commands_to_run(
+            commands_to_run=[
+                f"setfacl -m u:26:rw- {tmp_file}",
+            ]
+        )
         cid_s2i_test_mount = "s2i_test_mount"
         mount_point = "/opt/app-root/src/postgresql-init/add_backup_user.sh"
         assert self.app_image.create_container(
