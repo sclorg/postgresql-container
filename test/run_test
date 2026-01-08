@@ -110,7 +110,14 @@ function get_ip_from_cid() {
 }
 
 function postgresql_cmd() {
-  docker run --rm -e PGPASSWORD="$PASS" "$IMAGE_NAME" psql -v ON_ERROR_STOP=1 "postgresql://$PGUSER@$CONTAINER_IP:5432/${DB-db}" "$@"
+  # URI encode the values used inside the connection URI to avoid special
+  # characters causing the tests using them to fail.
+  # These tests should not fail because the container is created just fine
+  # as it uses just environment variables. We need both the creation and
+  # connection to use the same values, which this use of `jq` ensures.
+  USERENC=$(jq -rn --arg x "$PGUSER" '$x|@uri')
+  DBENC=$(jq -rn --arg x "${DB-db}" '$x|@uri')
+  docker run --rm -e PGPASSWORD="$PASS" "$IMAGE_NAME" psql -v ON_ERROR_STOP=1 "postgresql://$USERENC@$CONTAINER_IP:5432/$DBENC" "$@"
 }
 
 function test_connection() {
@@ -647,7 +654,10 @@ VERY_LONG_IDENTIFIER="very_long_identifier_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   assert_container_creation_succeeds -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -e POSTGRESQL_ADMIN_PASSWORD="\"" || ret=8
 
   assert_container_creation_succeeds -e POSTGRESQL_ADMIN_PASSWORD="the @password" || ret=9
+  # Postgres <18 accepts spaces in the connection URI just fine,
+  # but 18 does not and tells you to use %20 instead, so we encode every DB- and username.
   assert_container_creation_succeeds -e POSTGRESQL_PASSWORD="the pass" -e POSTGRESQL_USER="the user" -e POSTGRESQL_DATABASE="the db" || ret=10
+  assert_container_creation_succeeds -e POSTGRESQL_PASSWORD="the pass" -e POSTGRESQL_USER="the@user" -e POSTGRESQL_DATABASE="the/db" || ret=10
 
   if [ $ret -eq 0 ]; then
     echo "  Success!"
