@@ -10,8 +10,8 @@ FROM ubi9/s2i-core
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-ENV POSTGRESQL_VERSION=13 \
-    POSTGRESQL_PREV_VERSION=12 \
+ENV POSTGRESQL_VERSION=18 \
+    POSTGRESQL_PREV_VERSION=16 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
@@ -24,15 +24,15 @@ create, run, maintain and access a PostgreSQL DBMS server."
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="PostgreSQL 13" \
+      io.k8s.display-name="PostgreSQL 18" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql13,postgresql-13" \
+      io.openshift.tags="database,postgresql,postgresql18,postgresql-18" \
       io.openshift.s2i.assemble-user="26" \
-      name="rhel9/postgresql-13" \
-      com.redhat.component="postgresql-13-container" \
+      name="rhel9/postgresql-18" \
+      com.redhat.component="postgresql-18-container" \
       version="1" \
       com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
-      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel9/postgresql-13" \
+      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel9/postgresql-18" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
@@ -42,10 +42,11 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
- \
-RUN INSTALL_PKGS="rsync tar gettext nss_wrapper-libs postgresql-server postgresql-contrib" && \
+RUN { yum -y module enable postgresql:18 || :; } && \
+    INSTALL_PKGS="rsync tar gettext nss_wrapper-libs postgresql-server postgresql-contrib" && \
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
+    INSTALL_PKGS="$INSTALL_PKGS pgvector" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \

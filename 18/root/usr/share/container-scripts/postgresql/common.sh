@@ -192,7 +192,7 @@ initdb_wrapper ()
 {
   # Initialize the database cluster with utf8 support enabled by default.
   # This might affect performance, see:
-  # http://www.postgresql.org/docs/13/static/locale.html
+  # http://www.postgresql.org/docs/18/static/locale.html
   LANG=${LANG:-en_US.utf8} "$@"
 }
 
@@ -342,7 +342,8 @@ run_pgupgrade ()
   # initialize the database
   info_msg "Initialize new data directory; we will migrate to that."
 
-  initdb_cmd=( initdb_wrapper "$new_pgengine"/initdb  "$PGDATA_new" )
+  # pg18 is the first to enable data checksums by default, so we disable them here
+  initdb_cmd=( initdb_wrapper "$new_pgengine"/initdb --no-data-checksums "$PGDATA_new" )
   eval "\${initdb_cmd[@]} ${POSTGRESQL_UPGRADE_INITDB_OPTIONS-}" || \
     { rm -rf "$PGDATA_new" ; false ; }
 
