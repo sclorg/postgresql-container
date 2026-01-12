@@ -917,13 +917,13 @@ run_upgrade_test ()
             upgrade_path="none 12 13 15 16 none"
             ;;
         rhel9|c9s)
-            upgrade_path="none 13 15 16 none"
+            upgrade_path="none 13 15 16 18 none"
             ;;
         rhel10|c10s)
-            upgrade_path="none 13 15 16 none"
+            upgrade_path="none 16 18 none"
             ;;
         fedora)
-            upgrade_path="none 12 13 14 15 16 none"
+            upgrade_path="none 15 16 18 none"
             ;;
         *)
             echo "unsupported OS variable" >&2

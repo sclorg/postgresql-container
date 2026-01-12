@@ -57,31 +57,37 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 RUN INSTALL_PKGS="rsync tar gettext-envsubst nss_wrapper-libs glibc-locale-source xz" && \
     PSQL_PKGS="{{ spec.pkgs }}" && \
 {% elif spec.prod == "rhel9" and spec.version == "13" %} \
-RUN INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper-libs {{ spec.pkgs }}" && \
-{% elif spec.prod == "rhel9" and spec.version in ["15", "16"] %}
+RUN INSTALL_PKGS="rsync tar gettext nss_wrapper-libs {{ spec.pkgs }}" && \
+{% elif spec.prod == "rhel9" and spec.version in ["15", "16", "18"] %}
 RUN {{ spec.environment_setup }}
-    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper-libs {{ spec.pkgs }}" && \
+    INSTALL_PKGS="rsync tar gettext nss_wrapper-libs {{ spec.pkgs }}" && \
 {% else %}
 RUN {{ spec.environment_setup }}
     INSTALL_PKGS="rsync tar gettext nss_wrapper-libs {{ spec.pkgs }}" && \
 {% endif %}
-{% if spec.version not in ["9.6", "10", "11"] %}
+{% if spec.version != "18" or spec.prod in ["c9s", "rhel9"] %}
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
-    {% if spec.prod != "c10s" %}
-    INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
-    {% endif %}
+{% else %}
+    INSTALL_PKGS="$INSTALL_PKGS postgresql{{ spec.version }}-pgaudit" && \
 {% endif %}
-{% if spec.version == "16" %}
+{% if spec.prod not in ["c10s", "rhel10"] %}
+    INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
+{% endif %}
+{% if spec.version in ["16", "18"] %}
     {% if spec.prod in ["c9s", "rhel9"] %}
     INSTALL_PKGS="$INSTALL_PKGS pgvector" && \
     {% endif %}
     {% if spec.prod in ["c10s", "rhel10" ] %}
-    PSQL_PKGS="$PSQL_PKGS postgresql16-pgvector" && \
+    PSQL_PKGS="$PSQL_PKGS postgresql{{ spec.version }}-pgvector" && \
     {% endif %}
 {% endif %}
-{% if spec.prod == "c10s" or spec.prod == "rhel10" %}
+{% if spec.prod in ["c10s", "rhel10"] %}
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS $PSQL_PKGS  && \
+    {% if spec.version != "18" %}
     rpm -V $INSTALL_PKGS {{ spec.check_pkgs }} && \
+    {% else %}
+    rpm -V $INSTALL_PKGS && \
+    {% endif %}
 {% else %}
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
