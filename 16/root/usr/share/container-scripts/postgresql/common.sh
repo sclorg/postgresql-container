@@ -341,7 +341,8 @@ run_pgupgrade ()
 
   # initialize the database
   info_msg "Initialize new data directory; we will migrate to that."
-  initdb_cmd=( initdb_wrapper "$new_pgengine"/initdb "$PGDATA_new" )
+
+  initdb_cmd=( initdb_wrapper "$new_pgengine"/initdb  "$PGDATA_new" )
   eval "\${initdb_cmd[@]} ${POSTGRESQL_UPGRADE_INITDB_OPTIONS-}" || \
     { rm -rf "$PGDATA_new" ; false ; }
 
