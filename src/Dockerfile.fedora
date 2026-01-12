@@ -1,4 +1,6 @@
-{% if spec.version == "16" %}
+{% if spec.version == "18" %}
+FROM quay.io/fedora/s2i-core:43
+{% elif spec.version == "16" %}
 FROM quay.io/fedora/s2i-core:41
 {% else %}
 FROM quay.io/fedora/s2i-core:40
@@ -48,14 +50,14 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-{% if spec.version == "16" %}
+{% if spec.version in ["16", "18"] %}
 RUN INSTALL_PKGS="rsync tar gettext postgresql-server postgresql-contrib nss_wrapper " && \
     INSTALL_PKGS+=" procps-ng util-linux postgresql-upgrade" && \
 {% else %}
 RUN INSTALL_PKGS="rsync tar gettext postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib nss_wrapper postgresql{{ spec.short }}-upgrade procps-ng util-linux" && \
 {% endif %}
     INSTALL_PKGS+=" findutils xz" && \
-{% if spec.version == "16" %}
+{% if spec.version in ["16", "18"] %}
     INSTALL_PKGS+=" pgaudit pgvector" && \
 {% else %}
     INSTALL_PKGS+=" postgresql{{ spec.short }}-pgaudit" && \

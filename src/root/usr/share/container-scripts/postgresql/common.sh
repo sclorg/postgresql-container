@@ -342,7 +342,14 @@ run_pgupgrade ()
 
   # initialize the database
   info_msg "Initialize new data directory; we will migrate to that."
-  initdb_cmd=( initdb_wrapper "$new_pgengine"/initdb "$PGDATA_new" )
+
+  {% if spec.version == "18" %}
+  # pg18 is the first to enable data checksums by default, so we disable them here
+  {%    set checksum_flag = "--no-data-checksums" %}
+  {% else %}
+  {%    set checksum_flag = "" %}
+  {% endif %}
+  initdb_cmd=( initdb_wrapper "$new_pgengine"/initdb {{ checksum_flag }} "$PGDATA_new" )
   eval "\${initdb_cmd[@]} ${POSTGRESQL_UPGRADE_INITDB_OPTIONS-}" || \
     { rm -rf "$PGDATA_new" ; false ; }
 

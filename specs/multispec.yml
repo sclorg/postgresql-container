@@ -35,6 +35,17 @@ specs:
       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       pkgs: "postgresql-server postgresql-contrib"
 
+    fedora43:
+      distros:
+        - fedora-43-x86_64
+      s2i_base: quay.io/fedora/s2i-core
+      org: "fedora"
+      prod: "fedora"
+      openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+      redhat_component: "postgresql-{{ spec.short }}-container"
+      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      pkgs: "postgresql-server postgresql-contrib"
+    
     rhel8:
        distros:
          - rhel-8-x86_64
@@ -72,7 +83,7 @@ specs:
        openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
        redhat_component: "postgresql-{{ spec.short }}-container"
        img_name: "{{ spec.org }}/postgresql-{{ spec.short }}"
-       pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib"
+       pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib postgresql{{ spec.short }}-upgrade"
     c9s:
       distros:
         - centos-stream-9-x86_64
@@ -138,6 +149,16 @@ specs:
       rhel_image_name: "rhel10/postgresql-{{ spec.short }}"
       latest_fedora: "f40"
 
+    "18":
+      version: "18"
+      prev_version: "16"
+      short: "18"
+      prev_short: "16"
+      common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c10s"
+      rhel_image_name: "rhel10/postgresql-{{ spec.short }}"
+      latest_fedora: "f43"
+
 
 matrix:
   include:
@@ -162,4 +183,10 @@ matrix:
         - centos-stream-9-x86_64
         - fedora-41-x86_64
         - centos-stream-10-x86_64
+        - rhel-10-x86_64
+    - version: "18"
+      distros:
+        - fedora-43-x86_64
+        - centos-stream-10-x86_64
+        - rhel-9-x86_64
         - rhel-10-x86_64
