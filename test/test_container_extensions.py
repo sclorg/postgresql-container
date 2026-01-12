@@ -79,8 +79,6 @@ class TestPostgreSQLPluginContainer:
             docker_args=docker_args,
             command="",
         )
-        cip = self.db.get_cip(cid_file_name=cid_file_name)
-        assert cip
         cid = self.db.get_cid(cid_file_name=cid_file_name)
         assert cid
         assert self.db_api.wait_for_database(
@@ -151,8 +149,6 @@ class TestPostgreSQLPluginContainer:
             docker_args=docker_args,
             command="",
         )
-        cip = self.db.get_cip(cid_file_name=cid_file_name)
-        assert cip
         cid = self.db.get_cid(cid_file_name=cid_file_name)
         assert cid
         assert self.db_api.wait_for_database(

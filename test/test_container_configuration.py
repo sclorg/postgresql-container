@@ -125,34 +125,34 @@ class TestPostgreSQLConfigurationContainer:
         "psql_user, psql_password, psql_database, psql_admin_password",
         [
             [
-                "-e POSTGRESQL_USER=user",
-                "-e POSTGRESQL_PASSWORD=",
-                "-e POSTGRESQL_DATABASE=db",
-                "-e POSTGRESQL_ADMIN_PASSWORD=admin_pass",
+                "user",
+                "pass",
+                "db",
+                "admin_pass",
             ],
             [
-                "-e POSTGRESQL_USER=user",
-                "-e POSTGRESQL_PASSWORD=pass",
-                "-e POSTGRESQL_DATABASE=9invalid",
-                "-e POSTGRESQL_ADMIN_PASSWORD=admin_pass",
+                "user",
+                "pass",
+                "9invalid",
+                "admin_pass",
             ],
             [
-                "-e POSTGRESQL_USER=user",
-                "-e POSTGRESQL_PASSWORD=pass",
-                "-e POSTGRESQL_DATABASE=db",
-                "-e POSTGRESQL_ADMIN_PASSWORD=",
+                "user",
+                "pass",
+                "db",
+                "",
             ],
             [
                 "",
                 "",
                 "",
-                '-e POSTGRESQL_ADMIN_PASSWORD="the @password"',
+                '"the @password"',
             ],
             [
-                '-e POSTGRESQL_USER="the user"',
-                '-e POSTGRESQL_PASSWORD="the pass"',
-                '-e POSTGRESQL_DATABASE="the db"',
-                "-e POSTGRESQL_ADMIN_PASSWORD=",
+                '"the user"',
+                '"the pass"',
+                '"the db"',
+                "",
             ],
         ],
     )
@@ -166,15 +166,52 @@ class TestPostgreSQLConfigurationContainer:
         """
         Test correct configuration combinations for PostgreSQL container.
         """
+        psql_admin_password_arg = ""
+        psql_user_arg = ""
+        psql_password_arg = ""
+        psql_database_arg = ""
+        if psql_user:
+            psql_user_arg = f"-e POSTGRESQL_USER={psql_user}"
+        if psql_password:
+            psql_password_arg = f"-e POSTGRESQL_PASSWORD={psql_password}"
+        if psql_database:
+            psql_database_arg = f"-e POSTGRESQL_DATABASE={psql_database}"
+        if psql_admin_password:
+            psql_admin_password_arg = (
+                f"-e POSTGRESQL_ADMIN_PASSWORD={psql_admin_password}"
+            )
+        container_args = [
+            psql_user_arg,
+            psql_password_arg,
+            psql_database_arg,
+            psql_admin_password_arg,
+        ]
         assert self.db.assert_container_creation_succeeds(
-            container_args=[
-                psql_user,
-                psql_password,
-                psql_database,
-                psql_admin_password,
-            ],
+            container_args=container_args,
             command="",
         )
+        cid_file_name = "cid_success_test"
+        assert self.db.create_container(
+            cid_file_name=cid_file_name,
+            container_args=container_args,
+            command="",
+        )
+        cip = self.db.get_cip(cid_file_name=cid_file_name)
+        assert cip
+        if psql_user and psql_password:
+            assert self.db.test_db_connection(
+                container_ip=cip,
+                username=psql_user,
+                password=psql_password,
+                database=psql_database,
+            )
+        if psql_admin_password:
+            assert self.db.test_db_connection(
+                container_ip=cip,
+                username="postgres",
+                password=psql_admin_password,
+                database=psql_database,
+            )
 
     def test_configuration_hook(self):
         """
