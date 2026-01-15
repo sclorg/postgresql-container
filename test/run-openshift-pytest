@@ -2,7 +2,7 @@
 #
 # IMAGE_NAME specifies a name of the candidate image used for testing.
 # The image has to be available before this script is executed.
-# VERSION specifies the major version of the MariaDB in format of X.Y
+# VERSION specifies the major version of the postgreSQL in format of XX
 # OS specifies RHEL version (e.g. OS=rhel8)
 #
 
@@ -13,4 +13,10 @@ PYTHON_VERSION="3.12"
 if [[ ! -f "/usr/bin/python$PYTHON_VERSION" ]]; then
   PYTHON_VERSION="3.13"
 fi
-cd "${THISDIR}" && "python$PYTHON_VERSION" -m pytest -s -rA --showlocals -vv test_ocp_*.py
+if [[ $VERSION == 18 ]]; then
+  # no imagestreams or helm yet, so skipping _imagestream, _template, _shared_helm_* for now
+  # TODO: remove when imagestreams available
+  cd "${THISDIR}" && "python$PYTHON_VERSION" -m pytest -s -rA --showlocals -vv test_ocp_psql_{imagestream_template,latest_imagestreams}.py
+else
+  cd "${THISDIR}" && "python$PYTHON_VERSION" -m pytest -s -rA --showlocals -vv test_ocp_*.py
+fi
