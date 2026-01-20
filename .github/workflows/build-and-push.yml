@@ -46,6 +46,14 @@ jobs:
             quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
             docker_context: 16
 
+          - dockerfile: "18/Dockerfile.c10s"
+            registry_namespace: "sclorg"
+            tag: "c10s"
+            image_name: "postgresql-18-c10s"
+            quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
+            docker_context: 18
+
           - dockerfile: "15/Dockerfile.fedora"
             registry_namespace: "fedora"
             tag: "15"
@@ -61,6 +69,14 @@ jobs:
             quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
             image_name: "postgresql-16"
             docker_context: 16
+            
+          - dockerfile: "18/Dockerfile.fedora"
+            registry_namespace: "fedora"
+            tag: "18"
+            quayio_username: "QUAY_IMAGE_FEDORA_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_FEDORA_BUILDER_TOKEN"
+            image_name: "postgresql-18"
+            docker_context: 18
 
     steps:
       - name: check if Dockerfile is c9s, then Build multi arch image and push to quay.io registry
