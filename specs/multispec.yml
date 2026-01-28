@@ -187,6 +187,7 @@ matrix:
     - version: "18"
       distros:
         - fedora-43-x86_64
+        - centos-stream-9-x86_64
         - centos-stream-10-x86_64
         - rhel-9-x86_64
         - rhel-10-x86_64
