@@ -38,6 +38,14 @@ jobs:
             quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
             docker_context: 16
 
+          - dockerfile: "18/Dockerfile.c9s"
+            registry_namespace: "sclorg"
+            tag: "c9s"
+            image_name: "postgresql-18-c9s"
+            quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
+            docker_context: 18
+
           - dockerfile: "16/Dockerfile.c10s"
             registry_namespace: "sclorg"
             tag: "c10s"
