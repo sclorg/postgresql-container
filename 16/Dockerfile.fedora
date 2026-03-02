@@ -9,6 +9,8 @@ FROM quay.io/fedora/s2i-core:41
 #  * $POSTGRESQL_DATABASE - Name of the database to create
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
+#  * $POSTGRESQL_ENCODING - Database encoding. Default to UTF8
+#  * $POSTGRESQL_LOCALE   - Database locale. Default to en_US
 
 ENV NAME=postgresql \
     VERSION=0 \

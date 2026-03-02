@@ -9,6 +9,8 @@ FROM {{ spec.s2i_base }}
 #  * $POSTGRESQL_DATABASE - Name of the database to create
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
+#  * $POSTGRESQL_ENCODING - Database encoding. Default to UTF8
+#  * $POSTGRESQL_LOCALE   - Database locale. Default to en_US
 
 ENV POSTGRESQL_VERSION={{ spec.version }} \
     {% if spec.prod != "rhel8" or spec.prod != "rhel9" or spec.version == "10" %}

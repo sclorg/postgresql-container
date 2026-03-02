@@ -193,7 +193,10 @@ initdb_wrapper ()
   # Initialize the database cluster with utf8 support enabled by default.
   # This might affect performance, see:
   # http://www.postgresql.org/docs/15/static/locale.html
-  LANG=${LANG:-en_US.utf8} "$@"
+  ENCODING=${POSTGRESQL_ENCODING:-UTF8}
+  LOCALE=${POSTGRESQL_LOCALE:-en_US}
+  if [ ${LOCALE} == "C" ] ; then LANG=C; fi
+  LANG=${LANG:-$LOCALE.$ENCODING} "$@" -E $ENCODING
 }
 
 function initialize_database() {
@@ -226,7 +229,16 @@ EOF
 function create_users() {
   if [[ ",$postinitdb_actions," = *,simple_db,* ]]; then
     createuser "$POSTGRESQL_USER"
-    createdb --owner="$POSTGRESQL_USER" "$POSTGRESQL_DATABASE"
+
+    EXTRA_ARGS=""
+    if [ -v POSTGRESQL_ENCODING ]; then
+       EXTRA_ARGS="$EXTRA_ARGS -E $POSTGRESQL_ENCODING"
+    fi
+    if [ -v POSTGRESQL_LOCALE ]; then
+       EXTRA_ARGS="$EXTRA_ARGS -l $POSTGRESQL_LOCALE"
+    fi
+
+    createdb $EXTRA_ARGS --owner="$POSTGRESQL_USER" "$POSTGRESQL_DATABASE"
   fi
 
   if [ -v POSTGRESQL_MASTER_USER ]; then
