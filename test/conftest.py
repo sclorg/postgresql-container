@@ -38,6 +38,9 @@ VARS = Vars(
 
 
 def get_previous_major_version():
+    """
+    Get the previous major version of the PostgreSQL container.
+    """
     version_dict = {
         "13": "12",
         "15": "13",
@@ -47,11 +50,14 @@ def get_previous_major_version():
 
 
 def get_upgrade_path():
+    """
+    Get the upgrade path of the PostgreSQL container.
+    """
     upgrade_path = {
         "rhel8": "none 12 13 15 16 none",
-        "rhel9": "none 13 15 16 none",
-        "rhel10": "none 13 15 16 none",
-        "fedora": "none 12 13 14 15 16 none",
+        "rhel9": "none 13 15 16 18 none",
+        "rhel10": "none 16 18 none",
+        "fedora": "none 15 16 18 none",
     }
     for version in upgrade_path.keys():
         if version == VARS.VERSION:
@@ -63,6 +69,9 @@ def get_upgrade_path():
 
 
 def get_image_id(version):
+    """
+    Get the image ID of the PostgreSQL container.
+    """
     ns = {
         "rhel8": f"registry.redhat.io/rhel8/postgresql-{version}",
         "rhel9": f"registry.redhat.io/rhel9/postgresql-{version}",
