@@ -192,8 +192,8 @@ class TestPostgreSQLPluginContainer:
         assert self.db_api.wait_for_database(
             container_id=cid, command="/usr/libexec/check-container"
         )
+        sleep(1)
         output = PodmanCLIWrapper.call_podman_command(
             cmd=f'exec {cid} bash -c "psql < /opt/app-root/src/enable-vector.sql"',
         )
-        sleep(1)
         assert output

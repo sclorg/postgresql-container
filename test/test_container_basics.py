@@ -105,7 +105,7 @@ class TestPostgreSQLBasicsContainer:
             cip, cid = self.app_image.get_cip_cid(cid_file_name=cid_backup)
             assert cip and cid
             self.check_psql_connection(cip, psql_backup_user, psql_backup_password)
-    
+
     def check_psql_connection(self, cip, psql_user, psql_password):
         """
         Check the PostgreSQL connection.
