@@ -5,7 +5,7 @@ from container_ci_suite.container_lib import ContainerTestLib
 from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
 from container_ci_suite.container_lib import DatabaseWrapper
 
-from conftest import VARS
+from conftest import VARS, check_db_output
 
 
 class TestPostgreSQLGeneralContainer:
@@ -190,21 +190,13 @@ class TestPostgreSQLGeneralContainer:
                 '-At -c "INSERT INTO tbl VALUES (5, 6);"',
             ],
         )
-        output = self.db_api.run_sql_command(
-            container_ip=cip,
+        check_db_output(
+            dw_api=self.db_api,
+            cip=cip,
             username=psql_user,
             password=psql_password,
-            container_id=VARS.IMAGE_NAME,
             database=psql_database,
-            sql_cmd='-At -c "SELECT * FROM tbl;"',
         )
-        expected_db_output = [
-            "1|2",
-            "3|4",
-            "5|6",
-        ]
-        for row in expected_db_output:
-            assert re.search(row, output), f"Row {row} not found in {output}"
         self.db_api.run_sql_command(
             container_ip=cip,
             username=psql_user,
