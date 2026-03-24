@@ -1,19 +1,11 @@
 import tempfile
-import re
 
 from container_ci_suite.container_lib import ContainerTestLib
 from container_ci_suite.container_lib import ContainerTestLibUtils
 from container_ci_suite.container_lib import DatabaseWrapper
 from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
 
-from conftest import VARS
-
-pwd_dir = tempfile.mkdtemp(prefix="/tmp/psql-pwd")
-ContainerTestLibUtils.commands_to_run(
-    commands_to_run=[
-        f"setfacl -m u:26:-wx {pwd_dir}",
-    ]
-)
+from conftest import VARS, check_db_output
 
 
 class TestPostgreSQLPasswordChangeContainer:
@@ -39,6 +31,12 @@ class TestPostgreSQLPasswordChangeContainer:
         """
         Test password change.
         """
+        pwd_dir = tempfile.mkdtemp(prefix="/tmp/psql-pwd-change")
+        assert ContainerTestLibUtils.commands_to_run(
+            commands_to_run=[
+                f"setfacl -m u:26:-wx {pwd_dir}",
+            ]
+        )
         pwd_file_name = "test_password_change"
         volume_options = f"-v {pwd_dir}:/var/lib/pgsql/data:Z"
         database = "db"
@@ -61,18 +59,24 @@ class TestPostgreSQLPasswordChangeContainer:
             container_ip=cip1,
             username=username,
             password=password,
-            max_attempts=10,
         )
+        login_access = True
         for user, pwd in [
             (username, password),
-            ("postgresql", admin_password),
+            ("postgres", admin_password),
         ]:
-            assert self.pwd_change.db_lib.assert_login_access(
+            test_assert = self.pwd_change.db_lib.assert_login_access(
                 container_ip=cip1,
                 username=user,
                 password=pwd,
                 expected_success=True,
             )
+            if not test_assert:
+                print(
+                    f"Login access failed for {user}:{pwd} with expected success {True}"
+                )
+                login_access = False
+        assert login_access
         assert self.pwd_change.test_db_connection(
             container_ip=cip1, username=username, password=password
         )
@@ -98,21 +102,13 @@ class TestPostgreSQLPasswordChangeContainer:
                 '-At -c "INSERT INTO tbl VALUES (5, 6);"',
             ],
         )
-        output = self.dw_api.run_sql_command(
-            container_ip=cip1,
+        check_db_output(
+            dw_api=self.dw_api,
+            cip=cip1,
             username=username,
             password=password,
-            container_id=VARS.IMAGE_NAME,
             database=database,
-            sql_cmd='-At -c "SELECT * FROM tbl;"',
         )
-        expected_db_output = [
-            "1|2",
-            "3|4",
-            "5|6",
-        ]
-        for row in expected_db_output:
-            assert re.search(row, output), f"Row {row} not found in {output}"
 
         PodmanCLIWrapper.call_podman_command(cmd=f"kill {cid1}")
         PodmanCLIWrapper.call_podman_command(cmd=f"rm {cid1}")
@@ -163,18 +159,10 @@ class TestPostgreSQLPasswordChangeContainer:
             password=password,
             container_id=VARS.IMAGE_NAME,
         )
-        output = self.dw_api.run_sql_command(
-            container_ip=cip_new,
+        check_db_output(
+            dw_api=self.dw_api,
+            cip=cip_new,
             username=username,
             password=new_password,
-            container_id=VARS.IMAGE_NAME,
             database=database,
-            sql_cmd='-At -c "SELECT * FROM tbl;"',
         )
-        expected_db_output = [
-            "1|2",
-            "3|4",
-            "5|6",
-        ]
-        for row in expected_db_output:
-            assert re.search(row, output), f"Row {row} not found in {output}"

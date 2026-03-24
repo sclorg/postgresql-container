@@ -1,10 +1,15 @@
 import os
+import re
 import sys
+import urllib3
+
 
 from pathlib import Path
 from collections import namedtuple
 
 from container_ci_suite.utils import check_variables
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 if not check_variables():
     sys.exit(1)
@@ -20,12 +25,38 @@ Vars = namedtuple(
         "TAG",
         "TEST_APP",
         "VERY_LONG_IDENTIFIER",
+        "PREVIOUS_VERSION",
+        "PAGILA",
+        "MIGRATION_PATHS",
+        "UPGRADE_PATH_DICT",
+        "SQL_CMDS",
     ],
 )
 VERSION = os.getenv("VERSION")
 OS = os.getenv("TARGET").lower()
 TEST_APP = TEST_DIR / "test-app"
 VERY_LONG_IDENTIFIER = "very_long_identifier_" + "x" * 40
+MIGRATION_PATHS = ["12", "13", "15", "16", "18"]
+VERSION_DICT = {
+    "13": "12",
+    "15": "13",
+    "16": "15",
+    "18": "16",
+}
+PAGILA = ["pagila-schema.sql", "pagila-data.sql", "pagila-insert-data.sql"]
+SQL_CMDS = {
+    "select count(*) from information_schema.triggers;": "16",
+    "select count(*) from staff;": "2",
+    "select * from information_schema.tables;": "28",
+}
+UPGRADE_PATH_DICT = {
+    "rhel8": "none 12 13 15 16 18 none",
+    "rhel9": "none 13 15 16 18 none",
+    "c9s": "none 13 15 16 18 none",
+    "rhel10": "none 16 18 none",
+    "c10s": "none 16 18 none",
+    "fedora": "none 15 16 18 none",
+}
 VARS = Vars(
     OS=OS,
     VERSION=VERSION,
@@ -34,32 +65,19 @@ VARS = Vars(
     TAG=OS.replace("rh", "-", 1),
     TEST_APP=TEST_APP,
     VERY_LONG_IDENTIFIER=VERY_LONG_IDENTIFIER,
+    PREVIOUS_VERSION=VERSION_DICT.get(VERSION),
+    PAGILA=PAGILA,
+    MIGRATION_PATHS=MIGRATION_PATHS,
+    UPGRADE_PATH_DICT=UPGRADE_PATH_DICT,
+    SQL_CMDS=SQL_CMDS,
 )
-
-
-def get_previous_major_version():
-    """
-    Get the previous major version of the PostgreSQL container.
-    """
-    version_dict = {
-        "13": "12",
-        "15": "13",
-        "16": "15",
-    }
-    return version_dict.get(VARS.VERSION)
 
 
 def get_upgrade_path():
     """
     Get the upgrade path of the PostgreSQL container.
     """
-    upgrade_path = {
-        "rhel8": "none 12 13 15 16 none",
-        "rhel9": "none 13 15 16 18 none",
-        "rhel10": "none 16 18 none",
-        "fedora": "none 15 16 18 none",
-    }
-    for version in upgrade_path.keys():
+    for version in UPGRADE_PATH_DICT[VARS.OS].split():
         if version == VARS.VERSION:
             break
         prev = version
@@ -80,3 +98,31 @@ def get_image_id(version):
         "c10s": f"quay.io/sclorg/postgresql-{version}-c10s",
     }
     return ns[VARS.OS]
+
+
+def check_db_output(
+    dw_api,
+    cip,
+    username,
+    password,
+    database,
+):
+    """
+    Check the database output if the data is inserted correctly
+    by running a SELECT statement.
+    """
+    output = dw_api.run_sql_command(
+        container_ip=cip,
+        username=username,
+        password=password,
+        container_id=VARS.IMAGE_NAME,
+        database=database,
+        sql_cmd='-At -c "SELECT * FROM tbl;"',
+    )
+    expected_db_output = [
+        "1|2",
+        "3|4",
+        "5|6",
+    ]
+    for row in expected_db_output:
+        assert re.search(row, output), f"Row {row} not found in {output}"
