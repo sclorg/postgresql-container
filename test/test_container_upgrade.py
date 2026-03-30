@@ -44,13 +44,18 @@ class TestPostgreSQLUpgrade:
         2. Create a container with the new version and run pg_upgrade
         3. Test if the database connection works
         """
+        if VARS.OS == "fedora":
+            pytest.skip("Skip upgrade test on Fedora. Only CentOS Stream and RHELs are supported.")
         self.datadir = datadir
         self.upgrade_volume_dir = tempfile.mkdtemp(prefix=f"/tmp/psql-upgrade-{upgrade_type}-{datadir}")
         prev_version = get_upgrade_path()
-        assert prev_version, "Previous version not found"
-        assert PodmanCLIWrapper.podman_pull_image(image_name=get_image_id(prev_version))
+        if not prev_version:
+            pytest.skip(f"Skipping for {VARS.OS} and version {VARS.VERSION}. No upgrade path found.")
+        self.registry_image = get_image_id(version=prev_version)
+        if not PodmanCLIWrapper.podman_pull_image(image_name=self.registry_image, loops=3):
+            pytest.skip(f"{self.registry_image} image not found in registry so skipping migration test..")
         # Override the image name to previous version
-        self.upgrade_db.image_name = get_image_id(prev_version)
+        self.upgrade_db.image_name = self.registry_image
         self.create_database_in_prev_version()
         self.upgrade_image(upgrade_type=upgrade_type)
         self.upgrade_image(upgrade_type=upgrade_type, bool_test_upgrade=False)
