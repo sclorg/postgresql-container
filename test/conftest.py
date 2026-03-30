@@ -37,7 +37,7 @@ OS = os.getenv("TARGET").lower()
 TEST_APP = TEST_DIR / "test-app"
 VERY_LONG_IDENTIFIER = "very_long_identifier_" + "x" * 40
 MIGRATION_PATHS = ["12", "13", "15", "16", "18"]
-VERSION_DICT = {
+PREVIOUS_VERSION_DICT = {
     "13": "12",
     "15": "13",
     "16": "15",
@@ -49,12 +49,14 @@ SQL_CMDS = {
     "select count(*) from staff;": "2",
     "select * from information_schema.tables;": "28",
 }
+RHEL9 = "none 13 15 16 18 none"
+RHEL10 = "none 16 18 none"
 UPGRADE_PATH_DICT = {
     "rhel8": "none 12 13 15 16 18 none",
-    "rhel9": "none 13 15 16 18 none",
-    "c9s": "none 13 15 16 18 none",
-    "rhel10": "none 16 18 none",
-    "c10s": "none 16 18 none",
+    "rhel9": RHEL9,
+    "c9s": RHEL9,
+    "rhel10": RHEL10,
+    "c10s": RHEL10,
     "fedora": "none 15 16 18 none",
 }
 VARS = Vars(
@@ -65,7 +67,7 @@ VARS = Vars(
     TAG=OS.replace("rh", "-", 1),
     TEST_APP=TEST_APP,
     VERY_LONG_IDENTIFIER=VERY_LONG_IDENTIFIER,
-    PREVIOUS_VERSION=VERSION_DICT.get(VERSION),
+    PREVIOUS_VERSION=PREVIOUS_VERSION_DICT.get(VERSION),
     PAGILA=PAGILA,
     MIGRATION_PATHS=MIGRATION_PATHS,
     UPGRADE_PATH_DICT=UPGRADE_PATH_DICT,
@@ -90,14 +92,9 @@ def get_image_id(version):
     """
     Get the image ID of the PostgreSQL container.
     """
-    ns = {
-        "rhel8": f"registry.redhat.io/rhel8/postgresql-{version}",
-        "rhel9": f"registry.redhat.io/rhel9/postgresql-{version}",
-        "rhel10": f"registry.redhat.io/rhel10/postgresql-{version}",
-        "c9s": f"quay.io/sclorg/postgresql-{version}-c9s",
-        "c10s": f"quay.io/sclorg/postgresql-{version}-c10s",
-    }
-    return ns[VARS.OS]
+    if VARS.OS in ["rhel8", "rhel9", "rhel10"]:
+        return f"registry.redhat.io/{VARS.OS}/postgresql-{version}"
+    return f"quay.io/sclorg/postgresql-{version}-{VARS.OS}"
 
 
 def check_db_output(
