@@ -63,6 +63,11 @@ class TestPostgreSQLUpgrade:
     def create_database_in_prev_version(self):
         """
         Create a database in the old version.
+        Steps are:
+        1. Create a container with the previous version and run pg_upgrade
+        2. Test if the database connection works
+        3. If datadir is empty, create a simple table and insert some data.
+        If datadir is pagila, add the pagila example database
         """
         cid_file_name = "create-db-test"
         assert ContainerTestLibUtils.commands_to_run(
@@ -87,13 +92,18 @@ class TestPostgreSQLUpgrade:
         assert self.db_api.wait_for_database(
             container_id=cid_create, command="/usr/libexec/check-container"
         )
+        # Let's wait couple seconds
+        time.sleep(5)
         is_db_ready = False
         for _ in range(5):
-            output = PodmanCLIWrapper.podman_logs(container_id=cid_upg)
-            for out in ["accepting connections", "Starting server"]:
-                if out not in output:
-                    time.sleep(5)
-                    continue
+            # Let's check if the database is ready by running a simple query.
+            # Sometimes check-container can return before the database is fully ready to accept connections.
+            if not self.db_api.wait_for_database(
+                container_id=cid_create,
+                command='psql -h localhost -tA -c \"select 1;\"',
+            ):
+                time.sleep(5)
+                continue
             is_db_ready = True
             break
         assert is_db_ready, "Database is not ready after waiting for 25 seconds"
@@ -122,6 +132,15 @@ class TestPostgreSQLUpgrade:
     def upgrade_image(self, upgrade_type: str, bool_test_upgrade: bool = True):
         """
         Upgrade the image.
+        Steps are:
+        1. Create a container with the new version and run pg_upgrade
+        2. Test if the database connection works
+        3. If bool_test_upgrade is True, check the database output after upgrade.
+           If False, just check the connection as the second upgrade
+           can take more time and we have already tested the output after the first upgrade.
+        4. If datadir is empty, create a simple table and insert some data.
+        If datadir is pagila, add the pagila example database
+        5. Stop and remove the container after the test.
         """
         self.upgrade_db.image_name = VARS.IMAGE_NAME
         cid_file_name = f"upg-test-{upgrade_type}-{self.datadir}"
@@ -139,21 +158,26 @@ class TestPostgreSQLUpgrade:
         cip_upg, cid_upg = self.upgrade_db.get_cip_cid(cid_file_name=cid_file_name)
         assert cip_upg and cid_upg
         assert self.db_api.wait_for_database(
-            container_id=cid_upg, command="/usr/libexec/check-container"
+            container_id=cid_upg,
+            command="/usr/libexec/check-container",
+            not_shell=False,
         )
         # Let's wait couple seconds
         time.sleep(5)
         is_db_ready = False
         for _ in range(5):
-            output = PodmanCLIWrapper.podman_logs(container_id=cid_upg)
-            for out in ["accepting connections", "Starting server"]:
-                if out not in output:
-                    time.sleep(5)
-                    continue
+            # Let's check if the database is ready by running a simple query.
+            # Sometimes check-container can return
+            # before the database is fully ready to accept connections.
+            if not self.db_api.wait_for_database(
+                container_id=cid_upg,
+                command='psql -h localhost -tA -c \"select 1;\"',
+            ):
+                time.sleep(5)
+                continue
             is_db_ready = True
             break
         assert is_db_ready, "Database is not ready after waiting for 25 seconds"
-        assert output
         if self.datadir == "empty":
             self.check_db_output(cid=cid_upg)
         else:
@@ -165,7 +189,7 @@ class TestPostgreSQLUpgrade:
         """
         output = PodmanCLIWrapper.podman_exec_shell_command(
             cid_file_name=cid,
-            cmd="psql -h localhost -At -c \"SELECT * FROM blah ORDER BY id;\""
+            cmd="psql -h localhost -At -c \"SELECT * FROM blah ORDER BY id;\"",
         )
         rows = [
             "1",
