@@ -89,12 +89,13 @@ class TestPostgreSQLUpgrade:
         )
         is_db_ready = False
         for _ in range(5):
-            output = PodmanCLIWrapper.podman_logs(container_id=cid_create)
-            print(output)
-            if "accepting connections" in output:
-                is_db_ready = True
-                break
-            time.sleep(5)
+            output = PodmanCLIWrapper.podman_logs(container_id=cid_upg)
+            for out in ["accepting connections", "Starting server"]:
+                if out not in output:
+                    time.sleep(5)
+                    continue
+            is_db_ready = True
+            break
         assert is_db_ready, "Database is not ready after waiting for 25 seconds"
         if self.datadir == "empty":
             sql_cmd = "CREATE TABLE blah (id int);"
@@ -117,8 +118,6 @@ class TestPostgreSQLUpgrade:
                 cmd=f"run --rm -i {VARS.IMAGE_NAME} bash -c '{psql_cmd}' < {file_path}",
             )
             self.check_pagila_db(cid=cid_create)
-        # PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid_create}")
-        # PodmanCLIWrapper.call_podman_command(cmd=f"rm -f {cid_create}")
 
     def upgrade_image(self, upgrade_type: str, bool_test_upgrade: bool = True):
         """
@@ -147,10 +146,12 @@ class TestPostgreSQLUpgrade:
         is_db_ready = False
         for _ in range(5):
             output = PodmanCLIWrapper.podman_logs(container_id=cid_upg)
-            if "accepting connections" in output:
-                is_db_ready = True
-                break
-            time.sleep(5)
+            for out in ["accepting connections", "Starting server"]:
+                if out not in output:
+                    time.sleep(5)
+                    continue
+            is_db_ready = True
+            break
         assert is_db_ready, "Database is not ready after waiting for 25 seconds"
         assert output
         if self.datadir == "empty":
