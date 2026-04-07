@@ -17,20 +17,6 @@ import pytest
 
 from conftest import VARS
 
-pg_audit_volume_dir = tempfile.mkdtemp(prefix="/tmp/psql-pgaudit-volume-dir")
-assert ContainerTestLibUtils.commands_to_run(
-    commands_to_run=[
-        f"setfacl -m u:26:-wx {pg_audit_volume_dir}",
-    ]
-)
-
-pg_vector_volume_dir = tempfile.mkdtemp(prefix="/tmp/psql-pgvector-volume-dir")
-assert ContainerTestLibUtils.commands_to_run(
-    commands_to_run=[
-        f"setfacl -m u:26:-wx {pg_vector_volume_dir}",
-    ]
-)
-
 
 class TestPostgreSQLPluginContainer:
     """
@@ -43,6 +29,19 @@ class TestPostgreSQLPluginContainer:
         """
         self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type="postgresql")
         self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
+        self.pg_audit_volume_dir = tempfile.mkdtemp(prefix="/tmp/psql-pgaudit-volume-dir")
+        ContainerTestLibUtils.commands_to_run(
+            commands_to_run=[
+                f"setfacl -m u:26:-wx {self.pg_audit_volume_dir}",
+            ]
+        )
+
+        self.pg_vector_volume_dir = tempfile.mkdtemp(prefix="/tmp/psql-pgvector-volume-dir")
+        ContainerTestLibUtils.commands_to_run(
+            commands_to_run=[
+                f"setfacl -m u:26:-wx {self.pg_vector_volume_dir}",
+            ]
+        )
 
     def teardown_method(self):
         """
@@ -93,7 +92,7 @@ class TestPostgreSQLPluginContainer:
             env_load,
             "-e POSTGRESQL_ADMIN_PASSWORD=password",
             f"-v {config_dir}:/opt/app-root/src:Z",
-            f"-v {pg_audit_volume_dir}:/var/lib/pgsql/data:Z",
+            f"-v {self.pg_audit_volume_dir}:/var/lib/pgsql/data:Z",
         ]
 
         assert self.db.create_container(
@@ -124,10 +123,10 @@ class TestPostgreSQLPluginContainer:
         )
         sleep(1)
         log_files_to_check = []
-        for f in os.listdir(Path(pg_audit_volume_dir) / "userdata" / "log"):
+        for f in os.listdir(Path(self.pg_audit_volume_dir) / "userdata" / "log"):
             if f.startswith("postgresql-"):
                 log_files_to_check.append(
-                    Path(pg_audit_volume_dir) / "userdata" / "log" / f
+                    Path(self.pg_audit_volume_dir) / "userdata" / "log" / f
                 )
         for f in log_files_to_check:
             output = get_file_content(
@@ -169,7 +168,7 @@ class TestPostgreSQLPluginContainer:
         container_args = [
             "-e POSTGRESQL_ADMIN_PASSWORD=password",
             f"-v {config_dir}:/opt/app-root/src:Z",
-            f"-v {pg_vector_volume_dir}:/var/lib/pgsql/data:Z",
+            f"-v {self.pg_vector_volume_dir}:/var/lib/pgsql/data:Z",
         ]
 
         assert self.db.create_container(

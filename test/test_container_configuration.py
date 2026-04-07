@@ -1,3 +1,4 @@
+import shutil
 import tempfile
 import pytest
 
@@ -7,13 +8,6 @@ from container_ci_suite.utils import ContainerTestLibUtils
 from container_ci_suite.engines.database import DatabaseWrapper
 
 from conftest import VARS
-
-volume_dir = tempfile.mkdtemp(prefix="/tmp/psql-volume-dir")
-ContainerTestLibUtils.commands_to_run(
-    commands_to_run=[
-        f"setfacl -m u:26:-wx {volume_dir}",
-    ]
-)
 
 
 class TestPostgreSQLInvalidConfigurations:
@@ -45,56 +39,16 @@ class TestPostgreSQLInvalidConfigurations:
     @pytest.mark.parametrize(
         "psql_user, psql_password, psql_database, psql_admin_password",
         [
-            (
-                "user",
-                "pass",
-                "",
-                "",
-            ),
-            (
-                "user",
-                "pass",
-                "",
-                "admin_pass",
-            ),
-            (
-                "user",
-                "",
-                "db",
-                "",
-            ),
-            (
-                "user",
-                "",
-                "db",
-                "admin_pass",
-            ),
-            (
-                "",
-                "pass",
-                "db",
-                "",
-            ),
-            (
-                "",
-                "pass",
-                "db",
-                "admin_pass",
-            ),
+            ("user", "pass", "", ""),
+            ("user", "pass", "", "admin_pass"),
+            ("user", "", "db", ""),
+            ("user", "", "db", "admin_pass"),
+            ("", "pass", "db", ""),
+            ("", "pass", "db", "admin_pass"),
             (VARS.VERY_LONG_IDENTIFIER, "pass", "db", ""),
             (VARS.VERY_LONG_IDENTIFIER, "pass", "db", "admin_pass"),
-            (
-                "user",
-                "pass",
-                VARS.VERY_LONG_IDENTIFIER,
-                "",
-            ),
-            (
-                "user",
-                "pass",
-                VARS.VERY_LONG_IDENTIFIER,
-                "admin_pass",
-            ),
+            ("user", "pass", VARS.VERY_LONG_IDENTIFIER, ""),
+            ("user", "pass", VARS.VERY_LONG_IDENTIFIER, "admin_pass"),
         ],
     )
     def test_try_image_invalid_combinations(
@@ -149,36 +103,11 @@ class TestPostgreSQLValidConfigurations:
     @pytest.mark.parametrize(
         "psql_user, psql_password, psql_database, psql_admin_password",
         [
-            [
-                "user",
-                "pass",
-                "db",
-                "admin_pass",
-            ],
-            [
-                "user",
-                "pass",
-                "9invalid",
-                "admin_pass",
-            ],
-            [
-                "user",
-                "pass",
-                "db",
-                "",
-            ],
-            [
-                "",
-                "",
-                "",
-                "the @password",
-            ],
-            [
-                "the user",
-                "the pass",
-                "the db",
-                "",
-            ],
+            ("user", "pass", "db", "admin_pass"),
+            ("user", "pass", "9invalid", "admin_pass"),
+            ("user", "pass", "db", ""),
+            ("", "", "", "the @password"),
+            ("the user", "the pass", "the db", ""),
         ],
     )
     def test_correct_configuration_tests(
@@ -248,12 +177,19 @@ class TestPostgreSQLBufferHooks:
         """
         self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type="postgresql")
         self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
+        self.volume_dir = tempfile.mkdtemp(prefix="/tmp/psql-volume-dir")
+        ContainerTestLibUtils.commands_to_run(
+            commands_to_run=[
+                f"setfacl -m u:26:-wx {self.volume_dir}",
+            ]
+        )
 
     def teardown_method(self):
         """
         Teardown the test environment.
         """
         self.db.cleanup()
+        shutil.rmtree(self.volume_dir, ignore_errors=True)
 
     def test_configuration_hook(self):
         """
@@ -277,7 +213,7 @@ class TestPostgreSQLBufferHooks:
         container_args = [
             "-e POSTGRESQL_ADMIN_PASSWORD=password",
             f"-e POSTGRESQL_SHARED_BUFFERS={shared_buffer_value}",
-            f"-v {volume_dir}:/opt/app-root/src:Z",
+            f"-v {self.volume_dir}:/opt/app-root/src:Z",
         ]
 
         assert self.db.create_container(

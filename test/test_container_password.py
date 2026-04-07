@@ -32,7 +32,7 @@ class TestPostgreSQLPasswordChangeContainer:
         Test password change.
         """
         pwd_dir = tempfile.mkdtemp(prefix="/tmp/psql-pwd-change")
-        assert ContainerTestLibUtils.commands_to_run(
+        ContainerTestLibUtils.commands_to_run(
             commands_to_run=[
                 f"setfacl -m u:26:-wx {pwd_dir}",
             ]
@@ -141,6 +141,8 @@ class TestPostgreSQLPasswordChangeContainer:
             ("postgres", new_admin_password, True),
             ("postgres", "admin_password", False),
         ]:
+            # Let's check login access for user and pwd combinations
+            # with expected ret_value. Otherwise let's failed.
             test_assert = self.pwd_change.db_lib.assert_login_access(
                 container_ip=cip_new,
                 username=user,
