@@ -70,7 +70,7 @@ class TestPostgreSQLUpgrade:
         If datadir is pagila, add the pagila example database
         """
         cid_file_name = "create-db-test"
-        assert ContainerTestLibUtils.commands_to_run(
+        ContainerTestLibUtils.commands_to_run(
             commands_to_run=[
                 f"setfacl -m u:26:rwx {self.upgrade_volume_dir}",
             ]

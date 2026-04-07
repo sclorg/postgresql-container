@@ -1,4 +1,5 @@
 import re
+import shutil
 import tempfile
 
 import pytest
@@ -28,6 +29,13 @@ class TestPostgreSQLMigration:
         self.registry_image = get_image_id(version=VARS.VERSION)
         self.migrate_volume_dir = tempfile.mkdtemp(prefix="/tmp/psql-migrate-volume")
         self.admin_password = "redhat"
+
+    def teardown_method(self):
+        """
+        Teardown the test environment.
+        """
+        self.migrate_db.cleanup()
+        shutil.rmtree(self.migrate_volume_dir, ignore_errors=True)
 
     @pytest.mark.parametrize(
         "version_to_migrate",

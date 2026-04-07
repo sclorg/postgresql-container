@@ -1,15 +1,12 @@
 import os
 import re
 import sys
-import urllib3
-
 
 from pathlib import Path
 from collections import namedtuple
 
 from container_ci_suite.utils import check_variables
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 if not check_variables():
     sys.exit(1)
@@ -92,7 +89,7 @@ def get_image_id(version):
     """
     Get the image ID of the PostgreSQL container.
     """
-    if VARS.OS in ["rhel8", "rhel9", "rhel10"]:
+    if VARS.OS.startswith("rhel"):
         return f"registry.redhat.io/{VARS.OS}/postgresql-{version}"
     return f"quay.io/sclorg/postgresql-{version}-{VARS.OS}"
 
