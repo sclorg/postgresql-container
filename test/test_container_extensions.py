@@ -1,5 +1,6 @@
 import re
 import os
+import shutil
 import tempfile
 
 from time import sleep
@@ -48,6 +49,8 @@ class TestPostgreSQLPluginContainer:
         Teardown the test environment.
         """
         self.db.cleanup()
+        shutil.rmtree(self.pg_audit_volume_dir)
+        shutil.rmtree(self.pg_vector_volume_dir)
 
     @pytest.mark.parametrize(
         "env_load",
