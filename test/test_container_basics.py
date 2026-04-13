@@ -46,7 +46,7 @@ class TestPostgreSQLBasicsContainer:
         1. Test if the container creation fails with invalid combinations of arguments
         2. Test if the container creation succeeds with valid combinations of arguments
         3. Test if the database connection works
-        4. Test if the backup functionality works
+        4. Test if the database backup works properly by adding a backup_user.sh script
         """
         with tempfile.NamedTemporaryFile(prefix="/tmp/psql-temp-file") as temp_file:
             cid_create = "conf_backup"

@@ -155,12 +155,6 @@ class TestPostgreSQLPasswordChangeContainer:
                 )
                 login_access = False
         assert login_access
-        self.dw_api.run_sql_command(
-            container_ip=cip_new,
-            username=username,
-            password=password,
-            container_id=VARS.IMAGE_NAME,
-        )
         check_db_output(
             dw_api=self.dw_api,
             cip=cip_new,
