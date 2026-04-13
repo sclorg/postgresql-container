@@ -46,15 +46,15 @@ SQL_CMDS = {
     "select count(*) from staff;": "2",
     "select * from information_schema.tables;": "28",
 }
-RHEL9 = "none 13 15 16 18 none"
-RHEL10 = "none 16 18 none"
+RHEL9 = [13, 15, 16, 18]
+RHEL10 = [16, 18]
 UPGRADE_PATH_DICT = {
-    "rhel8": "none 12 13 15 16 none",
+    "rhel8": [12, 13, 15, 16],
     "rhel9": RHEL9,
     "c9s": RHEL9,
     "rhel10": RHEL10,
     "c10s": RHEL10,
-    "fedora": "none 15 16 18 none",
+    "fedora": [15, 16, 18],
 }
 VARS = Vars(
     OS=OS,
@@ -76,13 +76,12 @@ def get_upgrade_path():
     """
     Get the upgrade path of the PostgreSQL container.
     """
-    for version in UPGRADE_PATH_DICT[VARS.OS].split():
-        if version == VARS.VERSION:
-            break
-        prev = version
-    if prev == "none":
+    if VARS.VERSION not in UPGRADE_PATH_DICT[VARS.OS]:
         return None
-    return prev
+    current_index = UPGRADE_PATH_DICT[VARS.OS].index(VARS.VERSION)
+    if current_index - 1 == -1:
+        return None
+    return UPGRADE_PATH_DICT[VARS.OS][current_index - 1]
 
 
 def get_image_id(version):
