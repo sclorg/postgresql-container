@@ -45,7 +45,7 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN INSTALL_PKGS="rsync tar gettext-envsubst nss_wrapper-libs glibc-locale-source xz" && \
-    PSQL_PKGS="postgresql18-server postgresql18-contrib postgresql18-upgrade" && \
+    PSQL_PKGS="postgresql18-server postgresql18-contrib gettext" && \
     INSTALL_PKGS="$INSTALL_PKGS postgresql18-pgaudit" && \
     PSQL_PKGS="$PSQL_PKGS postgresql18-pgvector" && \
     microdnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS $PSQL_PKGS  && \

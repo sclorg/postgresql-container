@@ -93,7 +93,7 @@ specs:
        openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
        redhat_component: "postgresql-{{ spec.short }}-container"
        img_name: "{{ spec.org }}/postgresql-{{ spec.short }}"
-       pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib postgresql{{ spec.short }}-upgrade gettext"
+       pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib gettext"
     c9s:
       distros:
         - centos-stream-9-x86_64
@@ -126,7 +126,7 @@ specs:
       openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
       redhat_component: "postgresql-{{ spec.short }}-container"
       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
-      pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib postgresql{{ spec.short }}-upgrade"
+      pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib"
       check_pkgs: "postgresql-server postgresql-contrib postgresql-upgrade pgvector"
 
   version:
