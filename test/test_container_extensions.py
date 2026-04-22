@@ -10,36 +10,40 @@ from container_ci_suite.container_lib import (
     ContainerTestLib,
     ContainerTestLibUtils,
 )
-from container_ci_suite.engines.database import DatabaseWrapper
+
 from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
 from container_ci_suite.utils import get_file_content
 
 import pytest
 
-from conftest import VARS
+from conftest import VARS, create_and_wait_for_container
 
 
 class TestPostgreSQLPluginContainer:
     """
-    Test PostgreSQL container configuration.
+    Test PostgreSQL container plugin configuration.
+    The class tests the installation of the pgaudit and pgvector extensions.
+    The test name is test_pgaudit_extension_installation for the pgaudit extension
+    and test_pgvector for the pgvector extension.
     """
 
     def setup_method(self):
         """
         Setup the test environment.
         """
-        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type="postgresql")
-        self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
-        self.pg_audit_volume_dir = tempfile.mkdtemp(prefix="/tmp/psql-pgaudit-volume-dir")
+        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type=VARS.DB_TYPE)
+        self.pg_audit_volume_dir = tempfile.mkdtemp(
+            prefix="/tmp/psql-pgaudit-volume-dir"
+        )
+        self.pg_vector_volume_dir = tempfile.mkdtemp(
+            prefix="/tmp/psql-pgvector-volume-dir"
+        )
+        self.config_dir_pgaudit = tempfile.mkdtemp(prefix="/tmp/psql-pgaudit-volume")
+        self.config_dir_pgvector = tempfile.mkdtemp(prefix="/tmp/psql-pgvector-volume")
+
         ContainerTestLibUtils.commands_to_run(
             commands_to_run=[
                 f"setfacl -m u:26:-wx {self.pg_audit_volume_dir}",
-            ]
-        )
-
-        self.pg_vector_volume_dir = tempfile.mkdtemp(prefix="/tmp/psql-pgvector-volume-dir")
-        ContainerTestLibUtils.commands_to_run(
-            commands_to_run=[
                 f"setfacl -m u:26:-wx {self.pg_vector_volume_dir}",
             ]
         )
@@ -49,8 +53,10 @@ class TestPostgreSQLPluginContainer:
         Teardown the test environment.
         """
         self.db.cleanup()
-        shutil.rmtree(self.pg_audit_volume_dir)
-        shutil.rmtree(self.pg_vector_volume_dir)
+        shutil.rmtree(self.pg_audit_volume_dir, ignore_errors=True)
+        shutil.rmtree(self.pg_vector_volume_dir, ignore_errors=True)
+        shutil.rmtree(self.config_dir_pgaudit, ignore_errors=True)
+        shutil.rmtree(self.config_dir_pgvector, ignore_errors=True)
 
     @pytest.mark.parametrize(
         "env_load",
@@ -73,7 +79,6 @@ class TestPostgreSQLPluginContainer:
         if VARS.VERSION in ["9.6", "10", "11"]:
             pytest.skip("pgaudit not expected, test skipped.")
         cid_file_name = "test_pg_pgaudit"
-        config_dir = tempfile.mkdtemp(prefix="/tmp/psql-pgaudit-volume")
         sql_cmd1 = "SET pgaudit.log = 'read, ddl';\nCREATE DATABASE pgaudittest;"
         sql_cmd2 = "SET pgaudit.log = 'read, ddl';\nCREATE TABLE account \
             (id int, name text, password text, description text);"
@@ -81,32 +86,28 @@ class TestPostgreSQLPluginContainer:
             VALUES (1, 'user1', 'HASH1', 'blah, blah');\nSELECT * FROM account;"
         ContainerTestLibUtils.commands_to_run(
             commands_to_run=[
-                f"setfacl -R -m u:26:rwx {config_dir}",
-                f"cp -r {VARS.TEST_DIR}/examples/pgaudit/* {config_dir}/",
-                f"setfacl -R -m u:26:rwx {config_dir}",
-                f"echo '{sql_cmd1}' > {config_dir}/enable-extension.sql",
-                f"echo '{sql_cmd2}' > {config_dir}/insert-data.sql",
-                f"echo '{sql_cmd3}' >> {config_dir}/insert-data.sql",
-                f"cat {config_dir}/enable-extension.sql",
-                f"cat {config_dir}/insert-data.sql",
+                f"setfacl -R -m u:26:rwx {self.config_dir_pgaudit}",
+                f"cp -r {VARS.TEST_DIR}/examples/pgaudit/* {self.config_dir_pgaudit}/",
+                f"setfacl -R -m u:26:rwx {self.config_dir_pgaudit}",
+                f"echo '{sql_cmd1}' > {self.config_dir_pgaudit}/enable-extension.sql",
+                f"echo '{sql_cmd2}' > {self.config_dir_pgaudit}/insert-data.sql",
+                f"echo '{sql_cmd3}' >> {self.config_dir_pgaudit}/insert-data.sql",
+                f"cat {self.config_dir_pgaudit}/enable-extension.sql",
+                f"cat {self.config_dir_pgaudit}/insert-data.sql",
             ]
         )
         container_args = [
             env_load,
             "-e POSTGRESQL_ADMIN_PASSWORD=password",
-            f"-v {config_dir}:/opt/app-root/src:Z",
+            f"-v {self.config_dir_pgaudit}:/opt/app-root/src:Z",
             f"-v {self.pg_audit_volume_dir}:/var/lib/pgsql/data:Z",
         ]
 
-        assert self.db.create_container(
+        cid, _ = create_and_wait_for_container(
+            db=self.db,
             cid_file_name=cid_file_name,
             container_args=container_args,
             command="",
-        )
-        cip, cid = self.db.get_cip_cid(cid_file_name=cid_file_name)
-        assert cip and cid
-        assert self.db_api.wait_for_database(
-            container_id=cid, command="/usr/libexec/check-container"
         )
         output = PodmanCLIWrapper.podman_exec_shell_command(
             cid_file_name=cid,
@@ -115,7 +116,7 @@ class TestPostgreSQLPluginContainer:
         assert "pgaudit" in output, (
             f"pgaudit should be in the shared_preload_libraries, but is {output}"
         )
-        assert self.db_api.wait_for_database(
+        assert self.db.db_lib.wait_for_database(
             container_id=cid, command="/usr/libexec/check-container"
         )
         output = PodmanCLIWrapper.call_podman_command(
@@ -131,10 +132,7 @@ class TestPostgreSQLPluginContainer:
                 log_files_to_check.append(
                     Path(self.pg_audit_volume_dir) / "userdata" / "log" / f
                 )
-        for f in log_files_to_check:
-            output = get_file_content(
-                filename=f,
-            )
+        output = "\n".join([get_file_content(filename=f) for f in log_files_to_check])
         words_to_check = [
             "AUDIT: SESSION,.*,.*,DDL,CREATE DATABASE,,,CREATE DATABASE pgaudittest",
             "AUDIT: SESSION,.*,.*,READ,SELECT,,,SELECT",
@@ -159,39 +157,34 @@ class TestPostgreSQLPluginContainer:
         if VARS.OS == "rhel8":
             pytest.skip("pgvector not expected on this OS, test skipped.")
         cid_file_name = "test_pg_pgvector"
-        config_dir = tempfile.mkdtemp(prefix="/tmp/psql-pgvector-volume")
         sql_cmd = "CREATE EXTENSION vector;\nCREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(3));"
         ContainerTestLibUtils.commands_to_run(
             commands_to_run=[
-                f"cp -r {VARS.TEST_DIR}/examples/pgvector/* {config_dir}/",
-                f"setfacl -R -m u:26:rwx {config_dir}",
-                f"echo '{sql_cmd}' > {config_dir}/enable-vector.sql",
+                f"cp -r {VARS.TEST_DIR}/examples/pgvector/* {self.config_dir_pgvector}/",
+                f"setfacl -R -m u:26:rwx {self.config_dir_pgvector}",
+                f"echo '{sql_cmd}' > {self.config_dir_pgvector}/enable-vector.sql",
             ]
         )
         container_args = [
             "-e POSTGRESQL_ADMIN_PASSWORD=password",
-            f"-v {config_dir}:/opt/app-root/src:Z",
+            f"-v {self.config_dir_pgvector}:/opt/app-root/src:Z",
             f"-v {self.pg_vector_volume_dir}:/var/lib/pgsql/data:Z",
         ]
 
-        assert self.db.create_container(
+        cid, _ = create_and_wait_for_container(
+            db=self.db,
             cid_file_name=cid_file_name,
             container_args=container_args,
             command="",
-        )
-        cip, cid = self.db.get_cip_cid(cid_file_name=cid_file_name)
-        assert cip and cid
-        assert self.db_api.wait_for_database(
-            container_id=cid, command="/usr/libexec/check-container"
         )
         output = PodmanCLIWrapper.podman_exec_shell_command(
             cid_file_name=cid,
             cmd='psql -tA -c "SHOW shared_preload_libraries;"',
         )
         assert "vector" in output, (
-            f"pgaudit should be in the shared_preload_libraries, but is {output}"
+            f"vector should be in the shared_preload_libraries, but is {output}"
         )
-        assert self.db_api.wait_for_database(
+        assert self.db.db_lib.wait_for_database(
             container_id=cid, command="/usr/libexec/check-container"
         )
         sleep(1)

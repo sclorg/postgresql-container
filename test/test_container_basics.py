@@ -1,29 +1,14 @@
 import shutil
 import tempfile
 
-from pathlib import Path
-
-from container_ci_suite.container_lib import ContainerTestLib
 from container_ci_suite.utils import ContainerTestLibUtils
 
-from conftest import VARS
-
-
-def build_s2i_app(app_path: Path) -> ContainerTestLib:
-    container_lib = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type="postgresql")
-    app_name = app_path.name
-    s2i_app = container_lib.build_as_df(
-        app_path=app_path,
-        s2i_args="--pull-policy=never",
-        src_image=VARS.IMAGE_NAME,
-        dst_image=f"{VARS.IMAGE_NAME}-{app_name}",
-    )
-    return s2i_app
+from conftest import VARS, create_and_wait_for_container, build_s2i_app
 
 
 class TestPostgreSQLBasicsContainer:
     """
-    Test PostgreSQL container configuration.
+    Test PostgreSQL container backup functionality.
     """
 
     def setup_method(self):
@@ -31,7 +16,6 @@ class TestPostgreSQLBasicsContainer:
         Setup the test environment.
         """
         self.app_image = build_s2i_app(app_path=VARS.TEST_APP)
-        self.app_image.db_lib.db_type = "postgresql"
 
     def teardown_method(self):
         """
@@ -64,20 +48,21 @@ class TestPostgreSQLBasicsContainer:
                     f"-e POSTGRESQL_DATABASE={psql_database}",
                 ],
             )
-            assert self.app_image.create_container(
+            container_args = [
+                f"-e POSTGRESQL_USER={psql_user}",
+                f"-e POSTGRESQL_PASSWORD={psql_password}",
+                f"-e POSTGRESQL_DATABASE={psql_database}",
+                f"-e POSTGRESQL_BACKUP_USER={psql_backup_user}",
+                f"-e POSTGRESQL_BACKUP_PASSWORD={psql_backup_password}",
+                f"-e POSTGRESQL_ADMIN_PASSWORD={psql_admin_password}",
+            ]
+            cid_create, cip_create = create_and_wait_for_container(
+                db=self.app_image,
                 cid_file_name=cid_create,
-                docker_args=[
-                    f"-e POSTGRESQL_USER={psql_user}",
-                    f"-e POSTGRESQL_PASSWORD={psql_password}",
-                    f"-e POSTGRESQL_DATABASE={psql_database}",
-                    f"-e POSTGRESQL_BACKUP_USER={psql_backup_user}",
-                    f"-e POSTGRESQL_BACKUP_PASSWORD={psql_backup_password}",
-                    f"-e POSTGRESQL_ADMIN_PASSWORD={psql_admin_password}",
-                ],
+                container_args=container_args,
+                command="",
             )
-            cip, cid = self.app_image.get_cip_cid(cid_file_name=cid_create)
-            assert cip and cid
-            self.check_psql_connection(cip, psql_user, psql_password)
+            self.check_psql_connection(cip_create, psql_user, psql_password)
             backup_user_script = (
                 VARS.TEST_DIR / "test-app/postgresql-init/backup_user.sh"
             )
@@ -90,21 +75,20 @@ class TestPostgreSQLBasicsContainer:
 
             cid_backup = "cid_backup"
             mount_point = "/opt/app-root/src/postgresql-init/add_backup_user.sh"
-            assert self.app_image.create_container(
-                cid_file_name=cid_backup,
-                docker_args=[
-                    f"-e POSTGRESQL_USER={psql_user}",
-                    f"-e POSTGRESQL_PASSWORD={psql_password}",
-                    f"-e POSTGRESQL_DATABASE={psql_database}",
-                    f"-e POSTGRESQL_BACKUP_USER={psql_backup_user}",
-                    f"-e POSTGRESQL_BACKUP_PASSWORD={psql_backup_password}",
-                    f"-e POSTGRESQL_ADMIN_PASSWORD={psql_admin_password}",
+            container_args.extend(
+                [
                     f"-v {temp_file.name}:{mount_point}:z,ro",
-                ],
+                ]
             )
-            cip, cid = self.app_image.get_cip_cid(cid_file_name=cid_backup)
-            assert cip and cid
-            self.check_psql_connection(cip, psql_backup_user, psql_backup_password)
+            cid_backup, cip_backup = create_and_wait_for_container(
+                db=self.app_image,
+                cid_file_name=cid_backup,
+                container_args=container_args,
+                command="",
+            )
+            self.check_psql_connection(
+                cip_backup, psql_backup_user, psql_backup_password
+            )
 
     def check_psql_connection(self, cip, psql_user, psql_password):
         """

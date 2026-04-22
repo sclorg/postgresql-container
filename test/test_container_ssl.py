@@ -1,43 +1,20 @@
 import re
 
-from pathlib import Path
-
-from container_ci_suite.container_lib import ContainerTestLib
-from container_ci_suite.engines.database import DatabaseWrapper
-
-from conftest import VARS
-
-
-def build_s2i_app(app_path: Path) -> ContainerTestLib:
-    container_lib = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type="postgresql")
-    app_name = app_path.name
-    s2i_app = container_lib.build_as_df(
-        app_path=app_path,
-        s2i_args="--pull-policy=never",
-        src_image=VARS.IMAGE_NAME,
-        dst_image=f"{VARS.IMAGE_NAME}-{app_name}",
-    )
-    return s2i_app
+from conftest import VARS, create_and_wait_for_container, build_s2i_app
 
 
 class TestPostgreSQLS2ISSLContainer:
-    """
-    Test PostgreSQL container configuration.
-    """
-
     def setup_method(self):
         """
         Setup the test environment.
         """
-        self.ssl_db = build_s2i_app(app_path=VARS.TEST_DIR / "examples" / "enable-ssl")
-        self.ssl_db.db_lib.db_type = "postgresql"
-        self.dw_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
+        self.db = build_s2i_app(app_path=VARS.TEST_DIR / "examples" / "enable-ssl")
 
     def teardown_method(self):
         """
         Teardown the test environment.
         """
-        self.ssl_db.cleanup()
+        self.db.cleanup()
 
     def test_ssl(self):
         """
@@ -45,20 +22,15 @@ class TestPostgreSQLS2ISSLContainer:
         """
         cid_ssl_name = "enable-ssl-test"
         admin_password = "password"
-
-        assert self.ssl_db.create_container(
+        _, ssl_cip = create_and_wait_for_container(
+            db=self.db,
             cid_file_name=cid_ssl_name,
             container_args=[
                 f"-e POSTGRESQL_ADMIN_PASSWORD={admin_password}",
             ],
+            command="",
         )
-        ssl_cip, ssl_cid = self.ssl_db.get_cip_cid(cid_file_name=cid_ssl_name)
-        assert ssl_cip and ssl_cid
-        assert self.dw_api.wait_for_database(
-            container_id=ssl_cid,
-            command="/usr/libexec/check-container",
-        )
-        assert self.dw_api.assert_login_access(
+        assert self.db.db_lib.assert_login_access(
             container_ip=ssl_cip,
             username="postgres",
             password=admin_password,
@@ -66,7 +38,7 @@ class TestPostgreSQLS2ISSLContainer:
             expected_success=True,
         )
 
-        output = self.dw_api.postgresql_cmd(
+        output = self.db.db_lib.postgresql_cmd(
             container_ip=ssl_cip,
             container_id=VARS.IMAGE_NAME,
             username="postgres",
@@ -75,29 +47,21 @@ class TestPostgreSQLS2ISSLContainer:
             uri_params={"sslmode": "require"},
             sql_command="-At -c 'SELECT 1;'",
         )
-        assert re.search(r"1", output), f"1 not found in {output}"
+        assert "1" in output
 
 
 class TestPostgreSQLS2IBakeDataContainer:
-    """
-    Test PostgreSQL container configuration.
-    """
-
     def setup_method(self):
         """
         Setup the test environment.
         """
-        self.ssl_db = build_s2i_app(
-            app_path=VARS.TEST_DIR / "examples" / "s2i-dump-data"
-        )
-        self.ssl_db.db_lib.db_type = "postgresql"
-        self.dw_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
+        self.db = build_s2i_app(app_path=VARS.TEST_DIR / "examples" / "s2i-dump-data")
 
     def teardown_method(self):
         """
         Teardown the test environment.
         """
-        self.ssl_db.cleanup()
+        self.db.cleanup()
 
     def test_ssl(self):
         """
@@ -105,20 +69,15 @@ class TestPostgreSQLS2IBakeDataContainer:
         """
         cid_ssl_name = "bake-data-test"
         admin_password = "password"
-
-        assert self.ssl_db.create_container(
+        _, ssl_cip = create_and_wait_for_container(
+            db=self.db,
             cid_file_name=cid_ssl_name,
             container_args=[
                 f"-e POSTGRESQL_ADMIN_PASSWORD={admin_password}",
             ],
+            command="",
         )
-        ssl_cip, ssl_cid = self.ssl_db.get_cip_cid(cid_file_name=cid_ssl_name)
-        assert ssl_cip and ssl_cid
-        assert self.dw_api.wait_for_database(
-            container_id=ssl_cid,
-            command="/usr/libexec/check-container",
-        )
-        assert self.dw_api.assert_login_access(
+        assert self.db.db_lib.assert_login_access(
             container_ip=ssl_cip,
             username="postgres",
             password=admin_password,
@@ -126,7 +85,7 @@ class TestPostgreSQLS2IBakeDataContainer:
             expected_success=True,
         )
 
-        output = self.dw_api.postgresql_cmd(
+        output = self.db.db_lib.postgresql_cmd(
             container_ip=ssl_cip,
             container_id=VARS.IMAGE_NAME,
             username="postgres",

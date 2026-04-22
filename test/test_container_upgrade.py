@@ -1,4 +1,4 @@
-import re
+import shutil
 import tempfile
 import time
 import pytest
@@ -6,26 +6,43 @@ import pytest
 from pathlib import Path
 
 from container_ci_suite.container_lib import ContainerTestLib, PodmanCLIWrapper
-from container_ci_suite.engines.database import DatabaseWrapper
 from container_ci_suite.utils import ContainerTestLibUtils
 
-from conftest import VARS, get_upgrade_path, get_image_id
+from conftest import (
+    VARS,
+    get_upgrade_path,
+    get_image_id,
+    create_and_wait_for_container,
+    check_pagila_db,
+    is_db_ready,
+    check_table_output_in_db,
+)
 
 
 class TestPostgreSQLUpgrade:
     """
-    Test PostgreSQL container configuration.
+    Test PostgreSQL container Upgrade functionality.
     """
 
     def setup_method(self):
         """
         Setup the test environment.
         """
-        self.upgrade_db = ContainerTestLib(
-            image_name=VARS.IMAGE_NAME, db_type="postgresql"
-        )
-        self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
+        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type=VARS.DB_TYPE)
         self.admin_password = "redhat"
+        self.upgrade_volume_dir = tempfile.mkdtemp(prefix="/tmp/psql-upgrade")
+        ContainerTestLibUtils.commands_to_run(
+            commands_to_run=[
+                f"setfacl -m u:26:rwx {self.upgrade_volume_dir}",
+            ]
+        )
+
+    def teardown_method(self):
+        """
+        Teardown the test environment.
+        """
+        self.db.cleanup()
+        shutil.rmtree(self.upgrade_volume_dir, ignore_errors=True)
 
     @pytest.mark.parametrize(
         "upgrade_type, datadir",
@@ -34,7 +51,7 @@ class TestPostgreSQLUpgrade:
             ("copy", "empty"),
             ("hardlink", "pagila"),
             ("copy", "pagila"),
-        ]
+        ],
     )
     def test_upgrade_functionality(self, upgrade_type, datadir):
         """
@@ -45,17 +62,24 @@ class TestPostgreSQLUpgrade:
         3. Test if the database connection works
         """
         if VARS.OS == "fedora":
-            pytest.skip("Skip upgrade test on Fedora. Only CentOS Stream and RHELs are supported.")
+            pytest.skip(
+                "Skip upgrade test on Fedora. Only CentOS Stream and RHELs are supported."
+            )
         self.datadir = datadir
-        self.upgrade_volume_dir = tempfile.mkdtemp(prefix=f"/tmp/psql-upgrade-{upgrade_type}-{datadir}")
         prev_version = get_upgrade_path()
         if not prev_version:
-            pytest.skip(f"Skipping for {VARS.OS} and version {VARS.VERSION}. No upgrade path found.")
+            pytest.skip(
+                f"Skipping for {VARS.OS} and version {VARS.VERSION}. No upgrade path found."
+            )
         self.registry_image = get_image_id(version=prev_version)
-        if not PodmanCLIWrapper.podman_pull_image(image_name=self.registry_image, loops=3):
-            pytest.skip(f"{self.registry_image} image not found in registry so skipping migration test..")
+        if not PodmanCLIWrapper.podman_pull_image(
+            image_name=self.registry_image, loops=3
+        ):
+            pytest.skip(
+                f"{self.registry_image} image not found in registry so skipping migration test.."
+            )
         # Override the image name to previous version
-        self.upgrade_db.image_name = self.registry_image
+        self.db.image_name = self.registry_image
         self.create_database_in_prev_version()
         self.upgrade_image(upgrade_type=upgrade_type)
         self.upgrade_image(upgrade_type=upgrade_type, bool_test_upgrade=False)
@@ -70,56 +94,24 @@ class TestPostgreSQLUpgrade:
         If datadir is pagila, add the pagila example database
         """
         cid_file_name = "create-db-test"
-        ContainerTestLibUtils.commands_to_run(
-            commands_to_run=[
-                f"setfacl -m u:26:rwx {self.upgrade_volume_dir}",
-            ]
-        )
         container_args = [
             f"-e POSTGRESQL_ADMIN_PASSWORD={self.admin_password}",
             f"-v {self.upgrade_volume_dir}:/var/lib/pgsql/data:Z",
         ]
 
-        assert self.upgrade_db.create_container(
+        cid_create, cip_create = create_and_wait_for_container(
+            db=self.db,
             cid_file_name=cid_file_name,
             container_args=container_args,
             command="",
         )
-        cip_create, cid_create = self.upgrade_db.get_cip_cid(
-            cid_file_name=cid_file_name
-        )
-        assert cid_create and cip_create
-        assert self.db_api.wait_for_database(
-            container_id=cid_create, command="/usr/libexec/check-container"
-        )
         # Let's wait couple seconds
         time.sleep(5)
-        is_db_ready = False
-        for _ in range(5):
-            # Let's check if the database is ready by running a simple query.
-            # Sometimes check-container can return before the database is fully ready to accept connections.
-            if not self.db_api.wait_for_database(
-                container_id=cid_create,
-                command='psql -h localhost -tA -c \"select 1;\"',
-            ):
-                time.sleep(5)
-                continue
-            is_db_ready = True
-            break
-        assert is_db_ready, "Database is not ready after waiting for 25 seconds"
+        assert is_db_ready(dw_api=self.db.db_lib, cid=cid_create)
         if self.datadir == "empty":
-            sql_cmd = "CREATE TABLE blah (id int);"
-            output = PodmanCLIWrapper.podman_exec_shell_command(
-                cid_file_name=cid_create,
-                cmd=f"psql -tA -c \"{sql_cmd}\"",
-            )
-            assert "CREATE TABLE" in output
-            sql_cmd = "INSERT INTO blah VALUES (1), (2), (3);"
-            output = PodmanCLIWrapper.podman_exec_shell_command(
-                cid_file_name=cid_create,
-                cmd=f"psql -tA -c \"{sql_cmd}\"",
-            )
-            self.check_db_output(cid=cid_create)
+            check_table_output_in_db(cid=cid_create)
+            PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid_create}")
+            PodmanCLIWrapper.call_podman_command(cmd=f"rm -f {cid_create}")
         else:
             file_path = Path(f"{VARS.TEST_DIR}/pagila/postgresql-container-pagila.sql")
             assert file_path.exists()
@@ -127,7 +119,7 @@ class TestPostgreSQLUpgrade:
             PodmanCLIWrapper.call_podman_command(
                 cmd=f"run --rm -i {VARS.IMAGE_NAME} bash -c '{psql_cmd}' < {file_path}",
             )
-            self.check_pagila_db(cid=cid_create)
+            check_pagila_db(cid=cid_create)
 
     def upgrade_image(self, upgrade_type: str, bool_test_upgrade: bool = True):
         """
@@ -139,10 +131,12 @@ class TestPostgreSQLUpgrade:
            If False, just check the connection as the second upgrade
            can take more time and we have already tested the output after the first upgrade.
         4. If datadir is empty, create a simple table and insert some data.
-        If datadir is pagila, add the pagila example database
+           Done by calling check_table_output_in_db function.
+           If datadir is pagila, add the pagila example database
+           Done by calling check_pagila_db function.
         5. Stop and remove the container after the test.
         """
-        self.upgrade_db.image_name = VARS.IMAGE_NAME
+        self.db.image_name = VARS.IMAGE_NAME
         cid_file_name = f"upg-test-{upgrade_type}-{self.datadir}"
         container_args = [
             f"-e POSTGRESQL_ADMIN_PASSWORD={self.admin_password}",
@@ -150,73 +144,18 @@ class TestPostgreSQLUpgrade:
         ]
         if bool_test_upgrade:
             container_args.append(f"-e POSTGRESQL_UPGRADE={upgrade_type}")
-        assert self.upgrade_db.create_container(
+
+        cid_upg, _ = create_and_wait_for_container(
+            db=self.db,
             cid_file_name=cid_file_name,
             container_args=container_args,
             command="",
         )
-        cip_upg, cid_upg = self.upgrade_db.get_cip_cid(cid_file_name=cid_file_name)
-        assert cip_upg and cid_upg
-        assert self.db_api.wait_for_database(
-            container_id=cid_upg,
-            command="/usr/libexec/check-container",
-            not_shell=False,
-        )
-        # Let's wait couple seconds
         time.sleep(5)
-        is_db_ready = False
-        for _ in range(5):
-            # Let's check if the database is ready by running a simple query.
-            # Sometimes check-container can return
-            # before the database is fully ready to accept connections.
-            if not self.db_api.wait_for_database(
-                container_id=cid_upg,
-                command='psql -h localhost -tA -c \"select 1;\"',
-            ):
-                time.sleep(5)
-                continue
-            is_db_ready = True
-            break
-        assert is_db_ready, "Database is not ready after waiting for 25 seconds"
+        assert is_db_ready(dw_api=self.db.db_lib, cid=cid_upg)
         if self.datadir == "empty":
-            self.check_db_output(cid=cid_upg)
+            check_table_output_in_db(cid=cid_upg)
+            PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid_upg}")
+            PodmanCLIWrapper.call_podman_command(cmd=f"rm -f {cid_upg}")
         else:
-            self.check_pagila_db(cid=cid_upg)
-
-    def check_db_output(self, cid):
-        """
-        Check the database output.
-        """
-        output = PodmanCLIWrapper.podman_exec_shell_command(
-            cid_file_name=cid,
-            cmd="psql -h localhost -At -c \"SELECT * FROM blah ORDER BY id;\"",
-        )
-        rows = [
-            "1",
-            "2",
-            "3",
-        ]
-        for row in rows:
-            assert re.search(row, output), f"Row {row} not found in {output}"
-        PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
-        PodmanCLIWrapper.call_podman_command(cmd=f"rm -f {cid}")
-
-    def check_pagila_db(self, cid):
-        """
-        Check the pagila database.
-        """
-        for sql, expected_count in VARS.SQL_CMDS.items():
-            cmd = f"psql -tA -c \"{sql}\""
-            output = PodmanCLIWrapper.podman_exec_shell_command(
-                cid_file_name=cid,
-                cmd=cmd,
-            )
-            if "information_schema.tables" in sql:
-                # For tables we will check the count of tables in public schema as
-                # there are some additional tables in information_schema after migration
-                table_count = [x for x in output.split('\n') if "|public|" in x]
-                assert len(table_count) == int(expected_count)
-            else:
-                assert re.search(expected_count, output)
-        PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
-        PodmanCLIWrapper.call_podman_command(cmd=f"rm -f {cid}")
+            check_pagila_db(cid=cid_upg)
