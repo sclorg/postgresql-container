@@ -79,7 +79,7 @@ def get_upgrade_path():
     if VARS.VERSION not in UPGRADE_PATH_DICT[VARS.OS]:
         return None
     current_index = UPGRADE_PATH_DICT[VARS.OS].index(VARS.VERSION)
-    if current_index - 1 == -1:
+    if current_index == 0:
         return None
     return UPGRADE_PATH_DICT[VARS.OS][current_index - 1]
 
