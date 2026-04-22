@@ -2,9 +2,8 @@ import re
 from time import sleep
 
 from container_ci_suite.container_lib import ContainerTestLib
-from container_ci_suite.engines.database import DatabaseWrapper
 
-from conftest import VARS
+from conftest import VARS, create_and_wait_for_container
 
 
 class TestPostgreSQLReplicationContainer:
@@ -16,18 +15,13 @@ class TestPostgreSQLReplicationContainer:
         """
         Setup the test environment.
         """
-        self.replication_db = ContainerTestLib(
-            image_name=VARS.IMAGE_NAME, db_type="postgresql"
-        )
-        self.db_wrapper_api = DatabaseWrapper(
-            image_name=VARS.IMAGE_NAME, db_type="postgresql"
-        )
+        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type=VARS.DB_TYPE)
 
     def teardown_method(self):
         """
         Teardown the test environment.
         """
-        self.replication_db.cleanup()
+        self.db.cleanup()
 
     def test_replication(self):
         """
@@ -46,38 +40,23 @@ class TestPostgreSQLReplicationContainer:
             f"-e POSTGRESQL_MASTER_PASSWORD={master_password}",
         ]
         # Run the PostgreSQL master
-        assert self.replication_db.create_container(
+        _, master_cip = create_and_wait_for_container(
+            db=self.db,
             cid_file_name=master_cid_name,
             container_args=container_args,
             command="run-postgresql-master",
-        )
-        # Run the PostgreSQL replica
-        master_cip, master_cid = self.replication_db.get_cip_cid(
-            cid_file_name=master_cid_name
-        )
-        assert master_cip and master_cid
-        assert self.db_wrapper_api.wait_for_database(
-            container_id=master_cid,
-            command="/usr/libexec/check-container",
         )
         container_args += [
             f"--add-host {master_hostname}:{master_cip}",
             f"-e POSTGRESQL_MASTER_IP={master_hostname}",
         ]
-        assert self.replication_db.create_container(
+        _, slave_cip = create_and_wait_for_container(
+            db=self.db,
             cid_file_name=slave_cid_name,
             container_args=container_args,
             command="run-postgresql-slave",
         )
-        slave_cip, slave_cid = self.replication_db.get_cip_cid(
-            cid_file_name=slave_cid_name
-        )
-        assert slave_cip and slave_cid
-        assert self.db_wrapper_api.wait_for_database(
-            container_id=slave_cid,
-            command="/usr/libexec/check-container",
-        )
-        output = self.db_wrapper_api.run_sql_command(
+        output = self.db.db_lib.run_sql_command(
             container_ip=master_cip,
             username=master_user,
             password=master_password,
@@ -89,7 +68,7 @@ class TestPostgreSQLReplicationContainer:
             f"Replica {slave_cip} not found in MASTER {master_cip}"
         )
         # Test the replication
-        output = self.db_wrapper_api.run_sql_command(
+        output = self.db.db_lib.run_sql_command(
             container_ip=master_cip,
             username=master_user,
             password=master_password,
@@ -98,7 +77,7 @@ class TestPostgreSQLReplicationContainer:
         )
         # let's wait for the table to be created and available for replication
         sleep(3)
-        output = self.db_wrapper_api.run_sql_command(
+        output = self.db.db_lib.run_sql_command(
             container_ip=slave_cip,
             username=master_user,
             password=master_password,

@@ -3,9 +3,8 @@ import pytest
 
 from container_ci_suite.container_lib import ContainerTestLib
 from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
-from container_ci_suite.container_lib import DatabaseWrapper
 
-from conftest import VARS, check_db_output
+from conftest import VARS, check_db_output, create_and_wait_for_container
 
 
 class TestPostgreSQLGeneralContainer:
@@ -17,16 +16,13 @@ class TestPostgreSQLGeneralContainer:
         """
         Setup the test environment.
         """
-        self.db_image = ContainerTestLib(
-            image_name=VARS.IMAGE_NAME, db_type="postgresql"
-        )
-        self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
+        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type=VARS.DB_TYPE)
 
     def teardown_method(self):
         """
         Teardown the test environment.
         """
-        self.db_image.cleanup()
+        self.db.cleanup()
 
     @pytest.mark.parametrize(
         "container_args, psql_user, psql_password, psql_database, root_password, test_name",
@@ -82,16 +78,17 @@ class TestPostgreSQLGeneralContainer:
             f"-e POSTGRESQL_MAX_CONNECTIONS={psql_max_connections}",
             f"-e POSTGRESQL_MAX_PREPARED_TRANSACTIONS={psql_max_prepared_transactions}",
             f"-e POSTGRESQL_SHARED_BUFFERS={psql_shared_buffers}",
-            f"{container_args}",
+            container_args,
         ]
         cid_file_name = test_name
-        assert self.db_image.create_container(
-            cid_file_name=cid_file_name, container_args=container_all_args
+        cid, cip = create_and_wait_for_container(
+            db=self.db,
+            cid_file_name=cid_file_name,
+            container_args=container_all_args,
+            command="",
         )
-        cip, cid = self.db_image.get_cip_cid(cid_file_name=cid_file_name)
-        assert cip and cid
         if root_password:
-            assert self.db_image.test_db_connection(
+            assert self.db.test_db_connection(
                 container_ip=cip,
                 username="postgres",
                 password=root_password,
@@ -99,7 +96,7 @@ class TestPostgreSQLGeneralContainer:
                 max_attempts=10,
             )
         else:
-            assert self.db_image.test_db_connection(
+            assert self.db.test_db_connection(
                 container_ip=cip,
                 username=psql_user,
                 password=psql_password,
@@ -119,7 +116,7 @@ class TestPostgreSQLGeneralContainer:
             ("postgres", root_password, expected_admin_success),
             ("postgres", f"{root_password}_foo", False),
         ]:
-            test_assert = self.db_image.db_lib.assert_login_access(
+            test_assert = self.db.db_lib.assert_login_access(
                 container_ip=cip,
                 username=user,
                 password=pwd,
@@ -132,22 +129,24 @@ class TestPostgreSQLGeneralContainer:
                 )
                 login_access = False
         assert login_access
-        assert self.db_image.db_lib.assert_local_access(container_id=cid)
+        assert self.db.db_lib.assert_local_access(container_id=cid)
         output = PodmanCLIWrapper.podman_exec_shell_command(
             cid_file_name=cid,
             cmd="cat /var/lib/pgsql/openshift-custom-postgresql.conf",
         )
 
-        rows = [
+        expected_rows = [
             rf"max_connections\s*=\s*{psql_max_connections}",
             rf"max_prepared_transactions\s*=\s*{psql_max_prepared_transactions}",
             rf"shared_buffers\s*=\s*{psql_shared_buffers}",
         ]
-        for row in rows:
-            assert re.search(row, output), f"Row {row} not found in {output}"
+        for expected_row in expected_rows:
+            assert re.search(expected_row, output), (
+                f"Row {expected_row} not found in {output}"
+            )
         # test_postgresql
         if test_name == "admin":
-            assert self.db_api.run_sql_command(
+            assert self.db.db_lib.run_sql_command(
                 container_ip=cip,
                 username="postgres",
                 password=root_password,
@@ -169,35 +168,14 @@ class TestPostgreSQLGeneralContainer:
         3. Select data from the table.
         4. Drop the table.
         """
-        self.db_api.run_sql_command(
-            container_ip=cip,
-            username=psql_user,
-            password=psql_password,
-            container_id=VARS.IMAGE_NAME,
-            database=psql_database,
-            sql_cmd='-At -c "CREATE TABLE tbl (a integer, b integer);"',
-        )
-
-        self.db_api.run_sql_command(
-            container_ip=cip,
-            username=psql_user,
-            password=psql_password,
-            container_id=VARS.IMAGE_NAME,
-            database=psql_database,
-            sql_cmd=[
-                '-At -c "INSERT INTO tbl VALUES (1, 2);"',
-                '-At -c "INSERT INTO tbl VALUES (3, 4);"',
-                '-At -c "INSERT INTO tbl VALUES (5, 6);"',
-            ],
-        )
         check_db_output(
-            dw_api=self.db_api,
+            dw_api=self.db.db_lib,
             cip=cip,
             username=psql_user,
             password=psql_password,
             database=psql_database,
         )
-        self.db_api.run_sql_command(
+        self.db.db_lib.run_sql_command(
             container_ip=cip,
             username=psql_user,
             password=psql_password,

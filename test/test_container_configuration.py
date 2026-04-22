@@ -5,9 +5,8 @@ import pytest
 from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
 from container_ci_suite.container_lib import ContainerTestLib
 from container_ci_suite.utils import ContainerTestLibUtils
-from container_ci_suite.engines.database import DatabaseWrapper
 
-from conftest import VARS
+from conftest import VARS, create_and_wait_for_container
 
 
 class TestPostgreSQLInvalidConfigurations:
@@ -19,8 +18,7 @@ class TestPostgreSQLInvalidConfigurations:
         """
         Setup the test environment.
         """
-        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type="postgresql")
-        self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
+        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type=VARS.DB_TYPE)
 
     def teardown_method(self):
         """
@@ -91,8 +89,7 @@ class TestPostgreSQLValidConfigurations:
         """
         Setup the test environment.
         """
-        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type="postgresql")
-        self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
+        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type=VARS.DB_TYPE)
 
     def teardown_method(self):
         """
@@ -143,13 +140,12 @@ class TestPostgreSQLValidConfigurations:
             command="",
         )
         cid_file_name = "cid_success_test"
-        assert self.db.create_container(
+        _, cip = create_and_wait_for_container(
+            db=self.db,
             cid_file_name=cid_file_name,
             container_args=container_args,
             command="",
         )
-        cip, cid = self.db.get_cip_cid(cid_file_name=cid_file_name)
-        assert cip and cid
         if psql_user and psql_password:
             assert self.db.test_db_connection(
                 container_ip=cip,
@@ -175,8 +171,7 @@ class TestPostgreSQLBufferHooks:
         """
         Setup the test environment.
         """
-        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type="postgresql")
-        self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
+        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type=VARS.DB_TYPE)
         self.volume_dir = tempfile.mkdtemp(prefix="/tmp/psql-volume-dir")
         ContainerTestLibUtils.commands_to_run(
             commands_to_run=[
@@ -216,15 +211,11 @@ class TestPostgreSQLBufferHooks:
             f"-v {self.volume_dir}:/opt/app-root/src:Z",
         ]
 
-        assert self.db.create_container(
+        cid, _ = create_and_wait_for_container(
+            db=self.db,
             cid_file_name=cid_file_name,
             container_args=container_args,
             command="",
-        )
-        cip, cid = self.db.get_cip_cid(cid_file_name=cid_file_name)
-        assert cip and cid
-        assert self.db_api.wait_for_database(
-            container_id=cid, command="/usr/libexec/check-container"
         )
         output = PodmanCLIWrapper.podman_exec_shell_command(
             cid_file_name=cid,

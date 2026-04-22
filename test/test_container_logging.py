@@ -1,14 +1,14 @@
 import re
 
 from pathlib import Path
+import shutil
 
 from container_ci_suite.container_lib import ContainerTestLib
 from container_ci_suite.engines.container import ContainerTestLibUtils
-from container_ci_suite.engines.database import DatabaseWrapper
 from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
 from container_ci_suite.utils import tempfile
 
-from conftest import VARS
+from conftest import VARS, create_and_wait_for_container
 
 
 class TestPostgreSQLLoggingContainer:
@@ -20,41 +20,36 @@ class TestPostgreSQLLoggingContainer:
         """
         Setup the test environment.
         """
-        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type="postgresql")
-        self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME, db_type="postgresql")
+        self.db = ContainerTestLib(image_name=VARS.IMAGE_NAME, db_type=VARS.DB_TYPE)
+        self.logging_dir = tempfile.mkdtemp(prefix="/tmp/psql-logging-volume-dir")
+        ContainerTestLibUtils.commands_to_run(
+            commands_to_run=[
+                f"setfacl -m u:26:-wx {self.logging_dir}",
+            ]
+        )
 
     def teardown_method(self):
         """
         Teardown the test environment.
         """
         self.db.cleanup()
+        shutil.rmtree(self.logging_dir, ignore_errors=True)
 
     def test_logging_destination(self):
         """
         Test logging destination.
         """
         cid_file_name = "test_pg_logging"
-        logging_dir = tempfile.mkdtemp(prefix="/tmp/psql-logging-volume-dir")
-        assert ContainerTestLibUtils.commands_to_run(
-            commands_to_run=[
-                f"setfacl -m u:26:-wx {logging_dir}",
-            ]
-        )
         container_args = [
             "-e POSTGRESQL_ADMIN_PASSWORD=password",
             "-e POSTGRESQL_LOG_DESTINATION=/dev/stderr",
-            f"-v {logging_dir}:/var/lib/pgsql/data:Z",
+            f"-v {self.logging_dir}:/var/lib/pgsql/data:Z",
         ]
-
-        assert self.db.create_container(
+        cid, _ = create_and_wait_for_container(
+            db=self.db,
             cid_file_name=cid_file_name,
             container_args=container_args,
             command="",
-        )
-        cip, cid = self.db.get_cip_cid(cid_file_name=cid_file_name)
-        assert cip and cid
-        assert self.db_api.wait_for_database(
-            container_id=cid, command="/usr/libexec/check-container"
         )
 
         output = PodmanCLIWrapper.call_podman_command(
@@ -63,7 +58,7 @@ class TestPostgreSQLLoggingContainer:
         assert "stderr" in output, (
             f"stderr should be in the log_destination, but is {output}"
         )
-        assert self.db_api.wait_for_database(
+        assert self.db.db_lib.wait_for_database(
             container_id=cid, command="/usr/libexec/check-container"
         )
 
@@ -72,7 +67,7 @@ class TestPostgreSQLLoggingContainer:
             ignore_error=True,
         )
 
-        assert self.db_api.wait_for_database(
+        assert self.db.db_lib.wait_for_database(
             container_id=cid, command="/usr/libexec/check-container"
         )
         logs = PodmanCLIWrapper.podman_logs(
@@ -81,6 +76,6 @@ class TestPostgreSQLLoggingContainer:
         assert re.search('FATAL:\\s*role "nonexistent" does not exist', logs), (
             "ERROR: the container log does not include expected error message"
         )
-        assert not (Path(logging_dir) / "userdata" / "log").exists(), (
+        assert not (Path(self.logging_dir) / "userdata" / "log").exists(), (
             "ERROR: the traditional log file should not exist"
         )
