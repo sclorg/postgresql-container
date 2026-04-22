@@ -139,7 +139,7 @@ class TestPostgreSQLPasswordChangeContainer:
             (username, new_password, True),
             (username, password, False),
             ("postgres", new_admin_password, True),
-            ("postgres", "admin_password", False),
+            ("postgres", admin_password, False),
         ]:
             # Let's check login access for user and pwd combinations
             # with expected ret_value. Otherwise let's failed.
