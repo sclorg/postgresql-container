@@ -8,9 +8,6 @@ from conftest import VARS, check_db_output, create_and_wait_for_container
 
 
 class TestPostgreSQLGeneralContainer:
-    """
-    Test PostgreSQL container configuration.
-    """
 
     def setup_method(self):
         """
@@ -144,7 +141,6 @@ class TestPostgreSQLGeneralContainer:
             assert re.search(expected_row, output), (
                 f"Row {expected_row} not found in {output}"
             )
-        # test_postgresql
         if test_name == "admin":
             assert self.db.db_lib.run_sql_command(
                 container_ip=cip,

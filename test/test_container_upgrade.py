@@ -57,9 +57,9 @@ class TestPostgreSQLUpgrade:
         """
         Test upgrade functionality of the PostgreSQL container.
         Steps are:
-        1. Create a container with the previous version and run pg_upgrade
-        2. Create a container with the new version and run pg_upgrade
-        3. Test if the database connection works
+        1. Create a container with the previous version
+        2. Create a container with the new version
+        3. Test if the database connection works on upgraded database version
         """
         if VARS.OS == "fedora":
             pytest.skip(

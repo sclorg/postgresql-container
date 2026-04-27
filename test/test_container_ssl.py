@@ -3,7 +3,7 @@ import re
 from conftest import VARS, create_and_wait_for_container, build_s2i_app
 
 
-class TestPostgreSQLS2ISSLContainer:
+class TestPostgreSQLS2ICertificatesContainer:
     def setup_method(self):
         """
         Setup the test environment.
@@ -16,10 +16,7 @@ class TestPostgreSQLS2ISSLContainer:
         """
         self.db.cleanup()
 
-    def test_ssl(self):
-        """
-        Test SSL.
-        """
+    def test_enable_ssl_example(self):
         cid_ssl_name = "enable-ssl-test"
         admin_password = "password"
         _, ssl_cip = create_and_wait_for_container(

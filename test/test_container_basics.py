@@ -7,9 +7,6 @@ from conftest import VARS, create_and_wait_for_container, build_s2i_app
 
 
 class TestPostgreSQLBasicsContainer:
-    """
-    Test PostgreSQL container backup functionality.
-    """
 
     def setup_method(self):
         """
