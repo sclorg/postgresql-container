@@ -104,7 +104,7 @@ def check_db_output(
     database,
 ):
     """
-    Check the database out+put if the data is inserted correctly
+    Check the database output if the data is inserted correctly
     by running a SELECT statement.
     """
     dw_api.run_sql_command(
@@ -163,7 +163,7 @@ def create_and_wait_for_container(
     Steps:
     1. Create the container
     2. Get the container ID and IP
-    3. Wait for the database to be ready if required by wait_for_database flag
+    3. Wait for the database to be ready
     4. Return the container ID and IP
     """
     assert db.create_container(

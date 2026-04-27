@@ -1,12 +1,12 @@
 import re
+import tempfile
+import shutil
 
 from pathlib import Path
-import shutil
 
 from container_ci_suite.container_lib import ContainerTestLib
 from container_ci_suite.engines.container import ContainerTestLibUtils
 from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
-from container_ci_suite.utils import tempfile
 
 from conftest import VARS, create_and_wait_for_container
 
