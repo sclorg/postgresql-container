@@ -84,6 +84,16 @@ specs:
        redhat_component: "postgresql-{{ spec.short }}-container"
        img_name: "{{ spec.org }}/postgresql-{{ spec.short }}"
        pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib postgresql{{ spec.short }}-upgrade"
+    rhel11:
+       distros:
+         - rhel-11-x86_64
+       minimal_image: "ubi10-minimal:latest"
+       org: "rhel11"
+       prod: "rhel11"
+       openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+       redhat_component: "postgresql-{{ spec.short }}-container"
+       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}"
+       pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib gettext"
     c9s:
       distros:
         - centos-stream-9-x86_64
@@ -96,7 +106,6 @@ specs:
       pkgs: "postgresql-server postgresql-contrib"
       environment_setup: >-4
            { yum -y module enable postgresql:{{ spec.version }} || :; } && \
-
     c10s:
       distros:
         - centos-stream-10-x86_64
@@ -107,6 +116,17 @@ specs:
       redhat_component: "postgresql-{{ spec.short }}-container"
       img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib postgresql{{ spec.short }}-upgrade"
+      check_pkgs: "postgresql-server postgresql-contrib postgresql-upgrade pgvector"
+    c11s:
+      distros:
+        - centos-stream-11-x86_64
+      minimal_image: quay.io/centos/centos:stream10
+      org: "sclorg"
+      prod: "c11s"
+      openshift_tags: "database,postgresql,postgresql{{ spec.short }},postgresql-{{ spec.short }}"
+      redhat_component: "postgresql-{{ spec.short }}-container"
+      img_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      pkgs: "postgresql{{ spec.short }}-server postgresql{{ spec.short }}-contrib"
       check_pkgs: "postgresql-server postgresql-contrib postgresql-upgrade pgvector"
 
   version:
@@ -159,6 +179,15 @@ specs:
       rhel_image_name: "rhel10/postgresql-{{ spec.short }}"
       latest_fedora: "f43"
 
+    "18-minimal":
+      version: "18"
+      prev_version: "16"
+      short: "18"
+      prev_short: "16"
+      common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
+      c11s_image_name: "sclorg/postgresql-{{ spec.short }}-c11s"
+      rhel_image_name: "rhel11/postgresql-{{ spec.short }}"
+      latest_fedora: "f43"
 
 matrix:
   include:
@@ -191,3 +220,7 @@ matrix:
         - centos-stream-10-x86_64
         - rhel-9-x86_64
         - rhel-10-x86_64
+    - version: "18-minimal"
+      distros:
+        - centos-stream-11-x86_64
+        - rhel-11-x86_64

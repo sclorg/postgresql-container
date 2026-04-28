@@ -1,0 +1,7 @@
+# required on master for replication
+wal_level = hot_standby         # minimal, archive, hot_standby, or logical
+max_wal_senders = 6             # max number of walsender processes
+wal_keep_size = 6400            # number of segments (400) * size of segments (16MB each); 0 disables
+
+# required on replicas for replication
+hot_standby = on
