@@ -1,0 +1,1 @@
+groff -t -man -ETascii /help.1

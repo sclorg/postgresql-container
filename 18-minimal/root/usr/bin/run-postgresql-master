@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export ENABLE_REPLICATION=true
+
+exec run-postgresql "$@"

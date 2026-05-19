@@ -33,12 +33,20 @@ get_image_id ()
                 ns=rhel10
                 local image=registry.redhat.io/$ns/postgresql-${version}
                 ;;
+            rhel11)
+                ns=rhel11
+                local image=registry.redhat.io/$ns/postgresql-${version}
+                ;;
             c9s)
                 ns=c9s
                 local image=quay.io/sclorg/postgresql-${version}-$ns
                 ;;
             c10s)
                 ns=c10s
+                local image=quay.io/sclorg/postgresql-${version}-$ns
+                ;;
+            c11s)
+                ns=c11s
                 local image=quay.io/sclorg/postgresql-${version}-$ns
                 ;;
             esac

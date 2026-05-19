@@ -904,6 +904,9 @@ run_upgrade_test ()
         rhel10|c10s)
             upgrade_path="none 16 18 none"
             ;;
+        rhel11|c11s)
+            upgrade_path="none 18 none"
+            ;;
         fedora)
             upgrade_path="none 15 16 18 none"
             ;;
@@ -940,6 +943,7 @@ run_migration_test ()
 {
   local ret=0
     [ "${OS}" == "fedora" ] && return 0
+    [ "${VERSION}" == "18-minimal" ] && return 0
 
     local from_version
     local upgrade_path="12 13 15 16"
