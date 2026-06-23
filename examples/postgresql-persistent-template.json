@@ -89,7 +89,7 @@
         "name": "${DATABASE_SERVICE_NAME}",
         "annotations": {
           "template.alpha.openshift.io/wait-for-ready": "true",
-          "image.openshift.io/triggers": "[{\"from\":{\"kind\":\"ImageStreamTag\",\"name\":\"postgresql:${POSTGRESQL_VERSION}\"},\"fieldPath\": \"spec.template.spec.containers[0].image\"}]"
+          "image.openshift.io/triggers": "[{\"from\":{\"kind\":\"ImageStreamTag\",\"name\":\"postgresql:${POSTGRESQL_VERSION}\",\"namespace\":\"${NAMESPACE}\"},\"fieldPath\": \"spec.template.spec.containers[0].image\"}]"
         }
       },
       "spec": {
