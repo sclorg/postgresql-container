@@ -1,4 +1,4 @@
-FROM {{ spec.s2i_base }}
+FROM {{ spec.minimal_image }}
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -11,11 +11,14 @@ FROM {{ spec.s2i_base }}
 #                           PostgreSQL administrative account
 
 ENV POSTGRESQL_VERSION={{ spec.version }} \
-    {% if spec.prod != "rhel8" or spec.prod != "rhel9" or spec.version == "10" %}
+    {% if spec.prod in ["c11s", "rhel11"] %}
     POSTGRESQL_PREV_VERSION={{ spec.prev_version }} \
     {% endif %}
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
+    # Path to be used in other layers to place s2i scripts into
+    STI_SCRIPTS_PATH=/usr/libexec/s2i \
+    HOME=/opt/app-root/src \    
     APP_DATA=/opt/app-root
 
 ENV SUMMARY="PostgreSQL is an advanced Object-Relational database management system" \
@@ -30,17 +33,15 @@ LABEL summary="$SUMMARY" \
       io.openshift.expose-services="5432:postgresql" \
       io.openshift.tags="{{ spec.openshift_tags }}" \
       io.openshift.s2i.assemble-user="26" \
-      name="{{ spec.org }}/postgresql-{{ spec.short }}{% if spec.org == "sclorg" %}-{{ spec.prod }}{% endif %}" \
+      name="{{ spec.org }}/postgresql-{{ spec.short }}-minimal{% if spec.org == "sclorg" %}-{{ spec.prod }}{% endif %}" \
       com.redhat.component="{{ spec.redhat_component }}" \
-{% if config.os.id == "rhel" and spec.prod not in ["rhel10", "rhel11"] %}
-      version="1" \
-{% elif spec.prod in ["c9s", "c10s", "c11s"] %}
+{% if spec.prod in ["c11s"] %}
       version="1" \
 {% endif %}
 {% if config.os.id == 'rhel' %}
       com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
 {% endif %}
-      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 {{ spec.org }}/postgresql-{{ spec.short }}{% if spec.org == "sclorg" %}-{{ spec.prod }}{% endif %}" \
+      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 {{ spec.org }}/postgresql-{{ spec.short }}-minimal{% if spec.org == "sclorg" %}-{{ spec.prod }}{% endif %}" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
@@ -53,50 +54,32 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 {% if spec.repo_enable_reason %}
 {{ spec.repo_enable_reason }}
 {% endif %}
-{% if spec.prod in ["c10s", "c11s", "rhel10", "rhel11"] %}
+{% if spec.prod in ["c10s", "rhel10", "c11s", "rhel11"] %}
 RUN INSTALL_PKGS="rsync tar gettext-envsubst nss_wrapper-libs glibc-locale-source xz" && \
     PSQL_PKGS="{{ spec.pkgs }}" && \
-{% elif spec.prod == "rhel9" and spec.version == "13" %} \
-RUN INSTALL_PKGS="rsync tar gettext nss_wrapper-libs {{ spec.pkgs }}" && \
-{% elif spec.prod == "rhel9" and spec.version in ["15", "16", "18"] %}
-RUN {{ spec.environment_setup }}
-    INSTALL_PKGS="rsync tar gettext nss_wrapper-libs {{ spec.pkgs }}" && \
-{% else %}
-RUN {{ spec.environment_setup }}
-    INSTALL_PKGS="rsync tar gettext nss_wrapper-libs {{ spec.pkgs }}" && \
 {% endif %}
-{% if spec.version not in ["18", "18-minimal"] or spec.prod in ["c9s", "rhel9"] %}
-    INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
-{% else %}
+{% if spec.version == "18" or spec.prod in ["c10s", "rhel10", "c11s", "rhel11"] %}
     INSTALL_PKGS="$INSTALL_PKGS postgresql{{ spec.version }}-pgaudit" && \
 {% endif %}
 {% if spec.prod not in ["c10s", "rhel10", "c11s", "rhel11"] %}
     INSTALL_PKGS="$INSTALL_PKGS procps-ng util-linux postgresql-upgrade" && \
 {% endif %}
-{% if spec.version in ["16", "18", "18-minimal"] %}
-    {% if spec.prod in ["c9s", "rhel9"] %}
-    INSTALL_PKGS="$INSTALL_PKGS pgvector" && \
-    {% endif %}
+{% if spec.version in ["18"] %}
     {% if spec.prod in ["c10s", "rhel10", "c11s", "rhel11"] %}
     PSQL_PKGS="$PSQL_PKGS postgresql{{ spec.version }}-pgvector" && \
     {% endif %}
 {% endif %}
 {% if spec.prod in ["c10s", "rhel10", "c11s", "rhel11"] %}
-    yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS $PSQL_PKGS  && \
-    {% if spec.version not in ["18", "18-minimal"] %}
-    rpm -V $INSTALL_PKGS {{ spec.check_pkgs }} && \
-    {% else %}
-    rpm -V $INSTALL_PKGS && \
-    {% endif %}
-{% else %}
-    yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
+    microdnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS $PSQL_PKGS  && \
     rpm -V $INSTALL_PKGS && \
 {% endif %}
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
     {% if spec.post_install %}
     {{ spec.post_install }}
     {% endif %}
-    yum -y clean all --enablerepo='*' && \
+    microdnf -y clean all --enablerepo='*' && \
+    mkdir -p ${HOME}/.pki/nssdb && \
+    chown -R 1001:0 ${HOME}/.pki && \    
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     mkdir -p /var/lib/pgsql/data && \
@@ -104,8 +87,7 @@ RUN {{ spec.environment_setup }}
     /usr/libexec/fix-permissions /var/lib/pgsql /run/postgresql
 
 # Get prefix path and path to scripts rather than hard-code them in scripts
-ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
-    ENABLED_COLLECTIONS={{ spec.enabled_collection }}
+ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql
 
 COPY root /
 COPY ./s2i/bin/ $STI_SCRIPTS_PATH
@@ -115,9 +97,6 @@ COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 # /usr/libexec/s2i/run no such file or directory
 RUN ln -s /usr/bin/run-postgresql $STI_SCRIPTS_PATH/run
 
-# Not using VOLUME statement since it's not working in OpenShift Online:
-# https://github.com/sclorg/httpd-container/issues/30
-# VOLUME ["/var/lib/pgsql/data"]
 
 # S2I permission fixes
 # --------------------

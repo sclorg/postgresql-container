@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cat /usr/share/container-scripts/postgresql/README.md
+

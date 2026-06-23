@@ -1,0 +1,39 @@
+#!/bin/sh
+
+documentation="\
+Recursively fix permissions on the given directories to allow GID=0
+read/write regular files and read/write/execute directories.
+
+To run this command, you have to be in the group root=0!"
+
+uid=26
+write=w
+
+usage ()
+{
+    cat >&2 <<EOF
+$0: Error: ${1-usage error}
+
+Usage: $0 [--read-only] DIR [DIR ..]
+
+$documentation
+EOF
+    exit 1
+}
+
+while test $# -gt 0; do
+    case $1 in
+    --read-only) write= ; shift ;;
+    *) break ;;
+    esac
+done
+
+test $# -eq 0 && usage "no DIR specified"
+
+for dir; do
+    test -d "$dir" || usage "no such directory '$dir'"
+    echo >&2 "fixing permissions on '$dir' directory"
+    find "$dir" -exec chown "$uid:0" {} \;
+    find "$dir" -exec chmod "g+r$write" {} \;
+    find "$dir" -type d -exec chmod g+x {} +
+done

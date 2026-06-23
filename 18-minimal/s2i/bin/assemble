@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+shopt -s dotglob
+echo "---> Installing application source ..."
+
+
+mv /tmp/src/* ./
+
+# Fix source directory permissions
+/usr/libexec/fix-permissions --read-only ./
