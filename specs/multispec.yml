@@ -167,7 +167,6 @@ matrix:
         - rhel-8-x86_64
     - version: "13"
       distros:
-        - rhel-8-x86_64
         - rhel-9-x86_64
         - centos-stream-9-x86_64
     - version: "15"
