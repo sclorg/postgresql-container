@@ -8,7 +8,7 @@ Please note that while the examples provided in this README utilize `podman`, it
 
 This container image offers a containerized version of the PostgreSQL postgres daemon and client application. The postgres server daemon accepts client connections and grants access to PostgreSQL database content on behalf of said clients. For more information regarding the PostgreSQL project, please visit the official project website (https://www.postgresql.org/).
 
-See [the Red Hat Enterprise Linux Application Streams Life Cycle page](https://access.redhat.com/support/policy/updates/rhel-app-streams-life-cycle) for information about support for this particular stream.
+See [the Red Hat Enterprise Linux Application Streams Life Cycle page](https://access.redhat.com/support/policy/updates/rhel-app-streams-life-cycle) for information about support for a particular stream.
 
 ## Usage
 

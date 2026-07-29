@@ -17,7 +17,7 @@ Table start
 ||CentOS Stream 9|CentOS Stream 10|Fedora|RHEL 8|RHEL 9|RHEL 10|
 |:--|:--:|:--:|:--:|:--:|:--:|:--:|
 |12||||<details><summary>✓</summary>`registry.redhat.io/rhel8/postgresql-12`</details>|||
-|13|<details><summary>✓</summary>`quay.io/sclorg/postgresql-13-c9s`</details>|||<details><summary>✓</summary>`registry.redhat.io/rhel8/postgresql-13`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel9/postgresql-13`</details>||
+|13|<details><summary>✓</summary>`quay.io/sclorg/postgresql-13-c9s`</details>||||<details><summary>✓</summary>`registry.redhat.io/rhel9/postgresql-13`</details>||
 |15|<details><summary>✓</summary>`quay.io/sclorg/postgresql-15-c9s`</details>||<details><summary>✓</summary>`quay.io/fedora/postgresql-15`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel8/postgresql-15`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel9/postgresql-15`</details>||
 |16|<details><summary>✓</summary>`quay.io/sclorg/postgresql-16-c9s`</details>|<details><summary>✓</summary>`quay.io/sclorg/postgresql-16-c10s`</details>|<details><summary>✓</summary>`quay.io/fedora/postgresql-16`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel8/postgresql-16`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel9/postgresql-16`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel10/postgresql-16`</details>|
 |18|<details><summary>✓</summary>`quay.io/sclorg/postgresql-18-c9s`</details>|<details><summary>✓</summary>`quay.io/sclorg/postgresql-18-c10s`</details>|<details><summary>✓</summary>`quay.io/fedora/postgresql-18`</details>||<details><summary>✓</summary>`registry.redhat.io/rhel9/postgresql-18`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel10/postgresql-18`</details>|
