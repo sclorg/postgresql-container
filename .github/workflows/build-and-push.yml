@@ -87,8 +87,8 @@ jobs:
             docker_context: 18
 
     steps:
-      - name: check if Dockerfile is c9s, then Build multi arch image and push to quay.io registry
-        if: matrix.dockerfile == '13/Dockerfile.c9s' || matrix.dockerfile == '15/Dockerfile.c9s' || matrix.dockerfile == '16/Dockerfile.c9s'
+      - name: Build multi arch image and push to quay.io registry
+        if: matrix.dockerfile == '13/Dockerfile.c9s' || matrix.dockerfile == '15/Dockerfile.c9s' || matrix.dockerfile == '16/Dockerfile.c9s' || matrix.dockerfile == '18/Dockerfile.c9s' || contains(matrix.dockerfile, '.c10s')
         uses: sclorg/build-and-push-action@v4
         with:
           registry: "quay.io"
@@ -101,8 +101,8 @@ jobs:
           image_name: ${{ matrix.image_name }}
           archs: amd64, s390x, ppc64le, arm64
           
-      - name: Check if Dockerfile is not c9s, then Build and push to quay.io registry
-        if: matrix.dockerfile != '13/Dockerfile.c9s' && matrix.dockerfile != '15/Dockerfile.c9s' && matrix.dockerfile != '16/Dockerfile.c9s'
+      - name: Build single arch image and push to quay.io registry
+        if: matrix.dockerfile != '13/Dockerfile.c9s' && matrix.dockerfile != '15/Dockerfile.c9s' && matrix.dockerfile != '16/Dockerfile.c9s' && matrix.dockerfile != '18/Dockerfile.c9s' && !contains(matrix.dockerfile, '.c10s')
         uses: sclorg/build-and-push-action@v4
         with:
           registry: "quay.io"
