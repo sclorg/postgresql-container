@@ -141,9 +141,9 @@ specs:
 
     "16":
       version: "16"
-      prev_version: "15"
+      prev_version: '{{ "13" if spec.prod == "rhel10" or spec.prod == "c10s" else "15" }}'
       short: "16"
-      prev_short: "15"
+      prev_short: '{{ "13" if spec.prod == "rhel10" or spec.prod == "c10s" else "15" }}'
       common_image_name: "{{ spec.org }}/postgresql-{{ spec.short }}-{{ spec.prod }}"
       c9s_image_name: "sclorg/postgresql-{{ spec.short }}-c10s"
       rhel_image_name: "rhel10/postgresql-{{ spec.short }}"
