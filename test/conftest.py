@@ -51,7 +51,7 @@ SQL_CMDS = {
 RHEL9 = ["13", "15", "16", "18"]
 RHEL10 = ["16", "18"]
 UPGRADE_PATH_DICT = {
-    "rhel8": ["12", "15", "16"],
+    "rhel8": ["12", "13", "15", "16"],
     "rhel9": RHEL9,
     "c9s": RHEL9,
     "rhel10": RHEL10,
